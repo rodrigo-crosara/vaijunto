@@ -25,15 +25,14 @@ if ($rideId <= 0) {
 try {
     $pdo->beginTransaction();
 
-    // 1. Buscar detalhes da carona e verificar condições (FOR UPDATE para lock)
+    // 1. Buscar detalhes da carona (para validações e dados de retorno)
     $stmtRide = $pdo->prepare("
-        SELECT r.*, u.phone as driver_phone, u.pix_key, c.plate as car_plate, c.model as car_model
+        SELECT r.*, u.phone as driver_phone, u.pix_key, u.name as driver_name, c.plate as car_plate, c.model as car_model
         FROM rides r
         JOIN users u ON r.driver_id = u.id
         LEFT JOIN cars c ON c.user_id = u.id
         WHERE r.id = ? 
-        LIMIT 1 
-        FOR UPDATE
+        LIMIT 1
     ");
     $stmtRide->execute([$rideId]);
     $ride = $stmtRide->fetch(PDO::FETCH_ASSOC);
@@ -42,38 +41,47 @@ try {
         throw new Exception("Carona não encontrada.");
     }
 
-    // Validações
+    // 2. Bloqueios de Lógica
     if ($ride['driver_id'] == $passengerId) {
         throw new Exception("Você não pode reservar sua própria carona.");
     }
 
-    if ($ride['seats_available'] <= 0) {
-        throw new Exception("Esta carona está lotada.");
+    if ($ride['status'] === 'canceled') {
+        throw new Exception("Esta carona foi cancelada.");
     }
 
-    // Verificar duplicidade
-    $stmtCheck = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ?");
+    if (strtotime($ride['departure_time']) < time()) {
+        throw new Exception("Esta carona já partiu.");
+    }
+
+    // Verificar duplicidade (exclui canceladas para permitir re-reserva)
+    $stmtCheck = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? AND status != 'canceled'");
     $stmtCheck->execute([$rideId, $passengerId]);
     if ($stmtCheck->fetch()) {
         throw new Exception("Você já reservou um lugar nesta carona.");
     }
 
-    // 2. Criar Booking
+    // 3. RESERVA ATÔMICA: Tenta decrementar SOMENTE se tiver vaga (> 0)
+    $stmtDecrement = $pdo->prepare("UPDATE rides SET seats_available = seats_available - 1 WHERE id = ? AND seats_available > 0");
+    $stmtDecrement->execute([$rideId]);
+
+    if ($stmtDecrement->rowCount() === 0) {
+        // Nenhuma linha afetada = sem vagas
+        throw new Exception("Vagas esgotadas! Alguém reservou antes de você.");
+    }
+
+    // 4. Vaga garantida atomicamente — inserir booking
     $meetingPoint = trim($input['meetingPoint'] ?? '');
     $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, status, created_at) VALUES (?, ?, ?, 'confirmed', NOW())");
     $stmtBook->execute([$rideId, $passengerId, $meetingPoint]);
 
-    // 3. Atualizar Vagas
-    $stmtUpdate = $pdo->prepare("UPDATE rides SET seats_available = seats_available - 1 WHERE id = ?");
-    $stmtUpdate->execute([$rideId]);
-
     $pdo->commit();
 
-    // 4. Notificar o Motorista
+    // 5. Notificar o Motorista
     $passengerName = $_SESSION['user_name'] ?? 'Alguém';
     createNotification($pdo, $ride['driver_id'], 'booking', "🎉 Nova reserva de {$passengerName}!", 'index.php?page=my_rides');
 
-    // 5. Retorno de Sucesso com Dados Revelados
+    // 6. Retorno de Sucesso com Dados Revelados
     echo json_encode([
         'success' => true,
         'message' => 'Vaga garantida!',
@@ -89,3 +97,4 @@ try {
     }
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+

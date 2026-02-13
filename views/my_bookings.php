@@ -149,8 +149,11 @@ foreach ($bookings as $b) {
                                     <div>
                                         <span class="block text-[10px] font-bold text-green-300 uppercase tracking-widest">Seu
                                             Embarque</span>
-                                        <span
-                                            class="text-white font-bold text-sm"><?= htmlspecialchars($nb['meeting_point'] ?: $nb['origin_text']) ?></span>
+                                        <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nb['meeting_point'] ?: $nb['origin_text']) ?>"
+                                            target="_blank"
+                                            class="text-white font-bold text-sm hover:text-green-300 transition-colors underline underline-offset-4 decoration-white/20">
+                                            <?= htmlspecialchars($nb['meeting_point'] ?: $nb['origin_text']) ?>
+                                        </a>
                                     </div>
                                 </div>
 
@@ -161,7 +164,11 @@ foreach ($bookings as $b) {
                                     foreach ($waypoints as $wp): ?>
                                         <div class="flex items-start gap-4 relative mb-4">
                                             <div class="absolute -left-[12px] top-1.5 w-2.5 h-2.5 bg-white/30 rounded-full z-10"></div>
-                                            <span class="text-blue-100 font-medium text-xs"><?= htmlspecialchars($wp) ?></span>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($wp) ?>"
+                                                target="_blank"
+                                                class="text-blue-100 font-medium text-xs hover:text-white transition-colors">
+                                                <?= htmlspecialchars($wp) ?>
+                                            </a>
                                         </div>
                                     <?php endforeach;
                                 endif; ?>
@@ -175,8 +182,11 @@ foreach ($bookings as $b) {
                                         <span
                                             class="block text-[10px] font-bold text-blue-200 uppercase tracking-widest">Destino
                                             Final</span>
-                                        <span
-                                            class="text-white font-extrabold text-sm"><?= htmlspecialchars($nb['destination_text']) ?></span>
+                                        <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nb['destination_text']) ?>"
+                                            target="_blank"
+                                            class="text-white font-extrabold text-sm hover:text-blue-200 transition-colors underline underline-offset-4 decoration-white/20">
+                                            <?= htmlspecialchars($nb['destination_text']) ?>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -204,10 +214,21 @@ foreach ($bookings as $b) {
                                     class="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-transform">
                                     <i class="bi bi-whatsapp text-xl"></i>
                                 </a>
-                                <a href="https://www.google.com/maps/search/<?= urlencode($nb['meeting_point'] ?: $nb['origin_text']) ?>"
-                                    target="_blank"
-                                    class="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors backdrop-blur-md">
+                                <?php
+                                $locMsg = urlencode("Olá! Estou compartilhando minha localização atual para facilitar o encontro. 👇");
+                                ?>
+                                <a href="https://wa.me/<?= $nbPhone ?>?text=<?= $locMsg ?>" target="_blank"
+                                    class="w-12 h-12 rounded-full bg-blue-400 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg shadow-blue-400/30"
+                                    title="Pedir/Enviar Localização">
                                     <i class="bi bi-geo-alt text-xl"></i>
+                                </a>
+                                <?php
+                                $shareTxt = urlencode("Estou indo de {$nb['origin_text']} para {$nb['destination_text']} com {$nb['driver_name']}. Placa: {$nb['car_plate']}. Carro: {$nb['car_model']}. Acompanhe se eu chegar bem!");
+                                ?>
+                                <a href="https://wa.me/?text=<?= $shareTxt ?>" target="_blank"
+                                    class="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors backdrop-blur-md"
+                                    title="🛡️ Enviar dados para Mãe/Amigo">
+                                    <i class="bi bi-shield-check text-xl"></i>
                                 </a>
                             </div>
 
@@ -252,7 +273,9 @@ foreach ($bookings as $b) {
                                 class="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                    <span class="truncate"><?= htmlspecialchars($b['destination_text']) ?></span>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($b['destination_text']) ?>"
+                                        target="_blank"
+                                        class="truncate hover:text-primary transition-colors"><?= htmlspecialchars($b['destination_text']) ?></a>
                                 </div>
                                 <div class="flex items-center gap-2 text-xs text-gray-400">
                                     <span><?= $date ?> às <?= $time ?></span>

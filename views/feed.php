@@ -127,42 +127,55 @@ try {
                         </div>
                     </div>
 
-                    <!-- Rota Detalhada -->
-                    <div class="relative pl-6 mb-6">
-                        <div class="absolute left-2.5 top-3 bottom-8 w-0.5 border-l-2 border-dashed border-gray-200"></div>
-
-                        <!-- Origem -->
-                        <div class="flex items-start gap-3 relative mb-4">
-                            <i class="bi bi-circle text-primary text-xs bg-white relative z-10 mt-1"></i>
-                            <div>
-                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saída</span>
-                                <span
-                                    class="text-gray-900 font-bold text-sm leading-tight"><?= htmlspecialchars($ride['origin_text']) ?></span>
-                            </div>
+                    <!-- Rota Detalhada (Native Style) -->
+                    <div class="flex gap-4 mb-5 relative no-select">
+                        <!-- Linha do Tempo -->
+                        <div class="flex flex-col items-center w-4 flex-shrink-0 pt-1">
+                            <div class="w-3 h-3 rounded-full border-2 border-primary bg-white z-10"></div>
+                            <div class="flex-grow w-0 border-l-2 border-dashed border-gray-300 my-1"></div>
+                            <div class="w-3 h-3 rounded-full bg-primary z-10"></div>
                         </div>
 
-                        <!-- Waypoints -->
-                        <?php
-                        $waypoints = json_decode($ride['waypoints'] ?? '[]', true);
-                        if (!empty($waypoints)):
-                            foreach ($waypoints as $point):
-                                ?>
-                                <div class="flex items-start gap-4 relative mb-4">
-                                    <i class="bi bi-dot text-gray-300 text-xl -ml-1.5 -mt-1 bg-white relative z-10"></i>
-                                    <span class="text-gray-500 font-medium text-xs"><?= htmlspecialchars($point) ?></span>
-                                </div>
-                                <?php
-                            endforeach;
-                        endif;
-                        ?>
-
-                        <!-- Destino -->
-                        <div class="flex items-start gap-3 relative">
-                            <i class="bi bi-geo-alt-fill text-primary text-xs bg-white relative z-10 mt-1"></i>
+                        <!-- Textos da Rota -->
+                        <div class="flex flex-col justify-between flex-grow gap-6 pb-1">
                             <div>
-                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Chegada</span>
                                 <span
-                                    class="text-gray-900 font-extrabold text-sm leading-tight"><?= htmlspecialchars($ride['destination_text']) ?></span>
+                                    class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Partida</span>
+                                <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['origin_text']) ?>"
+                                    target="_blank"
+                                    class="text-gray-900 font-bold text-base leading-tight flex items-center gap-1 hover:text-primary transition-colors">
+                                    <?= htmlspecialchars($ride['origin_text']) ?>
+                                    <i class="bi bi-box-arrow-up-right text-[10px] opacity-30"></i>
+                                </a>
+                            </div>
+
+                            <?php
+                            $waypoints = json_decode($ride['waypoints'] ?? '[]', true);
+                            if (!empty($waypoints)): ?>
+                                <div class="space-y-3">
+                                    <?php foreach ($waypoints as $point): ?>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($point) ?>"
+                                                target="_blank"
+                                                class="text-gray-500 font-medium text-xs flex items-center gap-1 hover:text-primary transition-colors">
+                                                <?= htmlspecialchars($point) ?>
+                                                <i class="bi bi-box-arrow-up-right text-[8px] opacity-30"></i>
+                                            </a>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div>
+                                <span
+                                    class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Chegada</span>
+                                <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['destination_text']) ?>"
+                                    target="_blank"
+                                    class="text-gray-900 font-bold text-base leading-tight flex items-center gap-1 hover:text-primary transition-colors">
+                                    <?= htmlspecialchars($ride['destination_text']) ?>
+                                    <i class="bi bi-box-arrow-up-right text-[10px] opacity-30"></i>
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -199,18 +212,18 @@ try {
                                     "price" => $ride['price'],
                                     "waypoints" => $ride['waypoints']
                                 ]) ?>)'
-                                    class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 transition-all">
+                                    class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>
                             <?php elseif ($isBooked): ?>
                                 <a href="https://wa.me/<?= preg_replace('/\D/', '', $ride['driver_phone']) ?>" target="_blank"
-                                    class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2">
+                                    class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp"></i> WhatsApp
                                 </a>
                             <?php else: ?>
                                 <button
                                     onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", `<?= addslashes($ride['waypoints'] ?? "[]") ?>`)'
-                                    class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black transition-all">
+                                    class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
                                     Reservar
                                 </button>
                             <?php endif; ?>

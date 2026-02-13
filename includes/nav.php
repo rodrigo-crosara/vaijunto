@@ -6,7 +6,7 @@ $currentPage = $_GET['page'] ?? 'home';
 ?>
 
 <div
-    class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] pb-safe">
+    class="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-white/20 shadow-[0_-10px_40px_rgba(0,0,0,0.03)] pb-safe no-select">
     <div class="flex justify-around items-center h-20 max-w-lg mx-auto px-4">
 
         <!-- Home -->

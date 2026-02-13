@@ -29,11 +29,27 @@ $detailsInput = trim($input['details'] ?? ''); // Novo campo de observações
 
 $departure_time = $input['departure_time'] ?? '';
 $seats = intval($input['seats'] ?? 0);
-$price = floatval($input['price'] ?? 0);
+
+// Sanitização de preço: brasileiro usa vírgula (R$ 10,50), MySQL quer ponto (10.50)
+$priceInput = $input['price'] ?? '0';
+$price = floatval(str_replace(',', '.', str_replace('.', '', $priceInput)));
+
 $driver_id = $_SESSION['user_id'];
 
 if (empty($origin) || empty($destination) || empty($departure_time) || $seats <= 0) {
     echo json_encode(['success' => false, 'message' => 'Preencha todos os campos obrigatórios.']);
+    exit;
+}
+
+// Validação: Data no passado
+if (strtotime($departure_time) < time()) {
+    echo json_encode(['success' => false, 'message' => 'A data e hora de saída devem ser futuras.']);
+    exit;
+}
+
+// Validação: Preço negativo
+if ($price < 0) {
+    echo json_encode(['success' => false, 'message' => 'O preço não pode ser negativo.']);
     exit;
 }
 

@@ -107,28 +107,36 @@ try {
                         </div>
 
                         <div class="flex items-center gap-3 mb-8">
-                            <span class="font-bold text-lg truncate"><?= $nextRide['origin_text'] ?></span>
+                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nextRide['origin_text']) ?>"
+                                target="_blank"
+                                class="font-bold text-lg truncate hover:text-blue-200 transition-colors underline decoration-white/20 underline-offset-4">
+                                <?= $nextRide['origin_text'] ?>
+                            </a>
                             <i class="bi bi-arrow-right text-blue-300"></i>
-                            <span class="font-bold text-lg truncate"><?= $nextRide['destination_text'] ?></span>
+                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nextRide['destination_text']) ?>"
+                                target="_blank"
+                                class="font-bold text-lg truncate hover:text-blue-200 transition-colors underline decoration-white/20 underline-offset-4">
+                                <?= $nextRide['destination_text'] ?>
+                            </a>
                         </div>
 
                         <!-- Ações Rápidas -->
                         <div class="grid grid-cols-2 gap-3 mb-6">
-                            <button onclick='shareRide(<?= json_encode([
-                                "id" => $nextRide['id'],
-                                "origin" => $nextRide['origin_text'],
-                                "destination" => $nextRide['destination_text'],
-                                "departure_time" => $nextRide['departure_time'],
-                                "price" => $nextRide['price'],
-                                "waypoints" => "" // Simplificado para botão rápido
-                            ]) ?>)'
-                                class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                <i class="bi bi-whatsapp"></i> Divulgar
-                            </button>
-                            <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
-                                class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                <i class="bi bi-pencil-square"></i> Editar
-                            </button>
+                                    <button onclick='shareRide(<?= json_encode([
+                                        "id" => $nextRide['id'],
+                                        "origin" => $nextRide['origin_text'],
+                                        "destination" => $nextRide['destination_text'],
+                                        "departure_time" => $nextRide['departure_time'],
+                                        "price" => $nextRide['price'],
+                                        "waypoints" => "" // Simplificado para botão rápido
+                                    ]) ?>)'
+                                        class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                        <i class="bi bi-whatsapp"></i> Divulgar
+                                    </button>
+                                    <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
+                                        class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                        <i class="bi bi-pencil-square"></i> Editar
+                                    </button>
                         </div>
 
                         <!-- Checklist Express (Dentro do Card) -->
@@ -148,6 +156,8 @@ try {
                                 <div class="space-y-3">
                                     <?php foreach ($nextRide['passengers'] as $p):
                                         $isPaid = ($p['payment_status'] === 'paid');
+                                        $pPhone = preg_replace('/\D/', '', $p['phone']);
+                                        $locMsg = urlencode("Olá! Estou compartilhando minha localização atual para facilitar o encontro. 👇");
                                         ?>
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-3">
@@ -156,12 +166,20 @@ try {
                                                 <div class="flex flex-col">
                                                     <span
                                                         class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
-                                                    <span class="text-[10px] text-blue-200 truncate max-w-[100px]"><i
-                                                            class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?></span>
+                                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($p['meeting_point']) ?>"
+                                                        target="_blank"
+                                                        class="text-[10px] text-blue-200 truncate max-w-[100px] hover:text-white transition-colors">
+                                                        <i class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?>
+                                                    </a>
                                                 </div>
                                             </div>
                                             <div class="flex gap-2">
-                                                <a href="https://wa.me/<?= preg_replace('/\D/', '', $p['phone']) ?>" target="_blank"
+                                                <a href="https://wa.me/<?= $pPhone ?>?text=<?= $locMsg ?>" target="_blank"
+                                                    class="w-8 h-8 rounded-full bg-blue-400/20 text-white flex items-center justify-center hover:bg-blue-400 transition-all shadow-sm"
+                                                    title="Pedir/Enviar Localização">
+                                                    <i class="bi bi-geo-alt text-sm"></i>
+                                                </a>
+                                                <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
                                                     class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
                                                     <i class="bi bi-whatsapp text-sm"></i>
                                                 </a>
@@ -203,9 +221,13 @@ try {
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                    <span><?= $ride['origin_text'] ?></span>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['origin_text']) ?>"
+                                        target="_blank"
+                                        class="hover:text-primary transition-colors"><?= $ride['origin_text'] ?></a>
                                     <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
-                                    <span><?= $ride['destination_text'] ?></span>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['destination_text']) ?>"
+                                        target="_blank"
+                                        class="hover:text-primary transition-colors"><?= $ride['destination_text'] ?></a>
                                 </div>
                                 <span class="text-xs text-gray-400"><?= count($ride['passengers']) ?> passageiros • R$
                                     <?= number_format($ride['price'], 2, ',', '.') ?></span>

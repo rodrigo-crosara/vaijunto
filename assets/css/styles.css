@@ -1,3 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc; /* Slate-50 */
+    -webkit-tap-highlight-color: transparent; /* Remove flash azul ao tocar */
+    -webkit-touch-callout: none; /* Desativa menu de toque longo em imagens */
+    overscroll-behavior-y: none; /* Desativa o "bounce" de rolagem do navegador */
+}
+/* Esconder Scrollbar (Mas permitir rolagem) */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+/* Utilitário para evitar seleção de texto em UI */
+.no-select {
+    user-select: none;
+    -webkit-user-select: none;
+}
+/* Ajuste para iPhone X+ (Safe Area) */
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+/* Micro-interações */
+.btn-primary:active, .active\:scale-95:active {
+    transform: scale(0.97);
+}
+
 /*! tailwindcss v4.1.18 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
