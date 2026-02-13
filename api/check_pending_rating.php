@@ -44,7 +44,8 @@ try {
         JOIN users u_passenger ON b.passenger_id = u_passenger.id
         WHERE (b.passenger_id = ? OR r.driver_id = ?)
           AND b.status = 'confirmed'
-          AND r.departure_time < NOW()
+          AND r.status != 'canceled'
+          AND r.departure_time < DATE_SUB(NOW(), INTERVAL 1 HOUR)
           AND NOT EXISTS (
               SELECT 1 FROM ratings rt 
               WHERE rt.booking_id = b.id AND rt.reviewer_id = ?

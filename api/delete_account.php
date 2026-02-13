@@ -50,11 +50,28 @@ try {
         exit;
     }
 
-    // 3. Sem pendências: excluir conta (CASCADE cuida do resto)
+    // 3. Sem pendências: limpar arquivos físicos antes do DELETE
+    $stmtUserPhoto = $pdo->prepare("SELECT photo_url FROM users WHERE id = ?");
+    $stmtUserPhoto->execute([$userId]);
+    $userPhoto = $stmtUserPhoto->fetchColumn();
+
+    $stmtCarPhoto = $pdo->prepare("SELECT photo_url FROM cars WHERE user_id = ?");
+    $stmtCarPhoto->execute([$userId]);
+    $carPhoto = $stmtCarPhoto->fetchColumn();
+
+    // Apagar arquivos físicos do servidor
+    if ($userPhoto && file_exists(__DIR__ . '/../' . $userPhoto)) {
+        @unlink(__DIR__ . '/../' . $userPhoto);
+    }
+    if ($carPhoto && file_exists(__DIR__ . '/../' . $carPhoto)) {
+        @unlink(__DIR__ . '/../' . $carPhoto);
+    }
+
+    // 4. Excluir conta (CASCADE cuida do resto no banco)
     $stmtDelete = $pdo->prepare("DELETE FROM users WHERE id = ?");
     $stmtDelete->execute([$userId]);
 
-    // 4. Destruir sessão
+    // 5. Destruir sessão
     session_destroy();
 
     echo json_encode(['success' => true, 'message' => 'Conta excluída permanentemente.']);
