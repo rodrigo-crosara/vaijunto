@@ -36,7 +36,7 @@ if (empty($_SESSION['is_admin'])) {
         </div>
     </div>
 
-    <div class="grid lg:grid-cols-2 gap-8">
+    <div class="grid lg:grid-cols-2 gap-8 mb-10">
         <!-- Novos Usuários -->
         <div class="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100">
             <h3 class="text-sm font-black text-gray-900 mb-6 uppercase tracking-tight">Novos Usuários</h3>
@@ -61,6 +61,51 @@ if (empty($_SESSION['is_admin'])) {
                     <div class="h-12 bg-gray-50 rounded-2xl"></div>
                     <div class="h-12 bg-gray-50 rounded-2xl"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manutenção do Sistema -->
+    <div>
+        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Manutenção do Sistema 🧹</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Faxina -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mb-4">
+                    <i class="bi bi-eraser-fill text-xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-900 mb-1">Limpeza de Órfãos</h4>
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Remove fotos que não estão vinculadas a nenhum usuário ou carro.</p>
+                <button onclick="runMaintenance('cleanup_files', 'Deseja iniciar a faxina de arquivos?')" 
+                    class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-blue-600 hover:text-white transition-all">
+                    Executar Faxina
+                </button>
+            </div>
+
+            <!-- Broadcast -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mb-4">
+                    <i class="bi bi-megaphone-fill text-xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-900 mb-1">Alerta Geral</h4>
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Envia uma notificação para todos os usuários do sistema.</p>
+                <button onclick="sendBroadcast()" 
+                    class="w-full bg-orange-50 text-orange-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-orange-600 hover:text-white transition-all">
+                    Escrever Mensagem
+                </button>
+            </div>
+
+            <!-- Purge -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                <div class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center mb-4">
+                    <i class="bi bi-trash-fill text-xl"></i>
+                </div>
+                <h4 class="text-sm font-bold text-gray-900 mb-1">Expurgo de Histórico</h4>
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Apaga caronas canceladas ou concluídas há mais de 6 meses.</p>
+                <button onclick="runMaintenance('purge_old', 'Deseja apagar registros com mais de 6 meses?')" 
+                    class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-red-600 hover:text-white transition-all">
+                    Limpar Antigos
+                </button>
             </div>
         </div>
     </div>
@@ -117,31 +162,38 @@ if (empty($_SESSION['is_admin'])) {
         }
     }
 
-    async function adminAction(data) {
+    async function adminAction(apiUrl, data, confirmText = "Esta ação não pode ser desfeita.") {
         const confirm = await Swal.fire({
             title: 'Confirmar Ação?',
-            text: "Esta ação não pode ser desfeita.",
+            text: confirmText,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sim, executar',
             cancelButtonText: 'Cancelar',
             customClass: {
-                confirmButton: 'bg-red-500 text-white font-bold px-8 py-3 rounded-2xl shadow-lg',
+                confirmButton: 'bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg',
                 cancelButton: 'bg-gray-100 text-gray-400 font-bold px-6 py-3 rounded-2xl ml-2'
             },
             buttonsStyling: false
         });
 
         if (confirm.isConfirmed) {
+            Swal.fire({
+                title: 'Processando...',
+                html: 'Aguarde um momento',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
             try {
-                const res = await fetch('api/admin_actions.php', {
+                const res = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
                 if (result.success) {
-                    Swal.fire({ text: result.message, icon: 'success', timer: 1500, showConfirmButton: false }).then(() => loadStats());
+                    Swal.fire({ text: result.message, icon: 'success', customClass: { popup: 'rounded-[2rem]' } }).then(() => loadStats());
                 } else {
                     Swal.fire({ text: result.message, icon: 'error' });
                 }
@@ -152,11 +204,38 @@ if (empty($_SESSION['is_admin'])) {
     }
 
     function banUser(userId) {
-        adminAction({ action: 'ban_user', user_id: userId });
+        adminAction('api/admin_actions.php', { action: 'ban_user', user_id: userId });
     }
 
     function deleteRide(rideId) {
-        adminAction({ action: 'delete_ride', ride_id: rideId });
+        adminAction('api/admin_actions.php', { action: 'delete_ride', ride_id: rideId });
+    }
+
+    function runMaintenance(action, confirmText) {
+        adminAction('api/admin_maintenance.php', { action: action }, confirmText);
+    }
+
+    async function sendBroadcast() {
+        const { value: text } = await Swal.fire({
+            title: 'Enviar Alerta Geral 📢',
+            input: 'textarea',
+            inputLabel: 'Esta mensagem aparecerá no sino de todos os usuários.',
+            inputPlaceholder: 'Digite o alerta aqui...',
+            inputAttributes: { 'aria-label': 'Digite o alerta aqui' },
+            showCancelButton: true,
+            confirmButtonText: 'Enviar para Todos',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'rounded-[2.5rem]',
+                confirmButton: 'bg-orange-500 text-white font-bold px-8 py-3 rounded-2xl shadow-lg',
+                cancelButton: 'bg-gray-100 text-gray-400 font-bold px-6 py-3 rounded-2xl ml-2'
+            },
+            buttonsStyling: false
+        });
+
+        if (text) {
+            adminAction('api/admin_maintenance.php', { action: 'broadcast', message: text }, "Enviar agora?");
+        }
     }
 
     document.addEventListener('DOMContentLoaded', loadStats);
