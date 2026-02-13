@@ -51,8 +51,8 @@ try {
         <span class="badge badge-light-primary rounded-lg font-bold">Driver Mode</span>
     </div>
 
-    <!-- Empty State -->
     <?php if (empty($myRides)): ?>
+        <!-- Empty State (Manteve igual) -->
         <div
             class="flex flex-col items-center justify-center py-12 text-center bg-white rounded-3xl border border-dashed border-gray-200 shadow-sm">
             <div class="bg-blue-50 rounded-full p-6 mb-4">
@@ -66,126 +66,187 @@ try {
         </div>
     <?php else: ?>
 
-        <div class="space-y-6">
-            <?php foreach ($myRides as $ride):
-                $time = date('H:i', strtotime($ride['departure_time']));
-                $date = date('d/m/Y', strtotime($ride['departure_time']));
-                $isCanceled = ($ride['status'] === 'canceled');
-                ?>
+        <!-- 1. Próxima Viagem (Highlight) -->
+        <?php
+        $nextRide = null;
+        foreach ($myRides as $ride) {
+            if ($ride['status'] !== 'canceled' && strtotime($ride['departure_time']) >= time()) {
+                $nextRide = $ride;
+                break; // A query já ordena por time ASC, então a primeira válida é a próxima
+            }
+        }
+        ?>
+
+        <?php if ($nextRide):
+            $time = date('H:i', strtotime($nextRide['departure_time']));
+            $date = date('d/m', strtotime($nextRide['departure_time']));
+            ?>
+            <div class="mb-8">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Próxima Missão 🚀</h2>
+
                 <div
-                    class="card shadow-sm border border-gray-100 rounded-3xl overflow-hidden bg-white <?= $isCanceled ? 'opacity-60 bg-gray-50' : '' ?>">
-                    <div class="card-header bg-gray-50/50 p-5 flex justify-between items-center border-b border-gray-100">
-                        <div>
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
-                                <?= $date ?> às <?= $time ?>
-                                <?php if ($isCanceled): ?>
-                                    <span class="badge badge-light-danger ml-2 uppercase">CANCELADA</span>
-                                <?php endif; ?>
-                            </span>
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="text-gray-900 font-bold text-sm truncate max-w-[120px]"><?= $ride['origin_text'] ?></span>
-                                <i class="bi bi-arrow-right text-gray-400 text-xs"></i>
-                                <span
-                                    class="text-gray-900 font-bold text-sm truncate max-w-[120px]"><?= $ride['destination_text'] ?></span>
+                    class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-[2.5rem] p-6 text-white shadow-2xl shadow-blue-900/20 relative overflow-hidden">
+                    <!-- Background Decoration -->
+                    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <span class="block text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Saída
+                                    às</span>
+                                <span class="text-5xl font-black tracking-tighter"><?= $time ?></span>
+                                <span class="text-blue-200 font-bold ml-1"><?= $date ?></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Vagas</span>
+                                <div class="flex items-center justify-end gap-1">
+                                    <span class="text-2xl font-black"><?= $nextRide['seats_available'] ?></span>
+                                    <span class="text-blue-300 text-sm">/ <?= $nextRide['seats_total'] ?></span>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex flex-col items-end">
-                            <span class="text-[10px] font-bold text-gray-400 mb-1 uppercase">Vagas</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-primary font-bold"><?= $ride['seats_available'] ?></span>
-                                <span class="text-gray-300">/</span>
-                                <span class="text-gray-400 font-medium"><?= $ride['seats_total'] ?></span>
+
+                        <div class="flex items-center gap-3 mb-8">
+                            <span class="font-bold text-lg truncate"><?= $nextRide['origin_text'] ?></span>
+                            <i class="bi bi-arrow-right text-blue-300"></i>
+                            <span class="font-bold text-lg truncate"><?= $nextRide['destination_text'] ?></span>
+                        </div>
+
+                        <!-- Ações Rápidas -->
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button onclick='shareRide(<?= json_encode([
+                                "id" => $nextRide['id'],
+                                "origin" => $nextRide['origin_text'],
+                                "destination" => $nextRide['destination_text'],
+                                "departure_time" => $nextRide['departure_time'],
+                                "price" => $nextRide['price'],
+                                "waypoints" => "" // Simplificado para botão rápido
+                            ]) ?>)'
+                                class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                <i class="bi bi-whatsapp"></i> Divulgar
+                            </button>
+                            <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
+                                class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                        </div>
+
+                        <!-- Checklist Express (Dentro do Card) -->
+                        <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/5">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-blue-200 uppercase">Checklist de Embarque</span>
+                                <span
+                                    class="text-xs font-bold bg-white/20 px-2 py-0.5 rounded text-white"><?= count($nextRide['passengers']) ?>
+                                    Confirmados</span>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Barra de Ações -->
-                    <?php if (!$isCanceled): ?>
-                        <div class="px-5 py-3 bg-white border-b border-gray-100 flex gap-2 overflow-x-auto">
-                            <button onclick="editarVagas(<?= $ride['id'] ?>, <?= $ride['seats_available'] ?>)"
-                                class="btn btn-sm btn-light-primary rounded-xl font-bold flex items-center gap-2 whitespace-nowrap">
-                                <i class="bi bi-pencil-square"></i> Editar Vagas
-                            </button>
-                            <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
-                                class="btn btn-sm btn-light-danger rounded-xl font-bold flex items-center gap-2 whitespace-nowrap">
-                                <i class="bi bi-x-circle"></i> Cancelar Viagem
-                            </button>
-                            <button onclick="confirmarVolta(<?= $ride['id'] ?>, '<?= addslashes($ride['origin_text']) ?>', '<?= addslashes($ride['destination_text']) ?>', '<?= $ride['departure_time'] ?>')"
-                                class="btn btn-sm btn-light-info rounded-xl font-bold flex items-center gap-2 whitespace-nowrap">
-                                <i class="bi bi-arrow-left-right"></i> Criar Volta
-                            </button>
-                            <button
-                                class="btn btn-sm btn-light rounded-xl font-bold flex items-center gap-2 whitespace-nowrap ml-auto"
-                                type="button" data-bs-toggle="collapse" data-bs-target="#ride-<?= $ride['id'] ?>">
-                                <i class="bi bi-people"></i> Passageiros (<?= count($ride['passengers']) ?>)
-                            </button>
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Lista de Passageiros (Collapse) -->
-                    <div class="collapse <?= count($ride['passengers']) > 0 ? 'show' : '' ?>" id="ride-<?= $ride['id'] ?>">
-                        <div class="card-body p-5 pt-0">
-                            <?php if (empty($ride['passengers'])): ?>
-                                <div class="bg-gray-50 rounded-2xl p-4 text-center border border-dashed border-gray-200 mt-4">
-                                    <p class="text-gray-500 text-xs italic">Nenhum passageiro confirmado.</p>
+                            <?php if (empty($nextRide['passengers'])): ?>
+                                <div class="text-center py-2">
+                                    <p class="text-blue-200 text-xs italic">Aguardando passageiros...</p>
                                 </div>
                             <?php else: ?>
-                                <div class="space-y-3 mt-4">
-                                    <?php foreach ($ride['passengers'] as $passenger):
-                                        $pAvatar = $passenger['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($passenger['name']) . "&background=random";
-                                        $pPhone = preg_replace('/\D/', '', $passenger['phone']);
+                                <div class="space-y-3">
+                                    <?php foreach ($nextRide['passengers'] as $p):
+                                        $isPaid = ($p['payment_status'] === 'paid');
                                         ?>
-                                        <div
-                                            class="flex items-center justify-between bg-white border border-gray-100 rounded-2xl p-3 shadow-sm">
+                                        <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-3">
-                                                <div class="symbol symbol-45px symbol-circle border-2 border-white shadow-sm">
-                                                    <img src="<?= htmlspecialchars($pAvatar) ?>" alt="Passageiro">
-                                                </div>
+                                                <img src="<?= $p['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($p['name']) ?>"
+                                                    class="w-8 h-8 rounded-full border border-white/30">
                                                 <div class="flex flex-col">
                                                     <span
-                                                        class="text-gray-900 font-bold text-sm mb-0.5"><?= htmlspecialchars($passenger['name']) ?></span>
-                                                    <span
-                                                        class="text-[10px] text-primary-active font-bold uppercase bg-primary/5 px-2 py-0.5 rounded-md">
-                                                        <i class="bi bi-geo-alt-fill text-[9px]"></i>
-                                                        <?= htmlspecialchars($passenger['meeting_point'] ?: 'Origem') ?>
-                                                    </span>
+                                                        class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
+                                                    <span class="text-[10px] text-blue-200 truncate max-w-[100px]"><i
+                                                            class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?></span>
                                                 </div>
                                             </div>
-                                            <div class="flex gap-1">
-                                                <?php
-                                                $isPaid = ($passenger['payment_status'] === 'paid');
-                                                ?>
-                                                <button onclick="confirmarPagamento(<?= $passenger['booking_id'] ?>)" 
-                                                    class="btn btn-icon btn-sm <?= $isPaid ? 'btn-success' : 'btn-light-secondary' ?> rounded-lg"
-                                                    title="<?= $isPaid ? 'Pago' : 'Marcar como Pago' ?>"
-                                                    <?= $isPaid ? 'disabled' : '' ?>>
-                                                    <i class="bi bi-check-circle<?= $isPaid ? '-fill' : '' ?>"></i>
-                                                </button>
-                                                <button onclick="mostrarPix('<?= addslashes($driverPix ?: '') ?>')"
-                                                    class="btn btn-icon btn-sm btn-light-primary rounded-lg"
-                                                    title="Cobrar (Mostrar Pix)">
-                                                    <i class="bi bi-qr-code"></i>
-                                                </button>
-                                                <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
-                                                    class="btn btn-icon btn-sm btn-success rounded-lg">
-                                                    <i class="bi bi-whatsapp"></i>
+                                            <div class="flex gap-2">
+                                                <a href="https://wa.me/<?= preg_replace('/\D/', '', $p['phone']) ?>" target="_blank"
+                                                    class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
+                                                    <i class="bi bi-whatsapp text-sm"></i>
                                                 </a>
-                                                <?php if (!$isCanceled): ?>
-                                                    <button onclick="removerPassageiro(<?= $passenger['booking_id'] ?>)"
-                                                        class="btn btn-icon btn-sm btn-light-danger rounded-lg" title="Remover Passageiro">
-                                                        <i class="bi bi-trash3-fill"></i>
-                                                    </button>
-                                                <?php endif; ?>
+                                                <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
+                                                    class="w-8 h-8 rounded-full flex items-center justify-center transition-all <?= $isPaid ? 'bg-green-500 text-white' : 'bg-white/10 text-white/50 hover:bg-green-500 hover:text-white' ?>">
+                                                    <i class="bi bi-currency-dollar text-sm"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
+
                     </div>
                 </div>
-            <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- 2. Histórico / Outras Viagens -->
+        <div>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico & Planejamento</h2>
+            <div class="space-y-4 opacity-100">
+                <?php foreach ($myRides as $ride):
+                    if ($nextRide && $ride['id'] == $nextRide['id'])
+                        continue; // Pula a que já exibimos
+                    // Rest of the loop logic keeps the simplified card style for history
+                    $time = date('H:i', strtotime($ride['departure_time']));
+                    $date = date('d/m', strtotime($ride['departure_time']));
+                    $isCanceled = ($ride['status'] === 'canceled');
+                    ?>
+                    <!-- Mini Card de Histórico -->
+                    <div
+                        class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between <?= $isCanceled ? 'opacity-50' : '' ?>">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="bg-gray-50 h-10 w-10 rounded-xl flex items-center justify-center text-gray-400 font-bold text-xs flex-col">
+                                <span><?= $date ?></span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
+                                    <span><?= $ride['origin_text'] ?></span>
+                                    <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
+                                    <span><?= $ride['destination_text'] ?></span>
+                                </div>
+                                <span class="text-xs text-gray-400"><?= count($ride['passengers']) ?> passageiros • R$
+                                    <?= number_format($ride['price'], 2, ',', '.') ?></span>
+                            </div>
+                        </div>
+                        <?php if (!$isCanceled): ?>
+                            <button class="text-gray-400 hover:text-primary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#ride-history-<?= $ride['id'] ?>">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        <?php else: ?>
+                            <span class="text-[10px] font-bold text-red-400 uppercase bg-red-50 px-2 py-1 rounded">Cancelada</span>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Detalhes do Histórico (Collapse) -->
+                    <div class="collapse" id="ride-history-<?= $ride['id'] ?>">
+                        <div class="bg-gray-50 rounded-xl p-4 mx-2 text-xs space-y-2 mb-4">
+                            <!-- Detalhes básicos e lista de passageiros simplificada -->
+                            <?php if (empty($ride['passengers'])): ?>
+                                <p class="text-gray-400 italic">Sem passageiros.</p>
+                            <?php else: ?>
+                                <?php foreach ($ride['passengers'] as $p): ?>
+                                    <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
+                                        <span><?= $p['name'] ?></span>
+                                        <span
+                                            class="<?= $p['payment_status'] == 'paid' ? 'text-green-500' : 'text-gray-400' ?> font-bold">
+                                            <?= $p['payment_status'] == 'paid' ? 'Pago' : 'Pendente' ?>
+                                        </span>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <div class="pt-2 flex justify-end">
+                                <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
+                                    class="text-red-500 font-bold hover:underline">Cancelar Viagem</button>
+                            </div>
+                        </div>
+                    </div>
+
+                <?php endforeach; ?>
+            </div>
         </div>
 
     <?php endif; ?>
