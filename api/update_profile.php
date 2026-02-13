@@ -1,6 +1,6 @@
 <?php
 /**
- * API: Atualizar Perfil e Carro
+ * API: Atualizar Perfil e Carro (com Telefone + Foto do Carro)
  */
 session_start();
 require_once '../config/db.php';
@@ -16,7 +16,6 @@ $userId = $_SESSION['user_id'];
 
 // Recebe dados via POST (padrão form-urlencoded ou multipart)
 if (empty($_POST)) {
-    // Tenta fallback para JSON raw se POST vazio (para compatibilidade futura)
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
 } else {
     $input = $_POST;
@@ -30,6 +29,7 @@ if (empty($input)) {
 // 1. Atualizar User
 $name = trim($input['name'] ?? '');
 $bio = trim($input['bio'] ?? '');
+$newPhone = trim($input['phone'] ?? '');
 
 if (empty($name)) {
     echo json_encode(['success' => false, 'message' => 'O nome é obrigatório.']);
@@ -39,12 +39,37 @@ if (empty($name)) {
 try {
     $pdo->beginTransaction();
 
+    // Buscar telefone atual
+    $stmtCurrent = $pdo->prepare("SELECT phone FROM users WHERE id = ?");
+    $stmtCurrent->execute([$userId]);
+    $currentPhone = $stmtCurrent->fetchColumn();
+
+    $phoneChanged = false;
+
+    // Validação de telefone (se mudou)
+    if (!empty($newPhone) && $newPhone !== $currentPhone) {
+        // Verificar se o número já existe em outra conta
+        $stmtCheckPhone = $pdo->prepare("SELECT id FROM users WHERE phone = ? AND id != ?");
+        $stmtCheckPhone->execute([$newPhone, $userId]);
+        if ($stmtCheckPhone->fetch()) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Este número de WhatsApp já está cadastrado em outra conta.']);
+            exit;
+        }
+        $phoneChanged = true;
+    }
+
     // Update User
     $pixKey = trim($input['pix_key'] ?? '');
     $isDriver = !empty($input['is_driver']) ? 1 : 0;
 
-    $stmtUser = $pdo->prepare("UPDATE users SET name = ?, bio = ?, pix_key = ?, is_driver = ? WHERE id = ?");
-    $stmtUser->execute([$name, $bio, $pixKey, $isDriver, $userId]);
+    if ($phoneChanged) {
+        $stmtUser = $pdo->prepare("UPDATE users SET name = ?, bio = ?, phone = ?, pix_key = ?, is_driver = ? WHERE id = ?");
+        $stmtUser->execute([$name, $bio, $newPhone, $pixKey, $isDriver, $userId]);
+    } else {
+        $stmtUser = $pdo->prepare("UPDATE users SET name = ?, bio = ?, pix_key = ?, is_driver = ? WHERE id = ?");
+        $stmtUser->execute([$name, $bio, $pixKey, $isDriver, $userId]);
+    }
 
     $_SESSION['is_driver'] = $isDriver;
     $_SESSION['user_name'] = $name;
@@ -62,19 +87,47 @@ try {
             $existingCar = $stmtCheck->fetchColumn();
 
             if ($existingCar) {
-                // Update
                 $stmtUpdateCar = $pdo->prepare("UPDATE cars SET model = ?, color = ?, plate = ? WHERE user_id = ?");
                 $stmtUpdateCar->execute([$model, $color, $plate, $userId]);
             } else {
-                // Insert
                 $stmtInsertCar = $pdo->prepare("INSERT INTO cars (user_id, model, color, plate) VALUES (?, ?, ?, ?)");
                 $stmtInsertCar->execute([$userId, $model, $color, $plate]);
             }
         }
     }
 
+    // 3. Upload da Foto do Carro (se enviada via multipart)
+    if (isset($_FILES['car_photo']) && $_FILES['car_photo']['error'] === UPLOAD_ERR_OK) {
+        $carFile = $_FILES['car_photo'];
+        $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (in_array($carFile['type'], $allowed) && $carFile['size'] <= 5 * 1024 * 1024) {
+            $ext = pathinfo($carFile['name'], PATHINFO_EXTENSION);
+            $carFileName = "car_{$userId}_" . time() . ".{$ext}";
+            $uploadDir = realpath(__DIR__ . '/../assets/media/uploads/cars') ?: __DIR__ . '/../assets/media/uploads/cars';
+
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $carPath = $uploadDir . DIRECTORY_SEPARATOR . $carFileName;
+            if (move_uploaded_file($carFile['tmp_name'], $carPath)) {
+                $carPhotoUrl = "assets/media/uploads/cars/{$carFileName}";
+                $stmtCarPhoto = $pdo->prepare("UPDATE cars SET photo_url = ? WHERE user_id = ?");
+                $stmtCarPhoto->execute([$carPhotoUrl, $userId]);
+            }
+        }
+    }
+
     $pdo->commit();
-    echo json_encode(['success' => true, 'message' => 'Perfil salvo.']);
+
+    $response = ['success' => true, 'message' => 'Perfil salvo.'];
+    if ($phoneChanged) {
+        $response['phone_changed'] = true;
+        $response['new_phone'] = $newPhone;
+    }
+
+    echo json_encode($response);
 
 } catch (PDOException $e) {
     $pdo->rollBack();

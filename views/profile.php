@@ -2,7 +2,7 @@
 /**
  * View: Perfil e Configurações (Glass & Lite)
  */
-$stmt = $pdo->prepare("SELECT u.*, c.model, c.color, c.plate FROM users u LEFT JOIN cars c ON c.user_id = u.id WHERE u.id = ?");
+$stmt = $pdo->prepare("SELECT u.*, c.model, c.color, c.plate, c.photo_url as car_photo FROM users u LEFT JOIN cars c ON c.user_id = u.id WHERE u.id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -60,7 +60,7 @@ $msg = $_GET['msg'] ?? '';
     </div>
 
     <!-- Formulário Principal -->
-    <form id="profile-form" class="space-y-6">
+    <form id="profile-form" class="space-y-6" enctype="multipart/form-data">
 
         <!-- Dados Pessoais -->
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
@@ -77,11 +77,24 @@ $msg = $_GET['msg'] ?? '';
                         placeholder="Como quer ser chamado?">
                 </div>
 
+                <!-- WhatsApp (Editável com trava) -->
                 <div>
                     <label
                         class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">WhatsApp</label>
-                    <input type="text" value="<?= htmlspecialchars($user['phone']) ?>" disabled
-                        class="w-full p-4 rounded-2xl bg-gray-100 text-gray-400 font-medium cursor-not-allowed">
+                    <div class="relative">
+                        <input type="text" name="phone" id="input-phone" value="<?= htmlspecialchars($user['phone']) ?>"
+                            readonly
+                            class="w-full p-4 pr-14 rounded-2xl bg-gray-100 text-gray-500 font-medium cursor-not-allowed transition-all"
+                            placeholder="(61) 99999-9999">
+                        <button type="button" onclick="enablePhoneEdit()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all"
+                            id="btn-edit-phone" title="Editar número">
+                            <i class="bi bi-pencil-fill text-xs"></i>
+                        </button>
+                    </div>
+                    <p id="phone-warning" class="hidden text-[10px] text-amber-600 font-bold mt-1 ml-1">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Alterar o número muda seu login!
+                    </p>
                 </div>
 
                 <div>
@@ -129,6 +142,14 @@ $msg = $_GET['msg'] ?? '';
                         placeholder="Ex: Gol G5 Prata">
                 </div>
 
+                <!-- Aviso de Privacidade -->
+                <div class="bg-blue-50 text-blue-800 border border-blue-100 rounded-xl p-4 mb-2 flex gap-3 items-start">
+                    <i class="bi bi-shield-lock-fill text-xl text-blue-500 shrink-0 mt-0.5"></i>
+                    <p class="text-xs leading-relaxed">
+                        <b>🔒 Segurança Garantida:</b> Sua placa e a foto do carro ficam ocultas no feed público. Elas só aparecem para o passageiro após confirmada a reserva.
+                    </p>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label
@@ -155,6 +176,37 @@ $msg = $_GET['msg'] ?? '';
                         class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all"
                         placeholder="CPF, Email ou Telefone">
                 </div>
+
+                <!-- Foto do Carro -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Foto do
+                        Carro</label>
+                    <p class="text-[10px] text-gray-400 mb-3 ml-1">Ajuda passageiros a identificar seu veículo na rua.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <?php
+                        $carPhoto = $user['car_photo'] ?? '';
+                        $carPhotoSrc = $carPhoto ?: '';
+                        ?>
+                        <?php if ($carPhotoSrc): ?>
+                            <img id="car-photo-preview" src="<?= htmlspecialchars($carPhotoSrc) ?>"
+                                class="w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 shadow-sm">
+                        <?php else: ?>
+                            <div id="car-photo-preview"
+                                class="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-300 border-2 border-dashed border-gray-200">
+                                <i class="bi bi-car-front text-2xl"></i>
+                            </div>
+                        <?php endif; ?>
+                        <div>
+                            <input type="file" name="car_photo" id="car-photo-input" class="hidden" accept="image/*"
+                                onchange="previewCarPhoto(this)">
+                            <button type="button" onclick="document.getElementById('car-photo-input').click()"
+                                class="bg-gray-50 text-gray-600 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-gray-100 transition-colors flex items-center gap-2">
+                                <i class="bi bi-camera"></i> <?= $carPhotoSrc ? 'Trocar' : 'Adicionar' ?> Foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -169,7 +221,6 @@ $msg = $_GET['msg'] ?? '';
             Sair da Conta
         </a>
 
-        <!-- Espaço para não cobrir o float button com o de salvar -->
         <div class="h-10"></div>
 
     </form>
@@ -229,6 +280,20 @@ $msg = $_GET['msg'] ?? '';
             </div>
         </div>
     <?php endif; ?>
+
+    <!-- ======================== -->
+    <!-- ZONA DE PERIGO           -->
+    <!-- ======================== -->
+    <div class="mt-8 bg-red-50/50 p-6 rounded-[2rem] border border-red-100">
+        <h3 class="text-sm font-bold text-red-400 mb-2 flex items-center gap-2">
+            <i class="bi bi-exclamation-octagon-fill"></i> Zona de Perigo
+        </h3>
+        <p class="text-xs text-red-300 mb-4">Ações irreversíveis. Prossiga com cuidado.</p>
+        <button type="button" onclick="excluirConta()"
+            class="w-full py-3.5 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2">
+            <i class="bi bi-trash3"></i> Excluir minha conta permanentemente
+        </button>
+    </div>
 </div>
 
 <script>
@@ -237,11 +302,40 @@ $msg = $_GET['msg'] ?? '';
         const fields = document.getElementById('driver-fields');
         if (isChecked) {
             $(fields).slideDown();
-            // Adiciona required
             $('#input-model, #input-plate').prop('required', true);
         } else {
             $(fields).slideUp();
             $('#input-model, #input-plate').prop('required', false);
+        }
+    }
+
+    function enablePhoneEdit() {
+        const input = document.getElementById('input-phone');
+        input.removeAttribute('readonly');
+        input.classList.remove('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
+        input.classList.add('bg-white', 'text-gray-900', 'ring-2', 'ring-amber-300');
+        input.focus();
+        document.getElementById('btn-edit-phone').classList.add('hidden');
+        document.getElementById('phone-warning').classList.remove('hidden');
+    }
+
+    function previewCarPhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const preview = document.getElementById('car-photo-preview');
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    // Replace div placeholder with img
+                    const img = document.createElement('img');
+                    img.id = 'car-photo-preview';
+                    img.src = e.target.result;
+                    img.className = 'w-20 h-20 rounded-2xl object-cover border-2 border-gray-100 shadow-sm';
+                    preview.replaceWith(img);
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
         }
     }
 
@@ -250,7 +344,6 @@ $msg = $_GET['msg'] ?? '';
             const formData = new FormData();
             formData.append('photo', input.files[0]);
 
-            // Feedback visual imediato (loading)
             const preview = document.getElementById('avatar-preview');
             const originalSrc = preview.src;
             preview.style.opacity = '0.5';
@@ -263,7 +356,6 @@ $msg = $_GET['msg'] ?? '';
                 const result = await response.json();
 
                 if (result.success) {
-                    // Cache buster para forçar recarregamento da imagem
                     preview.src = result.photo_url + '?t=' + new Date().getTime();
                     Swal.fire({
                         text: 'Foto atualizada!',
@@ -286,14 +378,81 @@ $msg = $_GET['msg'] ?? '';
         }
     }
 
+    function excluirConta() {
+        Swal.fire({
+            title: 'Excluir conta?',
+            html: '<p class="text-gray-500 text-sm">Isso apagará <b>todo seu histórico</b>, reputação, avaliações e dados.<br><span class="text-red-500 font-bold">Não tem volta.</span></p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, quero excluir',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                confirmButton: 'bg-red-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-red-600 transition-all',
+                cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Segunda confirmação: digitar DELETAR
+                Swal.fire({
+                    title: 'Confirmação Final',
+                    html: '<p class="text-gray-500 text-sm mb-4">Para confirmar, digite <b class="text-red-500">DELETAR</b> no campo abaixo:</p>',
+                    input: 'text',
+                    inputPlaceholder: 'DELETAR',
+                    inputAttributes: { autocapitalize: 'characters', spellcheck: 'false' },
+                    showCancelButton: true,
+                    confirmButtonText: '🗑️ Excluir Permanentemente',
+                    cancelButtonText: 'Cancelar',
+                    customClass: {
+                        confirmButton: 'bg-red-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg',
+                        cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2',
+                        input: 'rounded-2xl font-bold text-center uppercase'
+                    },
+                    buttonsStyling: false,
+                    preConfirm: (value) => {
+                        if (value !== 'DELETAR') {
+                            Swal.showValidationMessage('Digite DELETAR corretamente');
+                            return false;
+                        }
+                        return value;
+                    }
+                }).then(async (result2) => {
+                    if (result2.isConfirmed) {
+                        try {
+                            const res = await fetch('api/delete_account.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ confirmation: 'DELETAR' })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Conta excluída',
+                                    text: 'Seus dados foram removidos. Até mais.',
+                                    icon: 'success',
+                                    showConfirmButton: false,
+                                    timer: 2500
+                                }).then(() => {
+                                    window.location.href = 'index.php';
+                                });
+                            } else {
+                                Swal.fire({ text: data.message, icon: 'error' });
+                            }
+                        } catch (e) {
+                            Swal.fire({ text: 'Erro de conexão.', icon: 'error' });
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     $(document).ready(function () {
-        // Inicializa estado do toggle
         toggleDriverFields();
 
         $('#profile-form').on('submit', function (e) {
             e.preventDefault();
 
-            // Validação extra para motorista
             if ($('#driver-toggle').is(':checked')) {
                 if ($('#input-model').val() === '' || $('#input-plate').val() === '') {
                     Swal.fire({ title: 'Atenção', text: 'Motoristas precisam preencher os dados do carro.', icon: 'warning' });
@@ -305,28 +464,47 @@ $msg = $_GET['msg'] ?? '';
             const originalText = btn.html();
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Salvando...');
 
+            // Usar FormData para suportar upload de arquivo
+            const formData = new FormData(this);
+
             $.ajax({
                 url: 'api/update_profile.php',
                 type: 'POST',
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,
+                contentType: false,
                 success: function (res) {
                     if (res.success) {
-                        Swal.fire({
-                            title: 'Perfil Salvo!',
-                            text: 'Suas informações foram atualizadas.',
-                            icon: 'success',
-                            confirmButtonText: 'Continuar',
-                            customClass: { confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold' },
-                            buttonsStyling: false
-                        }).then(() => {
-                            // Se veio do onboarding (msg) ou se agora tem nome/foto, manda pra home
-                            <?php if ($msg === 'complete_registration'): ?>
-                                window.location.href = 'index.php?page=home';
-                            <?php else: ?>
-                                // Verifica se está completo para redirecionar ou apenas recarregar
-                                window.location.href = 'index.php?page=home';
-                            <?php endif; ?>
-                        });
+                        if (res.phone_changed) {
+                            Swal.fire({
+                                title: 'Número Alterado! 📱',
+                                html: `<p class="text-gray-600 text-sm">Seu login agora é:<br><b class="text-lg text-primary">${res.new_phone}</b></p><p class="text-red-500 text-xs font-bold mt-3">Anote para não perder o acesso!</p>`,
+                                icon: 'warning',
+                                confirmButtonText: 'Entendi',
+                                customClass: {
+                                    confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold',
+                                    popup: 'rounded-[2.5rem]'
+                                },
+                                buttonsStyling: false
+                            }).then(() => {
+                                window.location.href = 'index.php?page=profile';
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Perfil Salvo!',
+                                text: 'Suas informações foram atualizadas.',
+                                icon: 'success',
+                                confirmButtonText: 'Continuar',
+                                customClass: { confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold' },
+                                buttonsStyling: false
+                            }).then(() => {
+                                <?php if ($msg === 'complete_registration'): ?>
+                                    window.location.href = 'index.php?page=home';
+                                <?php else: ?>
+                                    window.location.href = 'index.php?page=home';
+                                <?php endif; ?>
+                            });
+                        }
                     } else {
                         Swal.fire({ text: res.message, icon: 'error' });
                     }
