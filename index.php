@@ -51,6 +51,9 @@ if (!isset($_SESSION['user_id'])) {
         case 'notifications':
             include 'views/notifications.php';
             break;
+        case 'admin':
+            include 'views/admin.php';
+            break;
         default:
             include 'views/feed.php';
             break;

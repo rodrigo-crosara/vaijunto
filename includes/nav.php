@@ -52,6 +52,15 @@ $currentPage = $_GET['page'] ?? 'home';
             </a>
         <?php endif; ?>
 
+        <!-- Admin (Opcional) -->
+        <?php if (!empty($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
+            <a href="index.php?page=admin"
+                class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'admin') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+                <i class="bi bi-shield-lock<?= ($currentPage == 'admin') ? '-fill' : '' ?> text-2xl"></i>
+                <span class="text-[9px] font-bold uppercase tracking-wider">Admin</span>
+            </a>
+        <?php endif; ?>
+
         <!-- Perfil -->
         <a href="index.php?page=profile"
             class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'profile') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">

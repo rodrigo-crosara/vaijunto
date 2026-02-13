@@ -25,7 +25,7 @@ $cleanPhone = preg_replace('/\D/', '', $phone);
 
 try {
     // 1. Verificar se o usuário já existe
-    $stmt = $pdo->prepare("SELECT id, name, photo_url, is_driver FROM users WHERE phone = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, name, photo_url, is_driver, is_admin FROM users WHERE phone = ? LIMIT 1");
     $stmt->execute([$cleanPhone]);
     $user = $stmt->fetch();
 
@@ -35,10 +35,11 @@ try {
         $_SESSION['user_name'] = $user['name'] ?? '';
         $_SESSION['user_photo'] = $user['photo_url'] ?? '';
         $_SESSION['is_driver'] = (int) $user['is_driver'];
+        $_SESSION['is_admin'] = (int) $user['is_admin'];
         echo json_encode(['success' => true, 'type' => 'login']);
     } else {
         // Não encontrado: Criar Usuário (Cadastro Implícito)
-        $stmt = $pdo->prepare("INSERT INTO users (phone, is_driver, created_at) VALUES (?, 0, NOW())");
+        $stmt = $pdo->prepare("INSERT INTO users (phone, is_driver, is_admin, created_at) VALUES (?, 0, 0, NOW())");
         $stmt->execute([$cleanPhone]);
 
         $newUserId = $pdo->lastInsertId();
@@ -46,6 +47,7 @@ try {
         $_SESSION['user_name'] = '';
         $_SESSION['user_photo'] = '';
         $_SESSION['is_driver'] = 0;
+        $_SESSION['is_admin'] = 0;
 
         echo json_encode(['success' => true, 'type' => 'register']);
     }
