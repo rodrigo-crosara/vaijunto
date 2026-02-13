@@ -450,12 +450,42 @@ $msg = $_GET['msg'] ?? '';
     $(document).ready(function () {
         toggleDriverFields();
 
-        $('#profile-form').on('submit', function (e) {
+        // Armazenar telefone original ao carregar a página
+        const originalPhone = $('#input-phone').val();
+
+        $('#profile-form').on('submit', async function (e) {
             e.preventDefault();
+            const self = this;
 
             if ($('#driver-toggle').is(':checked')) {
                 if ($('#input-model').val() === '' || $('#input-plate').val() === '') {
                     Swal.fire({ title: 'Atenção', text: 'Motoristas precisam preencher os dados do carro.', icon: 'warning' });
+                    return;
+                }
+            }
+
+            // Trava de segurança: confirmar troca de telefone ANTES de enviar
+            const currentPhone = $('#input-phone').val();
+            if (currentPhone !== originalPhone) {
+                const confirm = await Swal.fire({
+                    title: 'Confirme seu novo número',
+                    html: `<p class="text-gray-600 text-sm">Seu login mudará para:<br><b class="text-xl text-primary mt-2 block">${currentPhone}</b></p><p class="text-red-500 text-xs font-bold mt-3"><i class="bi bi-exclamation-triangle-fill"></i> Se estiver errado, você perderá o acesso à conta!</p>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Está correto, mudar',
+                    cancelButtonText: 'Revisar',
+                    customClass: {
+                        popup: 'rounded-[2.5rem]',
+                        confirmButton: 'bg-primary text-white font-bold px-6 py-3 rounded-2xl shadow-lg',
+                        cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
+                    },
+                    buttonsStyling: false,
+                    allowOutsideClick: false
+                });
+
+                if (!confirm.isConfirmed) {
+                    // Foca no campo de telefone para revisão
+                    $('#input-phone').focus().select();
                     return;
                 }
             }
@@ -465,7 +495,7 @@ $msg = $_GET['msg'] ?? '';
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Salvando...');
 
             // Usar FormData para suportar upload de arquivo
-            const formData = new FormData(this);
+            const formData = new FormData(self);
 
             $.ajax({
                 url: 'api/update_profile.php',
