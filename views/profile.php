@@ -173,6 +173,62 @@ $msg = $_GET['msg'] ?? '';
         <div class="h-10"></div>
 
     </form>
+
+    <!-- ======================== -->
+    <!-- ÚLTIMAS AVALIAÇÕES       -->
+    <!-- ======================== -->
+    <?php
+    try {
+        $stmtRatings = $pdo->prepare("
+            SELECT rt.score, rt.comment, rt.created_at, u.name as reviewer_name, u.photo_url as reviewer_photo
+            FROM ratings rt
+            JOIN users u ON rt.reviewer_id = u.id
+            WHERE rt.rated_user_id = ?
+            ORDER BY rt.created_at DESC
+            LIMIT 5
+        ");
+        $stmtRatings->execute([$_SESSION['user_id']]);
+        $ratings = $stmtRatings->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $ratings = [];
+    }
+    ?>
+
+    <?php if (!empty($ratings)): ?>
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 mt-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
+                <i class="bi bi-star-half text-yellow-400"></i> Últimas Avaliações
+            </h3>
+
+            <div class="space-y-4">
+                <?php foreach ($ratings as $rt):
+                    $reviewerAvatar = $rt['reviewer_photo'] ?: "https://ui-avatars.com/api/?name=" . urlencode($rt['reviewer_name']) . "&background=random&size=64";
+                    $dateFormatted = date('d/m/Y', strtotime($rt['created_at']));
+                    ?>
+                    <div class="flex gap-3 items-start">
+                        <img src="<?= htmlspecialchars($reviewerAvatar) ?>" alt="R"
+                            class="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0 mt-0.5">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span
+                                    class="text-sm font-bold text-gray-800"><?= htmlspecialchars(explode(' ', $rt['reviewer_name'])[0]) ?></span>
+                                <span class="text-[10px] text-gray-300 font-bold"><?= $dateFormatted ?></span>
+                            </div>
+                            <div class="flex gap-0.5 mb-1.5">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i
+                                        class="bi bi-star-fill text-xs <?= $i <= $rt['score'] ? 'text-yellow-400' : 'text-gray-200' ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <?php if (!empty($rt['comment'])): ?>
+                                <p class="text-xs text-gray-500 leading-relaxed">"<?= htmlspecialchars($rt['comment']) ?>"</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <script>

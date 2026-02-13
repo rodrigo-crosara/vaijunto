@@ -4,6 +4,7 @@
  */
 session_start();
 require_once '../config/db.php';
+require_once '../helpers/notification.php';
 
 header('Content-Type: application/json');
 
@@ -68,13 +69,17 @@ try {
 
     $pdo->commit();
 
-    // 4. Retorno de Sucesso com Dados Revelados
+    // 4. Notificar o Motorista
+    $passengerName = $_SESSION['user_name'] ?? 'Alguém';
+    createNotification($pdo, $ride['driver_id'], 'booking', "🎉 Nova reserva de {$passengerName}!", 'index.php?page=my_rides');
+
+    // 5. Retorno de Sucesso com Dados Revelados
     echo json_encode([
         'success' => true,
         'message' => 'Vaga garantida!',
-        'driver_phone' => $ride['driver_phone'], // Revela telefone
-        'pix_key' => $ride['pix_key'] ?? '', // Revela chave pix
-        'car_plate' => $ride['car_plate'] ?? 'Placa não inf.', // Revela placa
+        'driver_phone' => $ride['driver_phone'],
+        'pix_key' => $ride['pix_key'] ?? '',
+        'car_plate' => $ride['car_plate'] ?? 'Placa não inf.',
         'car_model' => $ride['car_model'] ?? 'Carro'
     ]);
 

@@ -48,6 +48,9 @@ if (!isset($_SESSION['user_id'])) {
         case 'my_bookings':
             include 'views/my_bookings.php';
             break;
+        case 'notifications':
+            include 'views/notifications.php';
+            break;
         default:
             include 'views/feed.php';
             break;

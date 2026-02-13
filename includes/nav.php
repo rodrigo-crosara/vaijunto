@@ -11,18 +11,29 @@ $currentPage = $_GET['page'] ?? 'home';
 
         <!-- Home -->
         <a href="index.php?page=home"
-            class="flex flex-col items-center justify-center w-20 gap-1 transition-all <?= ($currentPage == 'home') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+            class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'home') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
             <i class="bi bi-house<?= ($currentPage == 'home') ? '-fill' : '' ?> text-2xl"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Início</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Início</span>
+        </a>
+
+        <!-- Notificações (Sino) -->
+        <a href="index.php?page=notifications" id="nav-bell-link"
+            class="flex flex-col items-center justify-center w-16 gap-1 transition-all relative <?= ($currentPage == 'notifications') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+            <div class="relative">
+                <i class="bi bi-bell<?= ($currentPage == 'notifications') ? '-fill' : '' ?> text-2xl"></i>
+                <span id="notif-badge"
+                    class="hidden absolute -top-1 -right-1.5 w-4.5 h-4.5 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center min-w-[18px] h-[18px] shadow-lg shadow-red-200 border-2 border-white"></span>
+            </div>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Alertas</span>
         </a>
 
         <!-- Ação Central (Dinâmica) -->
         <?php if (!empty($_SESSION['is_driver']) && $_SESSION['is_driver'] == 1): ?>
             <!-- Dashboard Motorista -->
             <a href="index.php?page=my_rides"
-                class="flex flex-col items-center justify-center w-20 gap-1 transition-all <?= ($currentPage == 'my_rides') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+                class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'my_rides') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
                 <i class="bi bi-calendar-check<?= ($currentPage == 'my_rides') ? '-fill' : '' ?> text-2xl"></i>
-                <span class="text-[10px] font-bold uppercase tracking-wider">Painel</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider">Painel</span>
             </a>
 
             <!-- Botão Flutuante Criar -->
@@ -35,17 +46,17 @@ $currentPage = $_GET['page'] ?? 'home';
         <?php else: ?>
             <!-- Minhas Reservas (Passageiro) -->
             <a href="index.php?page=my_bookings"
-                class="flex flex-col items-center justify-center w-20 gap-1 transition-all <?= ($currentPage == 'my_bookings') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+                class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'my_bookings') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
                 <i class="bi bi-ticket-perforated<?= ($currentPage == 'my_bookings') ? '-fill' : '' ?> text-2xl"></i>
-                <span class="text-[10px] font-bold uppercase tracking-wider">Reservas</span>
+                <span class="text-[9px] font-bold uppercase tracking-wider">Reservas</span>
             </a>
         <?php endif; ?>
 
         <!-- Perfil -->
         <a href="index.php?page=profile"
-            class="flex flex-col items-center justify-center w-20 gap-1 transition-all <?= ($currentPage == 'profile') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+            class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'profile') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
             <i class="bi bi-person-circle<?= ($currentPage == 'profile') ? '-fill' : '' ?> text-2xl"></i>
-            <span class="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Perfil</span>
         </a>
 
     </div>

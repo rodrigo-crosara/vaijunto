@@ -4,6 +4,7 @@
  */
 session_start();
 require_once '../config/db.php';
+require_once '../helpers/notification.php';
 
 header('Content-Type: application/json');
 
@@ -35,7 +36,12 @@ switch ($action) {
             $pdo->beginTransaction();
 
             // 1. Verificar se a reserva pertence ao usuário logado e está ativa
-            $stmt = $pdo->prepare("SELECT id, ride_id, status FROM bookings WHERE id = ? AND passenger_id = ?");
+            $stmt = $pdo->prepare("
+                SELECT b.id, b.ride_id, b.status, r.driver_id 
+                FROM bookings b 
+                JOIN rides r ON b.ride_id = r.id 
+                WHERE b.id = ? AND b.passenger_id = ?
+            ");
             $stmt->execute([$bookingId, $userId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -60,6 +66,10 @@ switch ($action) {
             $stmtSeats->execute([$booking['ride_id']]);
 
             $pdo->commit();
+
+            // Notificar o Motorista
+            $passengerName = $_SESSION['user_name'] ?? 'Um passageiro';
+            createNotification($pdo, $booking['driver_id'], 'cancel', "😕 {$passengerName} cancelou a reserva. Vaga liberada.", 'index.php?page=my_rides');
 
             echo json_encode(['success' => true, 'message' => 'Reserva cancelada. A vaga foi liberada.']);
 

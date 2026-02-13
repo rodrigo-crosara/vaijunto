@@ -4,6 +4,7 @@
  */
 session_start();
 require_once '../config/db.php';
+require_once '../helpers/notification.php';
 
 header('Content-Type: application/json');
 
@@ -34,6 +35,14 @@ try {
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {
+                // Notificar TODOS os passageiros desta carona
+                $driverName = $_SESSION['user_name'] ?? 'O motorista';
+                $stmtPass = $pdo->prepare("SELECT passenger_id FROM bookings WHERE ride_id = ? AND status = 'confirmed'");
+                $stmtPass->execute([$rideId]);
+                $passengers = $stmtPass->fetchAll(PDO::FETCH_COLUMN);
+                foreach ($passengers as $pid) {
+                    createNotification($pdo, $pid, 'cancel', "🚨 URGENTE: Viagem cancelada por {$driverName}.", 'index.php?page=my_bookings');
+                }
                 echo json_encode(['success' => true, 'message' => 'Carona cancelada com sucesso.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Carona não encontrada ou você não tem permissão.']);
@@ -92,6 +101,15 @@ try {
             $stmtInc = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
             $stmtInc->execute([$booking['ride_id']]);
 
+            // Notificar o passageiro removido
+            $stmtPid = $pdo->prepare("SELECT passenger_id FROM bookings WHERE id = ?");
+            $stmtPid->execute([$bookingId]);
+            $removedPassengerId = $stmtPid->fetchColumn();
+            $driverName = $_SESSION['user_name'] ?? 'O motorista';
+            if ($removedPassengerId) {
+                createNotification($pdo, $removedPassengerId, 'cancel', "😔 {$driverName} removeu você da carona.", 'index.php?page=my_bookings');
+            }
+
             $pdo->commit();
             echo json_encode(['success' => true, 'message' => 'Passageiro removido e vaga liberada.']);
             break;
@@ -111,9 +129,19 @@ try {
             ");
             $stmt->execute([$bookingId, $driverId]);
 
-            if ($stmt->fetch()) {
+            $bookingRow = $stmt->fetch();
+            if ($bookingRow) {
                 $stmtUpdate = $pdo->prepare("UPDATE bookings SET payment_status = 'paid' WHERE id = ?");
                 $stmtUpdate->execute([$bookingId]);
+
+                // Notificar o passageiro
+                $stmtPid = $pdo->prepare("SELECT passenger_id FROM bookings WHERE id = ?");
+                $stmtPid->execute([$bookingId]);
+                $passengerId = $stmtPid->fetchColumn();
+                if ($passengerId) {
+                    createNotification($pdo, $passengerId, 'payment', '💰 Pagamento confirmado pelo motorista! ✅', 'index.php?page=my_bookings');
+                }
+
                 echo json_encode(['success' => true, 'message' => 'Pagamento confirmado!']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
