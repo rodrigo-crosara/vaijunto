@@ -19,35 +19,36 @@
     <div class="w-full max-w-sm">
         <form id="login-form" class="space-y-4">
             <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">E-mail
-                    Corporativo</label>
-                <input type="email" name="email" required
-                    class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-medium"
-                    placeholder="voce@empresa.com">
-            </div>
-
-            <div class="relative">
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Sua
-                    Senha</label>
-                <input type="password" name="password" required
-                    class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-medium"
-                    placeholder="••••••••">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Seu
+                    WhatsApp</label>
+                <input type="tel" name="phone" id="phone" required
+                    class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-medium text-lg text-center tracking-widest"
+                    placeholder="(61) 99999-9999">
             </div>
 
             <button type="submit"
                 class="w-full py-5 bg-primary text-white font-extrabold rounded-3xl shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all text-lg mt-6">
-                Entrar no App
+                Entrar / Cadastrar
             </button>
         </form>
 
         <div class="mt-8 text-center text-sm text-gray-400">
-            Ainda não tem conta? <a href="#" class="text-primary font-bold hover:underline">Cadastre-se</a>
+            <i class="bi bi-shield-lock-fill mr-1"></i> Acesso seguro sem senha
         </div>
     </div>
 </div>
 
 <script>
     $(document).ready(function () {
+        // Formatar Telefone
+        $('#phone').on('input', function () {
+            let v = $(this).val().replace(/\D/g, '');
+            if (v.length > 11) v = v.substring(0, 11);
+            if (v.length > 2) v = '(' + v.substring(0, 2) + ') ' + v.substring(2);
+            if (v.length > 9) v = v.substring(0, 9) + '-' + v.substring(9);
+            $(this).val(v);
+        });
+
         $('#login-form').on('submit', function (e) {
             e.preventDefault();
             const btn = $(this).find('button');
