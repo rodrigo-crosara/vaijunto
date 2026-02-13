@@ -104,8 +104,8 @@ if (empty($_SESSION['is_admin'])) {
                 </div>
                 <h4 class="text-sm font-bold text-gray-900 mb-1">Expurgo de Histórico</h4>
                 <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Apaga caronas canceladas ou concluídas há mais
-                    de 6 meses.</p>
-                <button onclick="runMaintenance('purge_old', 'Deseja apagar registros com mais de 6 meses?')"
+                    de 3 meses.</p>
+                <button onclick="runMaintenance('purge_old', 'Deseja apagar registros com mais de 3 meses?')"
                     class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-red-600 hover:text-white transition-all">
                     Limpar Antigos
                 </button>

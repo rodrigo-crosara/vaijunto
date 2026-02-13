@@ -74,12 +74,11 @@ try {
         echo json_encode(['success' => true, 'message' => 'Mensagem enviada com sucesso para toda a base!']);
 
     } elseif ($action === 'purge_old') {
-        // Apagar caronas com mais de 6 meses
-        // A lógica de Cascade do MySQL deve limpar bookings, ratings e notificações vinculadas (pela FK)
-        $stmt = $pdo->query("DELETE FROM rides WHERE departure_time < DATE_SUB(NOW(), INTERVAL 6 MONTH)");
+        // Apagar caronas com mais de 3 meses
+        $stmt = $pdo->query("DELETE FROM rides WHERE departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
         $count = $stmt->rowCount();
 
-        echo json_encode(['success' => true, 'message' => "Expurgo concluído! {$count} caronas antigas (e suas dependências) foram removidas."]);
+        echo json_encode(['success' => true, 'message' => "Expurgo concluído! {$count} caronas antigas (e suas dependências) foram removidas das base (Histórico anterior a 3 meses removido com sucesso)."]);
 
     } else {
         throw new Exception("Ação de manutenção desconhecida.");
