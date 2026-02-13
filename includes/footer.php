@@ -212,6 +212,23 @@
         // Polling de notificações: imediato + a cada 15s
         pollNotifications();
         setInterval(pollNotifications, 15000);
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado!', reg.scope))
+                    .catch(err => console.log('SW falhou:', err));
+            });
+        }
+    });
+
+    // Capturar evento de instalação
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('PWA: Pronto para instalar');
     });
 </script>
 </body>
