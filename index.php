@@ -5,54 +5,45 @@
 session_start();
 require_once 'config/db.php';
 
-// Redirecionamento para Login se não autenticado
+// Redirecionamento para Login se não autenticado (mas não faz header location para evitar loop)
 $page = $_GET['page'] ?? 'home';
-if (!isset($_SESSION['user_id']) && $page !== 'login') {
-    header('Location: index.php?page=login');
-    exit;
-}
 
-// Se já está logado e tenta ir pro login, manda pra home
-if (isset($_SESSION['user_id']) && $page === 'login') {
-    header('Location: index.php?page=home');
-    exit;
-}
-
+// Header deve ser incluído sempre para carregar CSS e Fonts
 include 'includes/header.php';
 
-// Wrapper principal do app com padding para a barra inferior
-echo '<main id="app-content" class="min-h-screen pb-32 pt-6 px-4 max-w-lg mx-auto overflow-x-hidden">';
+// Se não autenticado e tentando acessar qualquer pag que não seja login -> login
+if (!isset($_SESSION['user_id'])) {
+    // Carrega a view de login diretamente
+    include 'views/login.php';
+} else {
+    // Autenticado: Carrega a App Shell
+    echo '<main id="app-content" class="min-h-screen pb-32 pt-6 px-4 max-w-lg mx-auto overflow-x-hidden">';
 
-switch ($page) {
-    case 'home':
-        include 'views/feed.php';
-        break;
-    case 'login':
-        include 'views/login.php';
-        break;
-    case 'profile':
-        include 'views/profile.php';
-        break;
-    case 'offer':
-        include 'views/offer.php';
-        break;
-    case 'my_rides':
-        include 'views/my_rides.php';
-        break;
-    case 'my_bookings':
-        include 'views/my_bookings.php';
-        break;
-    default:
-        include 'views/feed.php';
-        break;
-}
+    switch ($page) {
+        case 'home':
+            include 'views/feed.php';
+            break;
+        case 'profile':
+            include 'views/profile.php';
+            break;
+        case 'offer':
+            include 'views/offer.php';
+            break;
+        case 'my_rides':
+            include 'views/my_rides.php';
+            break;
+        case 'my_bookings':
+            include 'views/my_bookings.php';
+            break;
+        default:
+            include 'views/feed.php';
+            break;
+    }
 
-echo '</main>';
-
-// Só exibe a navegação se não estiver no login
-if ($page !== 'login') {
+    echo '</main>';
     include 'includes/nav.php';
 }
 
+// Footer carrega scripts essenciais (jQuery, SweetAlert, Mask)
 include 'includes/footer.php';
 ?>

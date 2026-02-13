@@ -41,13 +41,7 @@
 <script>
     $(document).ready(function () {
         // Formatar Telefone
-        $('#phone').on('input', function () {
-            let v = $(this).val().replace(/\D/g, '');
-            if (v.length > 11) v = v.substring(0, 11);
-            if (v.length > 2) v = '(' + v.substring(0, 2) + ') ' + v.substring(2);
-            if (v.length > 9) v = v.substring(0, 9) + '-' + v.substring(9);
-            $(this).val(v);
-        });
+        $('#phone').mask('(00) 00000-0000');
 
         $('#login-form').on('submit', function (e) {
             e.preventDefault();
