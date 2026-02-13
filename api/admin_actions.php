@@ -42,12 +42,61 @@ try {
         $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ?");
         $stmt->execute([$rideId]);
 
-        // Notificar passageiros (usando a lógica de notificações se existir, senão apenas cancela)
-        // No esquema atual, cancelamos as reservas também
+        // Notificar passageiros
         $stmtBookings = $pdo->prepare("UPDATE bookings SET status = 'canceled' WHERE ride_id = ?");
         $stmtBookings->execute([$rideId]);
 
         echo json_encode(['success' => true, 'message' => 'Carona cancelada com sucesso']);
+
+    } elseif ($action === 'delete_user_permanent') {
+        $userId = $input['user_id'] ?? 0;
+        if (!$userId)
+            throw new Exception("ID de usuário inválido");
+
+        // Segurança: Não permitir deletar a si mesmo (o próprio admin logado)
+        if ($userId == $_SESSION['user_id']) {
+            throw new Exception("Você não pode excluir sua própria conta pelo painel administrativo.");
+        }
+
+        // 1. Buscar fotos para apagar arquivos físicos
+        $stmtPhotos = $pdo->prepare("
+            SELECT u.photo_url as user_photo, c.photo_url as car_photo 
+            FROM users u 
+            LEFT JOIN cars c ON c.user_id = u.id 
+            WHERE u.id = ?
+        ");
+        $stmtPhotos->execute([$userId]);
+        $photos = $stmtPhotos->fetch();
+
+        if ($photos) {
+            if ($photos['user_photo'] && file_exists(__DIR__ . '/../' . $photos['user_photo'])) {
+                @unlink(__DIR__ . '/../' . $photos['user_photo']);
+            }
+            if ($photos['car_photo'] && file_exists(__DIR__ . '/../' . $photos['car_photo'])) {
+                @unlink(__DIR__ . '/../' . $photos['car_photo']);
+            }
+        }
+
+        // 2. Excluir do banco (CASCADE deve estar habilitado)
+        $stmtDelete = $pdo->prepare("DELETE FROM users WHERE id = ?");
+        $stmtDelete->execute([$userId]);
+
+        echo json_encode(['success' => true, 'message' => 'Usuário e todos os seus dados foram apagados permanentemente.']);
+
+    } elseif ($action === 'notify_user') {
+        $userId = $input['user_id'] ?? 0;
+        $message = trim($input['message'] ?? '');
+        $type = $input['type'] ?? 'system';
+
+        if (!$userId || empty($message))
+            throw new Exception("Dados insuficientes para notificação.");
+
+        require_once '../helpers/notification.php';
+        if (createNotification($pdo, $userId, $type, $message, 'index.php?page=notifications')) {
+            echo json_encode(['success' => true, 'message' => 'Notificação enviada com sucesso!']);
+        } else {
+            throw new Exception("Falha ao criar notificação no banco.");
+        }
 
     } else {
         throw new Exception("Ação desconhecida");

@@ -75,8 +75,9 @@ if (empty($_SESSION['is_admin'])) {
                     <i class="bi bi-eraser-fill text-xl"></i>
                 </div>
                 <h4 class="text-sm font-bold text-gray-900 mb-1">Limpeza de Órfãos</h4>
-                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Remove fotos que não estão vinculadas a nenhum usuário ou carro.</p>
-                <button onclick="runMaintenance('cleanup_files', 'Deseja iniciar a faxina de arquivos?')" 
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Remove fotos que não estão vinculadas a nenhum
+                    usuário ou carro.</p>
+                <button onclick="runMaintenance('cleanup_files', 'Deseja iniciar a faxina de arquivos?')"
                     class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-blue-600 hover:text-white transition-all">
                     Executar Faxina
                 </button>
@@ -88,8 +89,9 @@ if (empty($_SESSION['is_admin'])) {
                     <i class="bi bi-megaphone-fill text-xl"></i>
                 </div>
                 <h4 class="text-sm font-bold text-gray-900 mb-1">Alerta Geral</h4>
-                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Envia uma notificação para todos os usuários do sistema.</p>
-                <button onclick="sendBroadcast()" 
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Envia uma notificação para todos os usuários
+                    do sistema.</p>
+                <button onclick="sendBroadcast()"
                     class="w-full bg-orange-50 text-orange-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-orange-600 hover:text-white transition-all">
                     Escrever Mensagem
                 </button>
@@ -101,8 +103,9 @@ if (empty($_SESSION['is_admin'])) {
                     <i class="bi bi-trash-fill text-xl"></i>
                 </div>
                 <h4 class="text-sm font-bold text-gray-900 mb-1">Expurgo de Histórico</h4>
-                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Apaga caronas canceladas ou concluídas há mais de 6 meses.</p>
-                <button onclick="runMaintenance('purge_old', 'Deseja apagar registros com mais de 6 meses?')" 
+                <p class="text-[10px] text-gray-400 mb-4 leading-relaxed">Apaga caronas canceladas ou concluídas há mais
+                    de 6 meses.</p>
+                <button onclick="runMaintenance('purge_old', 'Deseja apagar registros com mais de 6 meses?')"
                     class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-bold text-[10px] uppercase hover:bg-red-600 hover:text-white transition-all">
                     Limpar Antigos
                 </button>
@@ -126,16 +129,37 @@ if (empty($_SESSION['is_admin'])) {
 
                 // Usuários
                 const userList = document.getElementById('list-users');
+                const formatPhone = (p) => {
+                    const clean = p.replace(/\D/g, '');
+                    if (clean.length === 11) {
+                        return `(${clean.substring(0, 2)}) ${clean.substring(2, 7)}-${clean.substring(7)}`;
+                    }
+                    return p;
+                };
+
                 userList.innerHTML = data.recent_users.map(u => `
                     <div class="flex items-center justify-between group">
                         <div class="flex items-center gap-3">
                             <img src="${u.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || u.phone)}" class="w-10 h-10 rounded-full object-cover">
                             <div class="flex flex-col">
                                 <span class="text-xs font-bold text-gray-800">${u.name || 'Sem Nome'}</span>
-                                <span class="text-[10px] text-gray-400">${u.phone}</span>
+                                <span class="text-[10px] text-gray-400">${formatPhone(u.phone)}</span>
                             </div>
                         </div>
-                        <button onclick="banUser(${u.id})" class="opacity-0 group-hover:opacity-100 transition-all text-[10px] font-bold text-red-400 hover:text-red-600 uppercase">Banir</button>
+                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <a href="https://wa.me/55${u.phone.replace(/\D/g, '')}" target="_blank" 
+                               class="w-8 h-8 rounded-lg bg-green-50 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all" title="Checar Zap">
+                                <i class="bi bi-whatsapp"></i>
+                            </a>
+                            <button onclick="notificarUsuario(${u.id}, '${u.name || u.phone}')" 
+                                class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-500 flex items-center justify-center hover:bg-yellow-500 hover:text-white transition-all" title="Enviar Aviso">
+                                <i class="bi bi-bell-fill"></i>
+                            </button>
+                            <button onclick="banUser(${u.id})" class="text-[9px] font-bold text-orange-400 hover:text-orange-600 uppercase">Banir</button>
+                            <button onclick="deleteUserPermanent(${u.id})" class="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all" title="Excluir Permanentemente">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
 
@@ -209,6 +233,46 @@ if (empty($_SESSION['is_admin'])) {
 
     function deleteRide(rideId) {
         adminAction('api/admin_actions.php', { action: 'delete_ride', ride_id: rideId });
+    }
+
+    function deleteUserPermanent(userId) {
+        adminAction('api/admin_actions.php', {
+            action: 'delete_user_permanent',
+            user_id: userId
+        }, "Isso apagará TODOS os dados (caronas, reservas, fotos). É irreversível!");
+    }
+
+    async function notificarUsuario(userId, userName) {
+        const { value: text } = await Swal.fire({
+            title: `Avisar ${userName.split(' ')[0]} 🔔`,
+            input: 'textarea',
+            inputValue: 'Olá! Identificamos uma pendência no seu cadastro. Por favor, verifique seus dados para evitar o bloqueio da conta.',
+            inputLabel: 'Mensagem Personalizada',
+            html: `
+                <div class="flex flex-wrap gap-2 mb-4 justify-center">
+                    <button onclick="document.querySelector('.swal2-textarea').value = 'Seu WhatsApp parece inválido. Atualize em 3 dias para evitar o bloqueio.'" class="bg-gray-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-200 uppercase transition-all">WhatsApp Inválido</button>
+                    <button onclick="document.querySelector('.swal2-textarea').value = 'Sua foto de perfil não segue as regras de clareza da comunidade. Por favor, troque por uma foto real.'" class="bg-gray-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-200 uppercase transition-all">Foto Irregular</button>
+                    <button onclick="document.querySelector('.swal2-textarea').value = 'Complete seu cadastro com Nome e Foto para poder reservar caronas no sistema.'" class="bg-gray-100 px-3 py-1.5 rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-200 uppercase transition-all">Cadastro Incompleto</button>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Enviar Aviso',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'rounded-[2.5rem]',
+                confirmButton: 'bg-yellow-500 text-white font-bold px-8 py-3 rounded-2xl shadow-lg',
+                cancelButton: 'bg-gray-100 text-gray-400 font-bold px-6 py-3 rounded-2xl ml-2'
+            },
+            buttonsStyling: false
+        });
+
+        if (text) {
+            adminAction('api/admin_actions.php', {
+                action: 'notify_user',
+                user_id: userId,
+                message: text
+            }, "Deseja enviar este aviso agora?");
+        }
     }
 
     function runMaintenance(action, confirmText) {
