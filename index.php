@@ -16,6 +16,19 @@ if (!isset($_SESSION['user_id'])) {
     // Carrega a view de login diretamente
     include 'views/login.php';
 } else {
+    // Middleware de Onboarding (Força cadastro completo)
+    // Permite acessar profile, logout e script de update
+    if (
+        (empty($_SESSION['user_name']) || empty($_SESSION['user_photo'])) &&
+        $page !== 'profile' &&
+        $page !== 'logout'
+    ) {
+
+        // JavaScript redirect para evitar loop de header
+        echo "<script>window.location.href = 'index.php?page=profile&msg=complete_registration';</script>";
+        exit;
+    }
+
     // Autenticado: Carrega a App Shell
     echo '<main id="app-content" class="min-h-screen pb-32 pt-6 px-4 max-w-lg mx-auto overflow-x-hidden">';
 

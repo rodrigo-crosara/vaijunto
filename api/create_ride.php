@@ -72,7 +72,8 @@ try {
         $tagsJson // Salva JSON com { "details": "..." } ou NULL
     ]);
 
-    echo json_encode(['success' => true, 'message' => 'Carona criada com waypoints!']);
+    $rideId = $pdo->lastInsertId();
+    echo json_encode(['success' => true, 'message' => 'Carona criada com waypoints!', 'ride_id' => $rideId]);
 
 } catch (PDOException $e) {
     // Log do erro real no servidor se necessário

@@ -14,9 +14,16 @@ try {
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
             WHERE r.departure_time >= NOW() AND r.seats_available > 0 AND r.status != 'canceled'
-            ORDER BY r.departure_time ASC
+            ORDER BY 
+                CASE WHEN r.id = :ride_id_param THEN 0 ELSE 1 END,
+                r.departure_time ASC
             LIMIT $limit";
     $stmt = $pdo->prepare($sql);
+
+    // Bind Params
+    $rideIdParam = $_GET['ride_id'] ?? 0;
+    $stmt->bindValue(':ride_id_param', $rideIdParam, PDO::PARAM_INT);
+
     $stmt->execute();
     $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -120,21 +127,53 @@ try {
                         </div>
                     </div>
 
-                    <!-- Rota -->
-                    <div class="relative pl-6 mb-6 space-y-4">
-                        <div class="absolute left-1 top-2 bottom-2 w-0.5 border-l-2 border-dashed border-gray-200"></div>
-                        <div class="flex items-center gap-4 relative">
-                            <div class="absolute -left-6 w-3 h-3 rounded-full border-2 border-primary bg-white"></div>
-                            <span
-                                class="text-gray-500 font-medium text-sm truncate"><?= htmlspecialchars($ride['origin_text']) ?></span>
-                        </div>
-                        <div class="flex items-center gap-4 relative">
-                            <div class="absolute -left-6 w-3 h-3 rounded-full bg-primary border-4 border-primary text-white">
+                    <!-- Rota Detalhada -->
+                    <div class="relative pl-6 mb-6">
+                        <div class="absolute left-2.5 top-3 bottom-8 w-0.5 border-l-2 border-dashed border-gray-200"></div>
+
+                        <!-- Origem -->
+                        <div class="flex items-start gap-3 relative mb-4">
+                            <i class="bi bi-circle text-primary text-xs bg-white relative z-10 mt-1"></i>
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Saída</span>
+                                <span
+                                    class="text-gray-900 font-bold text-sm leading-tight"><?= htmlspecialchars($ride['origin_text']) ?></span>
                             </div>
-                            <span
-                                class="text-gray-900 font-extrabold text-sm truncate"><?= htmlspecialchars($ride['destination_text']) ?></span>
+                        </div>
+
+                        <!-- Waypoints -->
+                        <?php
+                        $waypoints = json_decode($ride['waypoints'] ?? '[]', true);
+                        if (!empty($waypoints)):
+                            foreach ($waypoints as $point):
+                                ?>
+                                <div class="flex items-start gap-4 relative mb-4">
+                                    <i class="bi bi-dot text-gray-300 text-xl -ml-1.5 -mt-1 bg-white relative z-10"></i>
+                                    <span class="text-gray-500 font-medium text-xs"><?= htmlspecialchars($point) ?></span>
+                                </div>
+                                <?php
+                            endforeach;
+                        endif;
+                        ?>
+
+                        <!-- Destino -->
+                        <div class="flex items-start gap-3 relative">
+                            <i class="bi bi-geo-alt-fill text-primary text-xs bg-white relative z-10 mt-1"></i>
+                            <div>
+                                <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Chegada</span>
+                                <span
+                                    class="text-gray-900 font-extrabold text-sm leading-tight"><?= htmlspecialchars($ride['destination_text']) ?></span>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Observações (Regras) -->
+                    <?php if (!empty($ride['details'])): ?>
+                        <div class="bg-yellow-50 text-yellow-800 rounded-xl p-4 mb-5 flex gap-3 items-start text-xs font-medium">
+                            <i class="bi bi-info-circle-fill text-yellow-500 text-sm shrink-0 mt-0.5"></i>
+                            <span><?= nl2br(htmlspecialchars($ride['details'])) ?></span>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- Footer -->
                     <div class="flex items-center justify-between pt-5 border-t border-gray-50">
@@ -152,8 +191,17 @@ try {
 
                         <div class="flex gap-2">
                             <?php if ($isDriver): ?>
-                                <span class="text-[10px] font-bold text-primary-active bg-primary/5 px-4 py-2 rounded-2xl">Sua
-                                    Carona</span>
+                                <button onclick='shareRide(<?= json_encode([
+                                    "id" => $ride['id'],
+                                    "origin" => $ride['origin_text'],
+                                    "destination" => $ride['destination_text'],
+                                    "departure_time" => $ride['departure_time'],
+                                    "price" => $ride['price'],
+                                    "waypoints" => $ride['waypoints']
+                                ]) ?>)'
+                                    class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 transition-all">
+                                    <i class="bi bi-whatsapp text-lg"></i> Divulgar
+                                </button>
                             <?php elseif ($isBooked): ?>
                                 <a href="https://wa.me/<?= preg_replace('/\D/', '', $ride['driver_phone']) ?>" target="_blank"
                                     class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2">
@@ -161,7 +209,7 @@ try {
                                 </a>
                             <?php else: ?>
                                 <button
-                                    onclick="reservarCarona(<?= $ride['id'] ?>, '<?= $ride['price'] ?>', '<?= addslashes($ride['origin_text']) ?>', '<?= addslashes($ride['destination_text']) ?>')"
+                                    onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", `<?= addslashes($ride['waypoints'] ?? "[]") ?>`)'
                                     class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black transition-all">
                                     Reservar
                                 </button>
@@ -260,29 +308,94 @@ try {
         } catch (e) { }
     }
 
-    async function reservarCarona(id, price, origin, dest) {
-        const result = await Swal.fire({
-            title: 'Reservar Carona?',
-            html: `De <b>${origin}</b> para <b>${dest}</b>`,
-            icon: 'question',
+    async function reservarCarona(id, price, origin, dest, waypointsJson) {
+        // 1. Preparar Opções de Ponto de Encontro
+        let options = {};
+        options[origin] = origin + ' (Saída)';
+
+        try {
+            const points = JSON.parse(waypointsJson);
+            if (Array.isArray(points)) {
+                points.forEach(p => options[p] = p);
+            }
+        } catch (e) { }
+
+        // 2. Modal de Escolha
+        const { value: meetingPoint } = await Swal.fire({
+            title: 'Onde você vai embarcar?',
+            text: 'Selecione o melhor ponto de encontro para você.',
+            input: 'select',
+            inputOptions: options,
+            inputPlaceholder: 'Selecione um local...',
             showCancelButton: true,
-            confirmButtonText: 'Confirmar',
-            customClass: { confirmButton: 'bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold', cancelButton: 'bg-gray-100 text-gray-500 px-8 py-3 rounded-2xl font-bold ml-2' },
-            buttonsStyling: false
+            confirmButtonText: 'Confirmar Reserva',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold',
+                cancelButton: 'bg-gray-100 text-gray-400 px-6 py-3 rounded-2xl font-bold ml-2',
+                input: 'rounded-xl border-gray-200 focus:ring-primary/20 focus:border-primary py-3'
+            },
+            buttonsStyling: false,
+            inputValidator: (value) => {
+                return new Promise((resolve) => {
+                    if (value) {
+                        resolve();
+                    } else {
+                        resolve('Você precisa escolher um local de embarque!');
+                    }
+                });
+            }
         });
 
-        if (result.isConfirmed) {
+        if (meetingPoint) {
+            // Loading
+            Swal.fire({ title: 'Reservando...', didOpen: () => Swal.showLoading() });
+
             $.ajax({
                 url: 'api/book_ride.php',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ ride_id: id }),
+                data: JSON.stringify({ rideId: id, meetingPoint: meetingPoint }),
                 success: function (res) {
                     if (res.success) {
-                        Swal.fire({ title: 'Sucesso!', text: res.message, icon: 'success' }).then(() => location.reload());
+                        // 3. Sucesso & WhatsApp (Grand Finale)
+                        const phone = res.driver_phone.replace(/\D/g, '');
+                        const msg = `Olá! Reservei sua carona no VaiJunto. Te espero em: *${meetingPoint}*. Pode ser?`;
+                        const link = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+
+                        Swal.fire({
+                            title: 'Vaga Garantida! ✅',
+                            html: `
+                                <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
+                                    <p class="text-sm text-gray-500 mb-1">Você vai de:</p>
+                                    <p class="font-bold text-gray-900 text-lg">${res.car_model} - ${res.car_plate}</p>
+                                    <hr class="my-3 border-gray-200">
+                                    <p class="text-sm text-gray-500 mb-1">Motorista notificado para te pegar em:</p>
+                                    <p class="font-bold text-primary">${meetingPoint}</p>
+                                </div>
+                                <p class="text-sm text-gray-400">Combine os detalhes finais no WhatsApp.</p>
+                            `,
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="bi bi-whatsapp"></i> Confirmar no Zap',
+                            cancelButtonText: 'Fechar',
+                            customClass: {
+                                confirmButton: 'bg-green-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-green-200 hover:scale-105 transition-all',
+                                cancelButton: 'text-gray-400 font-bold hover:text-gray-600'
+                            },
+                            buttonsStyling: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.open(link, '_blank');
+                            }
+                            location.reload();
+                        });
                     } else {
                         Swal.fire({ text: res.message, icon: 'error' });
                     }
+                },
+                error: function () {
+                    Swal.fire({ text: 'Erro de conexão.', icon: 'error' });
                 }
             });
         }

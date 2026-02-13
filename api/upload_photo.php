@@ -53,6 +53,9 @@ if (move_uploaded_file($file['tmp_name'], $targetPath)) {
         $stmt = $pdo->prepare("UPDATE users SET photo_url = ? WHERE id = ?");
         $stmt->execute([$publicPath, $userId]);
 
+        // Atualizar Sessão Imediatamente
+        $_SESSION['user_photo'] = $publicPath;
+
         echo json_encode([
             'success' => true,
             'message' => 'Foto atualizada com sucesso!',

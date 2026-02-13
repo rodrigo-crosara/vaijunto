@@ -13,10 +13,17 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
-$input = json_decode(file_get_contents('php://input'), true);
 
-if (!$input) {
-    echo json_encode(['success' => false, 'message' => 'Dados inválidos.']);
+// Recebe dados via POST (padrão form-urlencoded ou multipart)
+if (empty($_POST)) {
+    // Tenta fallback para JSON raw se POST vazio (para compatibilidade futura)
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+} else {
+    $input = $_POST;
+}
+
+if (empty($input)) {
+    echo json_encode(['success' => false, 'message' => 'Nenhum dado enviado.']);
     exit;
 }
 
@@ -40,6 +47,7 @@ try {
     $stmtUser->execute([$name, $bio, $pixKey, $isDriver, $userId]);
 
     $_SESSION['is_driver'] = $isDriver;
+    $_SESSION['user_name'] = $name;
 
     // 2. Atualizar Carro (Se for motorista)
     if ($isDriver) {
@@ -47,23 +55,22 @@ try {
         $color = trim($input['car_color'] ?? '');
         $plate = trim($input['car_plate'] ?? '');
 
-        // Verificar se usuário já tem carro
-        $stmtCheck = $pdo->prepare("SELECT id FROM cars WHERE user_id = ?");
-        $stmtCheck->execute([$userId]);
-        $existingCar = $stmtCheck->fetchColumn();
+        if (!empty($model) && !empty($plate)) {
+            // Verificar se usuário já tem carro
+            $stmtCheck = $pdo->prepare("SELECT id FROM cars WHERE user_id = ?");
+            $stmtCheck->execute([$userId]);
+            $existingCar = $stmtCheck->fetchColumn();
 
-        if ($existingCar) {
-            // Update
-            $stmtUpdateCar = $pdo->prepare("UPDATE cars SET model = ?, color = ?, plate = ? WHERE user_id = ?");
-            $stmtUpdateCar->execute([$model, $color, $plate, $userId]);
-        } else {
-            // Insert
-            $stmtInsertCar = $pdo->prepare("INSERT INTO cars (user_id, model, color, plate) VALUES (?, ?, ?, ?)");
-            $stmtInsertCar->execute([$userId, $model, $color, $plate]);
+            if ($existingCar) {
+                // Update
+                $stmtUpdateCar = $pdo->prepare("UPDATE cars SET model = ?, color = ?, plate = ? WHERE user_id = ?");
+                $stmtUpdateCar->execute([$model, $color, $plate, $userId]);
+            } else {
+                // Insert
+                $stmtInsertCar = $pdo->prepare("INSERT INTO cars (user_id, model, color, plate) VALUES (?, ?, ?, ?)");
+                $stmtInsertCar->execute([$userId, $model, $color, $plate]);
+            }
         }
-    } else {
-        // Se desmarcou (opcional: poderia deletar o carro, mas por segurança vamos apenas manter ou ignorar)
-        // Por enquanto, não faz nada. 
     }
 
     $pdo->commit();

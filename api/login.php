@@ -25,13 +25,15 @@ $cleanPhone = preg_replace('/\D/', '', $phone);
 
 try {
     // 1. Verificar se o usuário já existe
-    $stmt = $pdo->prepare("SELECT id, is_driver FROM users WHERE phone = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, name, photo_url, is_driver FROM users WHERE phone = ? LIMIT 1");
     $stmt->execute([$cleanPhone]);
     $user = $stmt->fetch();
 
     if ($user) {
         // Encontrado: Login
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_name'] = $user['name'] ?? '';
+        $_SESSION['user_photo'] = $user['photo_url'] ?? '';
         $_SESSION['is_driver'] = (int) $user['is_driver'];
         echo json_encode(['success' => true, 'type' => 'login']);
     } else {
@@ -41,6 +43,8 @@ try {
 
         $newUserId = $pdo->lastInsertId();
         $_SESSION['user_id'] = $newUserId;
+        $_SESSION['user_name'] = '';
+        $_SESSION['user_photo'] = '';
         $_SESSION['is_driver'] = 0;
 
         echo json_encode(['success' => true, 'type' => 'register']);
