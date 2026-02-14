@@ -74,11 +74,22 @@ try {
         echo json_encode(['success' => true, 'message' => 'Mensagem enviada com sucesso para toda a base!']);
 
     } elseif ($action === 'purge_old') {
-        // Apagar caronas com mais de 3 meses
-        $stmt = $pdo->query("DELETE FROM rides WHERE departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
-        $count = $stmt->rowCount();
+        // 1. Apagar caronas com mais de 3 meses
+        $stmtRides = $pdo->query("DELETE FROM rides WHERE departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
+        $countRides = $stmtRides->rowCount();
 
-        echo json_encode(['success' => true, 'message' => "Expurgo concluído! {$count} caronas antigas (e suas dependências) foram removidas das base (Histórico anterior a 3 meses removido com sucesso)."]);
+        // 2. Apagar notificações velhas (mais de 3 meses)
+        $stmtNotifOld = $pdo->query("DELETE FROM notifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
+
+        // 3. Apagar notificações LIDAS com mais de 1 mês (limpeza agressiva)
+        $stmtNotifRead = $pdo->query("DELETE FROM notifications WHERE is_read = 1 AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)");
+
+        $totalNotifDeleted = $stmtNotifOld->rowCount() + $stmtNotifRead->rowCount();
+
+        echo json_encode([
+            'success' => true,
+            'message' => "Expurgo concluído! {$countRides} caronas e {$totalNotifDeleted} notificações antigas foram removidas (Histórico de 3 meses mantido)."
+        ]);
 
     } else {
         throw new Exception("Ação de manutenção desconhecida.");
