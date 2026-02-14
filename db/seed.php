@@ -149,9 +149,15 @@ try {
                 $comments = ['Excelente motorista!', 'Viagem tranquila.', 'Muito pontual.', 'Gostei bastante.', 'Recomendo!'];
 
                 // Passageiro avalia motorista
-                $pdo->prepare("INSERT INTO ratings (booking_id, rater_id, rated_id, score, comment, created_at) VALUES ((SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? LIMIT 1), ?, ?, ?, ?, NOW())")
-                    ->execute([$rid, $p['passenger_id'], $p['passenger_id'], $p['driver_id'], $score, $comments[array_rand($comments)]]);
-                $avaliacoes++;
+                $stmtGetBooking = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? LIMIT 1");
+                $stmtGetBooking->execute([$rid, $p['passenger_id']]);
+                $bookingId = $stmtGetBooking->fetchColumn();
+
+                if ($bookingId) {
+                    $pdo->prepare("INSERT INTO ratings (booking_id, reviewer_id, rated_user_id, ride_id, score, comment, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())")
+                        ->execute([$bookingId, $p['passenger_id'], $p['driver_id'], $rid, $score, $comments[array_rand($comments)]]);
+                    $avaliacoes++;
+                }
             }
         }
     }
