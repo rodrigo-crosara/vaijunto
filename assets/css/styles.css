@@ -15205,3 +15205,14 @@ button[data-vc-week-day] {
     }
   }
 }
+
+ / *   O f f l i n e   S t a t e   S u p p o r t   * / 
+ b o d y . i s - o f f l i n e   . b g - p r i m a r y ,   
+ b o d y . i s - o f f l i n e   b u t t o n [ t y p e = ' s u b m i t ' ] , 
+ b o d y . i s - o f f l i n e   . b t n - a c t i o n   { 
+         o p a c i t y :   0 . 5   ! i m p o r t a n t ; 
+         p o i n t e r - e v e n t s :   n o n e   ! i m p o r t a n t ; 
+         f i l t e r :   g r a y s c a l e ( 1 )   ! i m p o r t a n t ; 
+ } 
+  
+ 

@@ -221,6 +221,45 @@
                     .catch(err => console.log('SW falhou:', err));
             });
         }
+
+        // --- MONITORAMENTO DE REDE (OFFLINE/ONLINE) ---
+        let offlineToastId = null;
+
+        window.addEventListener('offline', () => {
+            document.body.classList.add('is-offline');
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'warning',
+                title: 'Sem conexão. O app está offline.',
+                showConfirmButton: false,
+                timer: 0,
+                didOpen: (toast) => {
+                    offlineToastId = toast;
+                }
+            });
+        });
+
+        window.addEventListener('online', () => {
+            document.body.classList.remove('is-offline');
+            if (Swal.isVisible() && Swal.getIcon()?.classList.contains('swal2-warning')) {
+                Swal.close();
+            }
+
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'success',
+                title: 'Conexão restabelecida!',
+                showConfirmButton: false,
+                timer: 3000
+            });
+
+            // Recarregar se estiver em páginas dinâmicas para atualizar dados
+            if (window.location.search.includes('page=home') || window.location.search.includes('page=notifications')) {
+                setTimeout(() => location.reload(), 1500);
+            }
+        });
     });
 
     // Capturar evento de instalação
