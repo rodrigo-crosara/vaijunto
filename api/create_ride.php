@@ -13,6 +13,20 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$userId = $_SESSION['user_id'];
+$ip = $_SERVER['REMOTE_ADDR'];
+
+// 1.1 Rate Limiting (User based) - Máximo 3 caronas por hora
+try {
+    $stmtLimit = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE user_id = ? AND action_type = 'create_ride' AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+    $stmtLimit->execute([$userId]);
+    if ($stmtLimit->fetchColumn() >= 3) {
+        echo json_encode(['success' => false, 'message' => 'Calma! Você já criou muitas caronas recentemente. Aguarde um pouco.']);
+        exit;
+    }
+} catch (PDOException $e) { /* Silencioso */
+}
+
 // 2. Receber Dados (JSON)
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -89,6 +103,13 @@ try {
     ]);
 
     $rideId = $pdo->lastInsertId();
+
+    // Registrar ação no log de segurança para rate limiting
+    try {
+        $pdo->prepare("INSERT INTO access_logs (ip_address, action_type, user_id) VALUES (?, 'create_ride', ?)")->execute([$ip, $userId]);
+    } catch (PDOException $e) { /* Silencioso */
+    }
+
     echo json_encode(['success' => true, 'message' => 'Carona criada com waypoints!', 'ride_id' => $rideId]);
 
 } catch (PDOException $e) {

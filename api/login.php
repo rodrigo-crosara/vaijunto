@@ -14,10 +14,33 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $phone = $_POST['phone'] ?? '';
+$honeypot = $_POST['website_check'] ?? '';
+
+// 1. Honeypot check
+if (!empty($honeypot)) {
+    // Silent kill for bots
+    exit;
+}
 
 if (empty($phone)) {
     echo json_encode(['success' => false, 'message' => 'O telefone é obrigatório']);
     exit;
+}
+
+// 2. Rate Limiting (IP based)
+$ip = $_SERVER['REMOTE_ADDR'];
+try {
+    $stmtLimit = $pdo->prepare("SELECT COUNT(*) FROM access_logs WHERE ip_address = ? AND action_type = 'login' AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)");
+    $stmtLimit->execute([$ip]);
+    if ($stmtLimit->fetchColumn() > 5) {
+        echo json_encode(['success' => false, 'message' => 'Muitas tentativas. Tente novamente em 15 minutos.']);
+        exit;
+    }
+
+    // Registrar tentativa
+    $pdo->prepare("INSERT INTO access_logs (ip_address, action_type) VALUES (?, 'login')")->execute([$ip]);
+} catch (PDOException $e) {
+    // Silently continue if logs fail
 }
 
 // Limpeza básica do número (apenas números para o banco)

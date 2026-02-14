@@ -26,6 +26,12 @@
                     placeholder="(61) 99999-9999">
             </div>
 
+            <!-- Honeypot -->
+            <div style="opacity: 0; position: absolute; top: 0; left: 0; height: 0; width: 0; z-index: -1;">
+                <label for="website_check">Não preencha este campo:</label>
+                <input type="text" name="website_check" id="website_check" tabindex="-1" autocomplete="off">
+            </div>
+
             <button type="submit"
                 class="w-full py-5 bg-primary text-white font-extrabold rounded-3xl shadow-xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all text-lg mt-6">
                 Entrar / Cadastrar
