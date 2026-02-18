@@ -77,8 +77,11 @@ try {
 
     $pdo->commit();
 
-    // 5. Notificar o Motorista
-    $passengerName = $_SESSION['user_name'] ?? 'Alguém';
+    // 5. Notificar o Motorista (Buscar nome real do passageiro no banco para evitar fakes de sessão)
+    $stmtMe = $pdo->prepare("SELECT name FROM users WHERE id = ?");
+    $stmtMe->execute([$passengerId]);
+    $passengerName = $stmtMe->fetchColumn() ?: 'Alguém';
+
     createNotification($pdo, $ride['driver_id'], 'booking', "🎉 Nova reserva de {$passengerName}!", 'index.php?page=my_rides');
 
     // 6. Retorno de Sucesso com Dados Revelados

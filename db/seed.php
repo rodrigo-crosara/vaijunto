@@ -89,6 +89,12 @@ try {
         while ($origin === $dest)
             $dest = $locais[array_rand($locais)];
 
+        // Gerar 2 Waypoints Aleatórios (que não sejam origem ou destino)
+        $wpPool = array_diff($locais, [$origin, $dest]);
+        shuffle($wpPool);
+        $wps = array_slice($wpPool, 0, 2);
+        $waypointsJson = json_encode($wps);
+
         $isPast = ($i < 50); // 50 passadas, 50 futuras
         if ($isPast) {
             $time = date('Y-m-d H:i:s', strtotime('-' . rand(1, 60) . ' days'));
@@ -100,15 +106,16 @@ try {
 
         $price = rand(5, 25) . '.00';
         $seats = rand(2, 4);
+        $details = json_encode(['details' => 'Viagem gerada automaticamente pelo sistema de testes.']);
 
-        $stmt = $pdo->prepare("INSERT INTO rides (driver_id, origin_text, destination_text, departure_time, price, seats_total, seats_available, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())");
-        $stmt->execute([$driverId, $origin, $dest, $time, $price, $seats, $seats, $status]);
+        $stmt = $pdo->prepare("INSERT INTO rides (driver_id, origin_text, destination_text, waypoints, departure_time, price, seats_total, seats_available, tags, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->execute([$driverId, $origin, $dest, $waypointsJson, $time, $price, $seats, $seats, $details, $status]);
         $rid = $pdo->lastInsertId();
         $rideIds[] = $rid;
         if ($isPast)
             $pastRideIds[] = $rid;
     }
-    echo "🚗 100 Caronas criadas (50 futuras, 50 passadas).\n";
+    echo "🚗 100 Caronas criadas com Waypoints e detalhes.\n";
 
     // 7. Criar 200 Reservas Aleatórias
     $reservasCriadas = 0;

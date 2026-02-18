@@ -107,34 +107,28 @@ try {
                         </div>
 
                         <div class="flex items-center gap-3 mb-8">
-                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nextRide['origin_text']) ?>"
-                                target="_blank"
-                                class="font-bold text-lg truncate hover:text-blue-200 transition-colors underline decoration-white/20 underline-offset-4">
+                            <div class="font-bold text-lg truncate">
                                 <?= $nextRide['origin_text'] ?>
-                            </a>
+                            </div>
                             <i class="bi bi-arrow-right text-blue-300"></i>
-                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($nextRide['destination_text']) ?>"
-                                target="_blank"
-                                class="font-bold text-lg truncate hover:text-blue-200 transition-colors underline decoration-white/20 underline-offset-4">
+                            <div class="font-bold text-lg truncate">
                                 <?= $nextRide['destination_text'] ?>
-                            </a>
+                            </div>
                         </div>
 
                         <!-- Ações Rápidas -->
-                        <div class="grid grid-cols-2 gap-3 mb-6">
-                                    <button onclick='shareRide(<?= json_encode([
-                                        "id" => $nextRide['id'],
-                                        "origin" => $nextRide['origin_text'],
-                                        "destination" => $nextRide['destination_text'],
-                                        "departure_time" => $nextRide['departure_time'],
-                                        "price" => $nextRide['price'],
-                                        "waypoints" => "" // Simplificado para botão rápido
-                                    ]) ?>)'
-                                        class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                        <div class="flex gap-2 mb-6">
+                                    <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                        class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                         <i class="bi bi-whatsapp"></i> Divulgar
                                     </button>
+                                    <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                        class="w-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
+                                        title="Copiar Texto">
+                                        <i class="bi bi-clipboard"></i>
+                                    </button>
                                     <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
-                                        class="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                        class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                         <i class="bi bi-pencil-square"></i> Editar
                                     </button>
                         </div>
@@ -142,56 +136,54 @@ try {
                         <!-- Checklist Express (Dentro do Card) -->
                         <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/5">
                             <div class="flex items-center justify-between mb-3">
-                                <span class="text-xs font-bold text-blue-200 uppercase">Checklist de Embarque</span>
+                                <span class="text-xs font-bold text-blue-200 uppercase">Passageiros</span>
                                 <span
                                     class="text-xs font-bold bg-white/20 px-2 py-0.5 rounded text-white"><?= count($nextRide['passengers']) ?>
                                     Confirmados</span>
                             </div>
 
-                            <?php if (empty($nextRide['passengers'])): ?>
-                                <div class="text-center py-2">
-                                    <p class="text-blue-200 text-xs italic">Aguardando passageiros...</p>
-                                </div>
-                            <?php else: ?>
-                                <div class="space-y-3">
-                                    <?php foreach ($nextRide['passengers'] as $p):
-                                        $isPaid = ($p['payment_status'] === 'paid');
-                                        $pPhone = preg_replace('/\D/', '', $p['phone']);
-                                        $locMsg = urlencode("Olá! Estou compartilhando minha localização atual para facilitar o encontro. 👇");
-                                        ?>
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center gap-3">
-                                                <img src="<?= $p['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($p['name']) ?>"
-                                                    class="w-8 h-8 rounded-full border border-white/30">
-                                                <div class="flex flex-col">
-                                                    <span
-                                                        class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
-                                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($p['meeting_point']) ?>"
-                                                        target="_blank"
-                                                        class="text-[10px] text-blue-200 truncate max-w-[100px] hover:text-white transition-colors">
-                                                        <i class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?>
+                            <div id="passenger-list-container">
+                                <?php if (empty($nextRide['passengers'])): ?>
+                                    <div class="text-center py-2">
+                                        <p class="text-blue-200 text-xs italic">Aguardando passageiros...</p>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="space-y-3">
+                                        <?php foreach ($nextRide['passengers'] as $p):
+                                            $isPaid = ($p['payment_status'] === 'paid');
+                                            $pPhone = preg_replace('/\D/', '', $p['phone']);
+                                            ?>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
+                                                    <img src="<?= $p['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($p['name']) ?>"
+                                                        class="w-8 h-8 rounded-full border border-white/30">
+                                                    <div class="flex flex-col">
+                                                        <span
+                                                            class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
+                                                        <span class="text-[10px] text-blue-200 truncate max-w-[100px]">
+                                                            <i class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
+                                                        class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
+                                                        <i class="bi bi-whatsapp text-sm"></i>
                                                     </a>
+                                                    <?php if ($isPaid): ?>
+                                                        <span class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg">PAGO ✅</span>
+                                                    <?php else: ?>
+                                                        <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
+                                                            class="btn btn-xs btn-light-success text-[9px] font-bold py-1 px-2 rounded-lg flex items-center gap-1">
+                                                            💰 Confirmar Pagamento
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </div>
                                             </div>
-                                            <div class="flex gap-2">
-                                                <a href="https://wa.me/<?= $pPhone ?>?text=<?= $locMsg ?>" target="_blank"
-                                                    class="w-8 h-8 rounded-full bg-blue-400/20 text-white flex items-center justify-center hover:bg-blue-400 transition-all shadow-sm"
-                                                    title="Pedir/Enviar Localização">
-                                                    <i class="bi bi-geo-alt text-sm"></i>
-                                                </a>
-                                                <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
-                                                    class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
-                                                    <i class="bi bi-whatsapp text-sm"></i>
-                                                </a>
-                                                <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
-                                                    class="w-8 h-8 rounded-full flex items-center justify-center transition-all <?= $isPaid ? 'bg-green-500 text-white' : 'bg-white/10 text-white/50 hover:bg-green-500 hover:text-white' ?>">
-                                                    <i class="bi bi-currency-dollar text-sm"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                     </div>
@@ -221,13 +213,11 @@ try {
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['origin_text']) ?>"
-                                        target="_blank"
-                                        class="hover:text-primary transition-colors"><?= $ride['origin_text'] ?></a>
+                                <div>
+                                <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
+                                    <div><?= $ride['origin_text'] ?></div>
                                     <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
-                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['destination_text']) ?>"
-                                        target="_blank"
-                                        class="hover:text-primary transition-colors"><?= $ride['destination_text'] ?></a>
+                                    <div><?= $ride['destination_text'] ?></div>
                                 </div>
                                 <span class="text-xs text-gray-400"><?= count($ride['passengers']) ?> passageiros • R$
                                     <?= number_format($ride['price'], 2, ',', '.') ?></span>
@@ -275,6 +265,48 @@ try {
 </div>
 
 <script>
+    const currentRideId = <?= $nextRide ? $nextRide['id'] : 0 ?>;
+
+    function getRideText(origem, destino, hora, rota, valor, link) {
+        return `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+    }
+
+    async function copiarOferta(origem, destino, hora, rota, valor, rideId) {
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const texto = getRideText(origem, destino, hora, rota, valor, link);
+        try {
+            await navigator.clipboard.writeText(texto);
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Texto copiado com o link!',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        } catch (err) {
+            Swal.fire('Erro', 'Não foi possível copiar.', 'error');
+        }
+    }
+
+    function compartilharRide(rideId, origem, destino, hora, rota, valor) {
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const texto = getRideText(origem, destino, hora, rota, valor, link);
+        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    }
+
+    // Polling Automático de Passageiros
+    if (currentRideId > 0) {
+        setInterval(() => {
+            $.get('api/get_passengers_html.php?ride_id=' + currentRideId, function(data) {
+                if (data.trim() !== "") {
+                    $('#passenger-list-container').html(data);
+                }
+            });
+        }, 5000);
+    }
+
     async function driverAction(data) {
         try {
             const response = await fetch('api/driver_actions.php', {
@@ -284,7 +316,10 @@ try {
             });
             const result = await response.json();
             if (result.success) {
-                Swal.fire({ text: result.message, icon: 'success', timer: 1500, showConfirmButton: false }).then(() => location.reload());
+                Swal.fire({ text: result.message, icon: 'success', timer: 1500, showConfirmButton: false });
+                if (data.action !== 'confirm_payment') {
+                    setTimeout(() => location.reload(), 1500);
+                }
             } else {
                 Swal.fire({ text: result.message, icon: 'error' });
             }
@@ -326,48 +361,6 @@ try {
         });
     }
 
-    function removerPassageiro(bookingId) {
-        Swal.fire({
-            title: 'Remover Passageiro?',
-            text: 'A vaga será liberada no feed.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sim, remover',
-            cancelButtonText: 'Não',
-            customClass: { confirmButton: 'btn btn-danger px-6', cancelButton: 'btn btn-light ml-2' },
-            buttonsStyling: false
-        }).then((result) => {
-            if (result.isConfirmed) {
-                driverAction({ action: 'remove_passenger', bookingId: bookingId });
-            }
-        });
-    }
-
-    function mostrarPix(pix) {
-        if (!pix) {
-            Swal.fire({ text: 'Você ainda não cadastrou sua chave Pix no perfil.', icon: 'info' });
-            return;
-        }
-        Swal.fire({
-            title: 'Sua Chave Pix',
-            html: `
-                <div class="py-4">
-                    <p class="text-gray-500 mb-4 font-medium">Peça para o passageiro escanear ou copiar:</p>
-                    <div class="bg-gray-100 p-6 rounded-3xl mb-6 border-2 border-dashed border-gray-200">
-                        <span class="text-xl font-bold text-gray-800 break-all tracking-tight select-all">${pix}</span>
-                    </div>
-                    <button onclick="navigator.clipboard.writeText('${pix}'); Swal.fire({text:'Copiado!', timer:1000, showConfirmButton:false, toast:true, position:'top'})" class="btn btn-primary w-full rounded-2xl py-4 font-bold shadow-lg shadow-primary/20">
-                        <i class="bi bi-copy mr-2"></i> Copiar Chave
-                    </button>
-                    <p class="mt-4 text-[10px] text-gray-400 uppercase font-bold tracking-widest">VaiJunto • Segurança & Rapidez</p>
-                </div>
-            `,
-            showConfirmButton: false,
-            showCloseButton: true,
-            customClass: { popup: 'rounded-[2.5rem]' }
-        });
-    }
-
     function confirmarPagamento(bookingId) {
         Swal.fire({
             title: 'Confirmar Recebimento?',
@@ -381,43 +374,6 @@ try {
         }).then((result) => {
             if (result.isConfirmed) {
                 driverAction({ action: 'confirm_payment', bookingId: bookingId });
-            }
-        });
-    }
-
-    function confirmarVolta(rideId, origin, destination, time) {
-        // Calcular 9 horas depois
-        const date = new Date(time);
-        date.setHours(date.getHours() + 9);
-        const suggestedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        const suggestedDate = date.toLocaleDateString('pt-BR');
-
-        Swal.fire({
-            title: 'Criar Volta?',
-            html: `Deseja criar a volta de <b>${destination}</b> para <b>${origin}</b>?<br><br>Sugestão: <b>${suggestedDate} às ${suggestedTime}</b>`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sim, criar agora',
-            cancelButtonText: 'Cancelar',
-            customClass: { confirmButton: 'btn btn-primary px-6', cancelButton: 'btn btn-light ml-2' },
-            buttonsStyling: false
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                try {
-                    const response = await fetch('api/create_return_ride.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ originalRideId: rideId })
-                    });
-                    const res = await response.json();
-                    if (res.success) {
-                        Swal.fire({ text: res.message, icon: 'success', timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                    } else {
-                        Swal.fire({ text: res.message, icon: 'error' });
-                    }
-                } catch (e) {
-                    Swal.fire({ text: 'Erro na conexão.', icon: 'error' });
-                }
             }
         });
     }

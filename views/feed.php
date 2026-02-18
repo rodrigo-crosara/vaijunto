@@ -141,12 +141,9 @@ try {
                             <div>
                                 <span
                                     class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Partida</span>
-                                <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['origin_text']) ?>"
-                                    target="_blank"
-                                    class="text-gray-900 font-bold text-base leading-tight flex items-center gap-1 hover:text-primary transition-colors">
+                                <div class="text-gray-900 font-bold text-base leading-tight">
                                     <?= htmlspecialchars($ride['origin_text']) ?>
-                                    <i class="bi bi-box-arrow-up-right text-[10px] opacity-30"></i>
-                                </a>
+                                </div>
                             </div>
 
                             <?php
@@ -156,12 +153,9 @@ try {
                                     <?php foreach ($waypoints as $point): ?>
                                         <div class="flex items-center gap-2">
                                             <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
-                                            <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($point) ?>"
-                                                target="_blank"
-                                                class="text-gray-500 font-medium text-xs flex items-center gap-1 hover:text-primary transition-colors">
+                                            <div class="text-gray-500 font-medium text-xs">
                                                 <?= htmlspecialchars($point) ?>
-                                                <i class="bi bi-box-arrow-up-right text-[8px] opacity-30"></i>
-                                            </a>
+                                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -170,12 +164,9 @@ try {
                             <div>
                                 <span
                                     class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Chegada</span>
-                                <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($ride['destination_text']) ?>"
-                                    target="_blank"
-                                    class="text-gray-900 font-bold text-base leading-tight flex items-center gap-1 hover:text-primary transition-colors">
+                                <div class="text-gray-900 font-bold text-base leading-tight">
                                     <?= htmlspecialchars($ride['destination_text']) ?>
-                                    <i class="bi bi-box-arrow-up-right text-[10px] opacity-30"></i>
-                                </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -204,14 +195,8 @@ try {
 
                         <div class="flex gap-2">
                             <?php if ($isDriver): ?>
-                                <button onclick='shareRide(<?= json_encode([
-                                    "id" => $ride['id'],
-                                    "origin" => $ride['origin_text'],
-                                    "destination" => $ride['destination_text'],
-                                    "departure_time" => $ride['departure_time'],
-                                    "price" => $ride['price'],
-                                    "waypoints" => $ride['waypoints']
-                                ]) ?>)'
+                                <button
+                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", "<?= $time ?>", "<?= addslashes(implode(' -> ', $waypoints)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
                                     class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>
@@ -249,6 +234,12 @@ try {
     let lastRideId = <?= (int) ($maxRideId ?? 0) ?>;
     let offset = 10;
     let searchTimeout;
+
+    function compartilharRide(rideId, origem, destino, hora, rota, valor) {
+        const texto = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+        window.open(url, '_blank');
+    }
 
     // Busca Integrada
     function debounceSearch() {

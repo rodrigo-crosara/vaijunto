@@ -8,6 +8,12 @@ require_once 'config/db.php';
 // Redirecionamento para Login se não autenticado (mas não faz header location para evitar loop)
 $page = $_GET['page'] ?? 'home';
 
+// Atalho para links diretos de carona (ex: compartilhado no WhatsApp)
+if (isset($_GET['ride_id'])) {
+    $page = 'home'; // O feed.php já tem lógica para destacar o ride_id_param
+    $_GET['ride_id_param'] = $_GET['ride_id'];
+}
+
 // Header deve ser incluído sempre para carregar CSS e Fonts
 include 'includes/header.php';
 

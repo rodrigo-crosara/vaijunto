@@ -230,6 +230,12 @@ foreach ($bookings as $b) {
                                     title="🛡️ Enviar dados para Mãe/Amigo">
                                     <i class="bi bi-shield-check text-xl"></i>
                                 </a>
+                                <button
+                                    onclick='copiarOferta(<?= $nb['ride_id'] ?>, "<?= addslashes($nb['origin_text']) ?>", "<?= addslashes($nb['destination_text']) ?>", "<?= $nbTime ?>", "<?= addslashes(implode(" > ", $waypoints)) ?>", "<?= number_format($nb['price'], 2, ',', '.') ?>")'
+                                    class="w-12 h-12 rounded-full bg-cyan-400 text-white flex items-center justify-center shadow-lg shadow-cyan-400/30 hover:scale-110 transition-transform"
+                                    title="Copiar Oferta">
+                                    <i class="bi bi-clipboard text-xl"></i>
+                                </button>
                             </div>
 
                             <button onclick="cancelarReserva(<?= $nb['booking_id'] ?>)"
@@ -315,6 +321,28 @@ foreach ($bookings as $b) {
 </div>
 
 <script>
+    function getRideText(origem, destino, hora, rota, valor, link) {
+        return `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+    }
+
+    async function copiarOferta(origem, destino, hora, rota, valor, rideId) {
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const texto = getRideText(origem, destino, hora, rota, valor, link);
+        try {
+            await navigator.clipboard.writeText(texto);
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Texto copiado com o link!',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        } catch (err) {
+            Swal.fire('Erro', 'Não foi possível copiar.', 'error');
+        }
+    }
+
     function verPixMotorista(pix) {
         if (!pix) {
             Swal.fire({ text: 'O motorista ainda não cadastrou o Pix no sistema.', icon: 'info' });
