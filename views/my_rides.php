@@ -20,10 +20,10 @@ try {
 
     // 1. Buscar caronas criadas pelo motorista
     $stmtRides = $pdo->prepare("
-        SELECT id, origin_text, destination_text, departure_time, seats_total, seats_available, price, status
+        SELECT id, origin_text, destination_text, departure_time, seats_total, seats_available, price, status, waypoints, tags
         FROM rides
         WHERE driver_id = ?
-        ORDER BY departure_time DESC
+        ORDER BY departure_time ASC
     ");
     $stmtRides->execute([$currentUserId]);
     $myRides = $stmtRides->fetchAll(PDO::FETCH_ASSOC);
@@ -142,6 +142,15 @@ try {
                         </div>
 
                         <?php if ($nextRide['seats_available'] == 0): ?>
+                            <!-- Badge Relativo -->
+                            <?php 
+                            $diff = strtotime($nextRide['departure_time']) - time();
+                            $days = floor($diff / (60 * 60 * 24));
+                            if ($days > 0) {
+                                echo '<div class="absolute top-4 right-4 bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold text-white border border-white/20">Daqui a ' . $days . ' dias</div>';
+                            }
+                            ?>
+                            
                             <button onclick="copiarLotado(<?= $nextRide['id'] ?>, '<?= $time ?>', '<?= addslashes($nextRide['destination_text']) ?>')"
                                 class="w-full mb-6 bg-red-500 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all">
                                 <i class="bi bi-slash-circle"></i> Copiar Aviso de "LOTADO"
@@ -282,8 +291,13 @@ try {
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             <div class="pt-2 flex justify-end">
-                                <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
+                                    <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
                                     class="text-red-500 font-bold hover:underline">Cancelar Viagem</button>
+                                    
+                                    <button onclick='repetirViagem(<?= json_encode($ride) ?>)' 
+                                            class="text-primary font-bold hover:underline flex items-center gap-1">
+                                        <i class="bi bi-arrow-repeat"></i> Repetir
+                                    </button>
                             </div>
                         </div>
                     </div>
@@ -297,6 +311,24 @@ try {
 
 <script>
     const currentRideId = <?= $nextRide ? $nextRide['id'] : 0 ?>;
+
+    function repetirViagem(ride) {
+        // Salvar dados no localStorage para o offer.php pegar
+        // Estrutura compatível com o fillWithLastRide
+        const data = {
+            origin: ride.origin_text,
+            destination: ride.destination_text,
+            price: ride.price,
+            seats: ride.seats_total,
+            details: ride.tags ? JSON.parse(ride.tags).details : '',
+            waypoints: ride.waypoints
+        };
+        
+        // Vamos usar a mesma lógica do "checkLastRide" mas forçando os dados
+        // Uma forma é salvar isso no sessionStorage e o offer.php ler
+        sessionStorage.setItem('repeat_ride_data', JSON.stringify(data));
+        window.location.href = 'index.php?page=offer&mode=repeat';
+    }
 
     function getRideText(origem, destino, hora, rota, valor, link) {
         return `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;

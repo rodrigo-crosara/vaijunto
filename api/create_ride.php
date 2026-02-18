@@ -85,24 +85,75 @@ if (!empty($detailsInput)) {
 
 // 5. Inserção no Banco
 try {
-    // Nota: Usamos as colunas existentes `waypoints` e `tags` (esta última para guardar as new 'observations')
+    // Definir a query SQL que será usada em ambas as lógicas
     $sql = "INSERT INTO rides (driver_id, origin_text, destination_text, waypoints, departure_time, seats_total, seats_available, price, tags, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())";
 
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        $driver_id,
-        $origin,
-        $destination,
-        $waypointsJson, // Salva o JSON dos waypoints ou NULL
-        $departure_time,
-        $seats,
-        $seats, // Inicialmente disponíveis = total
-        $price,
-        $tagsJson // Salva JSON com { "details": "..." } ou NULL
-    ]);
+    $ridesCreated = [];
+    $repeat_days = $input['repeat_days'] ?? [];
+    $repeat_time = $input['repeat_time'] ?? '';
 
-    $rideId = $pdo->lastInsertId();
+    // Lógica Recorrente
+    if (!empty($repeat_days) && !empty($repeat_time)) {
+        // Criar para as próximas 2 semanas (14 dias)
+        $today = new DateTime();
+        $limit = new DateTime('+14 days');
+
+        while ($today <= $limit) {
+            // PHP: w (0 for Sunday, 6 for Saturday). Frontend: 1=Seg, 5=Sex. 
+            // Ajuste: date('N') return 1 (Mon) through 7 (Sun)
+            $currentDayOfWeek = $today->format('N'); // 1 = Seg, 5 = Sex
+
+            // Check if current day is selected (values 1-5 sent from frontend)
+            // Frontend sends string values "1", "2"...
+            if (in_array($currentDayOfWeek, $repeat_days)) {
+                // Montar datetime
+                $dbDate = $today->format('Y-m-d') . ' ' . $repeat_time . ':00';
+
+                // Validação extra: não criar no passado se for hoje e já passou a hora
+                if (strtotime($dbDate) > time()) {
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute([
+                        $driver_id,
+                        $origin,
+                        $destination,
+                        $waypointsJson,
+                        $dbDate,
+                        $seats,
+                        $seats,
+                        $price,
+                        $tagsJson
+                    ]);
+                    $ridesCreated[] = $pdo->lastInsertId();
+                }
+            }
+            $today->modify('+1 day');
+        }
+
+        if (empty($ridesCreated)) {
+            echo json_encode(['success' => false, 'message' => 'Nenhuma data futura válida encontrada para os dias selecionados.']);
+            exit;
+        }
+
+        // Retorna o ID do primeiro para o link
+        $rideId = $ridesCreated[0];
+
+    } else {
+        // Lógica Única (Normal)
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            $driver_id,
+            $origin,
+            $destination,
+            $waypointsJson,
+            $departure_time,
+            $seats,
+            $seats,
+            $price,
+            $tagsJson
+        ]);
+        $rideId = $pdo->lastInsertId();
+    }
 
     // Registrar ação no log de segurança para rate limiting
     try {

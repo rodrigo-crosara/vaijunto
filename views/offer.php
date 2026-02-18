@@ -76,11 +76,43 @@
 
                 <!-- Data e Vagas (Lado a Lado) -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-7">
-                    <div class="flex flex-col">
+                    <!-- Toggle de Repetição -->
+                    <div class="col-span-1 mb-4 sm:mb-0">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input cursor-pointer" type="checkbox" id="chk-repeat"
+                                onchange="toggleRepeat()">
+                            <label class="form-check-label text-sm font-bold text-gray-700" for="chk-repeat">Repetir na
+                                semana?</label>
+                        </div>
+                    </div>
+
+                    <!-- Single Date Input -->
+                    <div id="single-date-container" class="flex flex-col">
                         <label class="form-label font-bold text-gray-800 text-sm mb-2 required">Data e Hora</label>
                         <input type="datetime-local" name="departure_time"
                             class="form-control form-control-solid rounded-lg p-3 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                             required>
+                    </div>
+
+                    <!-- Repeat Days Container (Hidden by Default) -->
+                    <div id="repeat-days-container" class="hidden flex flex-col">
+                        <label class="form-label font-bold text-gray-800 text-sm mb-2 required">Selecione os dias (Próx.
+                            2 sem)</label>
+                        <div class="flex gap-2 flex-wrap mb-3">
+                            <?php
+                            $days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+                            foreach ($days as $idx => $day): ?>
+                                <label class="cursor-pointer">
+                                    <input type="checkbox" name="repeat_days[]" value="<?= $idx + 1 ?>"
+                                        class="peer sr-only">
+                                    <span
+                                        class="inline-block px-3 py-2 bg-gray-100 peer-checked:bg-primary peer-checked:text-white rounded-lg text-xs font-bold transition-all border border-gray-200 peer-checked:border-primary"><?= $day ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <label class="text-xs font-bold text-gray-500 mb-1">Horário (Fixo)</label>
+                        <input type="time" name="repeat_time"
+                            class="form-control form-control-solid rounded-lg p-2 bg-gray-50 border-gray-200">
                     </div>
 
                     <div class="flex flex-col">
@@ -145,6 +177,15 @@
     }
 
     async function checkLastRide() {
+        // Check for session storage repeat data first
+        const repeatData = sessionStorage.getItem('repeat_ride_data');
+        if (repeatData) {
+            lastRideData = JSON.parse(repeatData);
+            fillWithLastRide();
+            sessionStorage.removeItem('repeat_ride_data'); // Clear after use
+            return;
+        }
+
         try {
             const res = await fetch('api/get_last_ride_data.php');
             const data = await res.json();
@@ -206,6 +247,24 @@
         const str = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
 
         $('input[name="departure_time"]').val(str);
+        // Default time for repetition fields
+        $('input[name="repeat_time"]').val(`${pad(target.getHours())}:${pad(target.getMinutes())}`);
+    }
+
+    function toggleRepeat() {
+        const isRepeat = document.getElementById('chk-repeat').checked;
+        const singleDateDiv = document.getElementById('single-date-container');
+        const repeatDiv = document.getElementById('repeat-days-container');
+
+        if (isRepeat) {
+            singleDateDiv.classList.add('hidden');
+            singleDateDiv.querySelector('input').removeAttribute('required');
+            repeatDiv.classList.remove('hidden');
+        } else {
+            singleDateDiv.classList.remove('hidden');
+            singleDateDiv.querySelector('input').setAttribute('required', 'true');
+            repeatDiv.classList.add('hidden');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
