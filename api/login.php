@@ -72,6 +72,15 @@ try {
         $_SESSION['is_driver'] = 0;
         $_SESSION['is_admin'] = 0;
 
+        require_once '../helpers/notification.php';
+        createNotification(
+            $pdo,
+            $newUserId,
+            'system',
+            "Dica: Adicione uma foto de perfil e o modelo do seu carro (se for motorista) para ser aceito mais rápido!",
+            "index.php?page=profile"
+        );
+
         echo json_encode(['success' => true, 'type' => 'register']);
     }
 

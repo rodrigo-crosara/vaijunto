@@ -110,6 +110,42 @@ try {
     } catch (PDOException $e) { /* Silencioso */
     }
 
+    // 🚀 Notificar passageiros frequentes (Fãs)
+    try {
+        $stmtFans = $pdo->prepare("
+            SELECT DISTINCT b.passenger_id 
+            FROM bookings b
+            JOIN rides r ON b.ride_id = r.id
+            WHERE r.driver_id = ? 
+              AND r.status = 'completed'
+              AND r.departure_time > DATE_SUB(NOW(), INTERVAL 90 DAY)
+        ");
+        $stmtFans->execute([$driver_id]);
+        $fans = $stmtFans->fetchAll(PDO::FETCH_COLUMN);
+
+        if ($fans) {
+            require_once '../helpers/notification.php';
+            $driverName = $_SESSION['user_name'] ?: 'Um motorista';
+            $link = "index.php?ride_id=" . $rideId;
+
+            foreach ($fans as $fanId) {
+                // Evita notificar o próprio motorista
+                if ($fanId == $driver_id)
+                    continue;
+
+                createNotification(
+                    $pdo,
+                    $fanId,
+                    'system',
+                    "🚗 $driverName postou uma nova carona para " . $destination . "!",
+                    $link
+                );
+            }
+        }
+    } catch (Exception $e) {
+        // Não falha a criação se a notificação der erro
+    }
+
     echo json_encode(['success' => true, 'message' => 'Carona criada com waypoints!', 'ride_id' => $rideId]);
 
 } catch (PDOException $e) {
