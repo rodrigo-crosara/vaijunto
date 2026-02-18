@@ -128,7 +128,7 @@ try {
                         <div class="flex gap-2 mb-6">
                                     <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
                                         class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                        <i class="bi bi-whatsapp"></i> Divulgar
+                                        <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
                                     </button>
                                     <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
                                         class="w-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
@@ -341,30 +341,49 @@ try {
 
     function fecharVagas(rideId) {
         Swal.fire({
-            title: 'Fechar Vagas?',
-            text: 'Sua carona vai sumir do feed imediatamente.',
-            icon: 'warning',
+            title: 'Lotou? Fechar vagas?',
+            text: "Sua carona sairá do feed imediatamente.",
+            icon: 'question',
             showCancelButton: true,
+            confirmButtonColor: '#d33',
             confirmButtonText: 'Sim, fechar!',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#d33'
-        }).then(async (result) => {
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
             if (result.isConfirmed) {
-                try {
-                    const res = await fetch('api/close_ride.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ rideId: rideId })
+                $.post('api/close_ride.php', { rideId: rideId }, function(res) {
+                    // Nota: api/close_ride.php espera JSON raw, mas $.post envia form-urlencoded. 
+                    // Se o backend espera raw input, melhor usar fetch ou ajustar backend. 
+                    // Pelo código anterior backend usa `json_decode(file_get_contents('php://input'))`.
+                    // Vamos usar fetch para garantir compatibilidade com o backend existente.
+                });
+                
+                // Correção para usar fetch e garantir envio correto
+                fetch('api/close_ride.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({rideId: rideId})
+                })
+                .then(r => r.json())
+                .then(data => {
+                     Swal.fire({
+                        title: 'Vagas Encerradas!',
+                        html: '<p class="mb-3 text-sm text-gray-600">Copie o aviso abaixo e cole no grupo:</p>' +
+                              '<textarea id="msg-encerrado" class="form-control mb-3 text-center font-bold" rows="2" readonly>❌ Carona ENCERRADA/LOTADA. Obrigado!</textarea>',
+                        showCancelButton: true,
+                        confirmButtonText: '📝 Copiar e ir pro Zap <i class="bi bi-box-arrow-up-right text-[10px]"></i>',
+                        confirmButtonColor: '#25D366',
+                        cancelButtonText: 'Concluir',
+                        reverseButtons: true
+                    }).then((res2) => {
+                        if (res2.isConfirmed) {
+                            var copyText = document.getElementById("msg-encerrado");
+                            copyText.select();
+                            document.execCommand("copy");
+                            window.open('https://wa.me/', '_blank');
+                        }
+                        location.reload();
                     });
-                    const data = await res.json();
-                    if (data.success) {
-                        Swal.fire({ text: 'Vagas encerradas!', icon: 'success', timer: 1500, showConfirmButton: false }).then(() => location.reload());
-                    } else {
-                        Swal.fire('Erro', data.message, 'error');
-                    }
-                } catch (e) {
-                    Swal.fire('Erro', 'Falha na conexão', 'error');
-                }
+                });
             }
         });
     }

@@ -246,7 +246,7 @@
                         text: 'Agora, publique no seu grupo de caronas para lotar rápido.',
                         icon: 'success',
                         showCancelButton: true,
-                        confirmButtonText: '📢 Publicar no WhatsApp',
+                        confirmButtonText: '📢 Publicar no WhatsApp <i class="bi bi-box-arrow-up-right text-[10px]"></i>',
                         cancelButtonText: 'Ir para o Feed',
                         customClass: {
                             confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-green-600 transition-all',
