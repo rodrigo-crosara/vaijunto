@@ -206,24 +206,37 @@
         $('select[name="seats"]').val(lastRideData.seats);
         $('input[name="details"]').val(lastRideData.details);
 
-        // Parse waypoints
-        try {
-            const pts = JSON.parse(lastRideData.waypoints || '[]');
-            if (Array.isArray(pts)) {
-                $('textarea[name="waypoints"]').val(pts.join(', '));
+        // Parse waypoints - handle both string and array formats
+        let pts = [];
+        if (typeof lastRideData.waypoints === 'string') {
+            try {
+                pts = JSON.parse(lastRideData.waypoints);
+            } catch (e) {
+                // Might be a plain string comma separated?
+                if (lastRideData.waypoints.includes('[')) {
+                    pts = [];
+                } else {
+                    pts = lastRideData.waypoints.split(',').map(s => s.trim());
+                }
             }
-        } catch (e) {
-            $('textarea[name="waypoints"]').val('');
+        } else if (Array.isArray(lastRideData.waypoints)) {
+            pts = lastRideData.waypoints;
+        }
+
+        if (Array.isArray(pts)) {
+            $('textarea[name="waypoints"]').val(pts.join(', '));
         }
 
         // Animação de sucesso
         const btn = document.querySelector('#smart-replay-box button');
-        const original = btn.innerHTML;
-        btn.innerHTML = '<i class="bi bi-check-lg"></i> Preenchido!';
-        btn.classList.replace('bg-primary', 'bg-green-500');
-        setTimeout(() => {
-            document.getElementById('smart-replay-box').classList.add('hidden');
-        }, 1000);
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Preenchido!';
+            btn.classList.replace('bg-primary', 'bg-green-500');
+            setTimeout(() => {
+                document.getElementById('smart-replay-box').classList.add('hidden');
+            }, 1000);
+        }
     }
 
     function suggestDate() {
@@ -274,10 +287,21 @@
         const form = document.getElementById('offer-form');
         const btnParam = document.getElementById('btn-submit-offer');
 
+        // Global Loading State for buttons
+        $('form').on('submit', function () {
+            const btn = $(this).find('button[type="submit"]');
+            if (btn.length && !btn.prop('disabled')) {
+                btn.data('original-text', btn.html());
+                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Processando...');
+            }
+        });
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const originalBtnText = btnParam.innerText;
+            // Loading state handled globally, but we might need specific handling here if we preventDefault
+            // Since we preventDefault, the global handler might fire but we control the flow.
+            // Let's ensure the button is locked.
             btnParam.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
             btnParam.disabled = true;
 
@@ -348,7 +372,7 @@
                     alert(error.message);
                 }
                 // Destravar botão
-                btnParam.innerText = originalBtnText;
+                btnParam.innerHTML = btnParam.getAttribute('data-original-text') || 'Publicar Carona';
                 btnParam.disabled = false;
             }
         });

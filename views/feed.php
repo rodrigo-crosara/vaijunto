@@ -220,7 +220,7 @@ if ($currentUserId) {
                                     class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
                                     Solicitar Vaga
                                 </button>
-                                <?php endif; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -274,7 +274,20 @@ if ($currentUserId) {
                 if (result.count > 0) {
                     container.html(result.html);
                 } else {
-                    container.html('<div class="py-20 text-center text-gray-400 italic">Nenhum resultado encontrado...</div>');
+                    container.html(`
+                        <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+                            <div class="bg-gray-50 rounded-full p-6 mb-4">
+                                <i class="bi bi-search text-4xl text-gray-300"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">Nenhuma carona encontrada.</h3>
+                            <p class="text-sm text-gray-500 max-w-xs mx-auto mb-6">Tente mudar o horário ou o destino.</p>
+                            <?php if ($_SESSION['is_driver']): ?>
+                                <a href="index.php?page=offer" class="btn btn-primary px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20">
+                                    <i class="bi bi-plus-lg mr-2"></i> Criar Carona
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    `);
                 }
             }
         } catch (e) { console.error(e); }
