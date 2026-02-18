@@ -153,12 +153,12 @@
                 document.getElementById('smart-replay-box').classList.remove('hidden');
                 document.getElementById('last-route-text').innerText = `${lastRideData.origin} ➝ ${lastRideData.destination}`;
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     function fillWithLastRide() {
         if (!lastRideData) return;
-        
+
         $('input[name="origin"]').val(lastRideData.origin);
         $('input[name="destination"]').val(lastRideData.destination);
         $('input[name="price"]').val(lastRideData.price);
@@ -188,7 +188,7 @@
     function suggestDate() {
         const now = new Date();
         const hour = now.getHours();
-        
+
         // Lógica de Sugestão Inteligente
         let target = new Date();
         if (hour < 12) {
@@ -203,8 +203,8 @@
         // Formatar para input datetime-local (YYYY-MM-DDTHH:mm)
         // Correção de fuso horário local
         const pad = (n) => n.toString().padStart(2, '0');
-        const str = `${target.getFullYear()}-${pad(target.getMonth()+1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
-        
+        const str = `${target.getFullYear()}-${pad(target.getMonth() + 1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
+
         $('input[name="departure_time"]').val(str);
     }
 
@@ -242,32 +242,32 @@
 
                 if (result.success) {
                     Swal.fire({
-                        title: "Carona Publicada! 🚀",
-                        text: "Agora divulgue no grupo para lotar rápido.",
-                        icon: "success",
+                        title: 'Carona Criada! 🚀',
+                        text: 'Agora, publique no seu grupo de caronas para lotar rápido.',
+                        icon: 'success',
                         showCancelButton: true,
-                        confirmButtonText: "📢 Divulgar no Zap",
-                        cancelButtonText: "Voltar ao Início",
+                        confirmButtonText: '📢 Publicar no WhatsApp',
+                        cancelButtonText: 'Ir para o Feed',
                         customClass: {
-                            confirmButton: "bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-green-600 transition-all",
-                            cancelButton: "bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2 hover:bg-gray-200"
+                            confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-green-600 transition-all',
+                            cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2 hover:bg-gray-200'
                         },
                         buttonsStyling: false
                     }).then((r) => {
+                        window.location.href = 'index.php?page=my_rides';
                         if (r.isConfirmed) {
-                            // Montar objeto ride para compartilhar
-                            const rideObj = {
-                                id: result.ride_id, // API precisa retornar isso
-                                origin: data.origin,
-                                destination: data.destination,
-                                departure_time: data.departure_time,
-                                price: data.price,
-                                waypoints: JSON.stringify(data.waypoints ? data.waypoints.split(',').map(s => s.trim()) : [])
-                            };
-                            shareRide(rideObj);
-                            setTimeout(() => window.location.href = 'index.php?page=home', 1000);
-                        } else {
-                            window.location.href = 'index.php?page=home';
+                            const origem = data.origin;
+                            const destino = data.destination;
+                            const horaRaw = data.departure_time;
+                            const hora = new Date(horaRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            const valor = parseFloat(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                            const rota = data.waypoints || 'Via padrão';
+
+                            const link = `${window.location.origin}${window.location.pathname}?ride_id=${result.ride_id}`;
+                            const textoZap = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+                            const urlZap = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
+
+                            window.open(urlZap, '_blank');
                         }
                     });
                 } else {
