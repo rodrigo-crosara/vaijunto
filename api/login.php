@@ -45,25 +45,48 @@ try {
 
 // Limpeza básica do número (apenas números para o banco)
 $cleanPhone = preg_replace('/\D/', '', $phone);
+$pin = $_POST['pin'] ?? '';
+
+if (strlen($pin) !== 4 || !ctype_digit($pin)) {
+    echo json_encode(['success' => false, 'message' => 'O PIN deve ter 4 dígitos numéricos.']);
+    exit;
+}
 
 try {
     // 1. Verificar se o usuário já existe
-    $stmt = $pdo->prepare("SELECT id, name, photo_url, is_driver, is_admin FROM users WHERE phone = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, name, photo_url, is_driver, is_admin, pin_hash FROM users WHERE phone = ? LIMIT 1");
     $stmt->execute([$cleanPhone]);
     $user = $stmt->fetch();
 
     if ($user) {
-        // Encontrado: Login
+        // Encontrado: Verificar PIN
+        if (!empty($user['pin_hash'])) {
+            // Conta protegida: verificar hash
+            if (!password_verify($pin, $user['pin_hash'])) {
+                echo json_encode(['success' => false, 'message' => 'PIN incorreto.']);
+                exit;
+            }
+        } else {
+            // Migração: Usuário antigo sem PIN -> Definir este como o PIN permanente
+            $newHash = password_hash($pin, PASSWORD_DEFAULT);
+            $stmtUp = $pdo->prepare("UPDATE users SET pin_hash = ? WHERE id = ?");
+            $stmtUp->execute([$newHash, $user['id']]);
+        }
+
+        // Login com sucesso
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['user_name'] = $user['name'] ?? '';
         $_SESSION['user_photo'] = $user['photo_url'] ?? '';
         $_SESSION['is_driver'] = (int) $user['is_driver'];
         $_SESSION['is_admin'] = (int) $user['is_admin'];
         echo json_encode(['success' => true, 'type' => 'login']);
+
     } else {
-        // Não encontrado: Criar Usuário (Cadastro Implícito)
-        $stmt = $pdo->prepare("INSERT INTO users (phone, is_driver, is_admin, created_at) VALUES (?, 0, 0, NOW())");
-        $stmt->execute([$cleanPhone]);
+        // Não encontrado: Criar Usuário (Cadastro Implícito com PIN)
+        $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+
+        $stmt = $pdo->prepare("INSERT INTO users (phone, pin_hash, is_driver, is_admin, created_at) VALUES (?, ?, 0, 0, NOW())");
+        $stmt->execute([$cleanPhone, $pinHash]);
 
         $newUserId = $pdo->lastInsertId();
         $_SESSION['user_id'] = $newUserId;

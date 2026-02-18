@@ -18,12 +18,29 @@
     <!-- Login Card -->
     <div class="w-full max-w-sm">
         <form id="login-form" class="space-y-4">
+            <!-- Phone Input -->
             <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Seu
                     WhatsApp</label>
                 <input type="tel" name="phone" id="phone" required
                     class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-medium text-lg text-center tracking-widest"
                     placeholder="(61) 99999-9999">
+            </div>
+
+            <!-- PIN Input -->
+            <div class="mt-4">
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN de
+                    Segurança (4 dígitos)</label>
+                <input type="tel" name="pin" id="pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" required
+                    class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-bold text-2xl text-center tracking-[1em]"
+                    placeholder="••••" style="-webkit-text-security: disc;">
+            </div>
+
+            <!-- Esqueceu PIN -->
+            <div class="text-center mt-2">
+                <button type="button" onclick="forgotPin()" class="text-xs text-primary font-bold hover:underline">
+                    Esqueci meu PIN
+                </button>
             </div>
 
             <!-- Honeypot -->
@@ -45,9 +62,30 @@
 </div>
 
 <script>
+    function forgotPin() {
+        Swal.fire({
+            title: 'Recuperar Acesso',
+            text: 'Entre em contato com o administrador para resetar seu PIN.',
+            input: 'text',
+            inputLabel: 'Confirme seu telefone (apenas números)',
+            inputPlaceholder: 'Ex: 61999999999',
+            showCancelButton: true,
+            confirmButtonText: 'Pedir Reset no WhatsApp',
+            confirmButtonColor: '#25D366'
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const phone = result.value;
+                const msg = `Olá! Esqueci meu PIN da conta ${phone}. Pode resetar?`;
+                const link = `https://wa.me/5561999999999?text=${encodeURIComponent(msg)}`; // Substitua pelo número real do Admin
+                window.open(link, '_blank');
+            }
+        });
+    }
+
     $(document).ready(function () {
-        // Formatar Telefone
+        // Formatar Telefone e PIN
         $('#phone').mask('(00) 00000-0000');
+        $('#pin').mask('0000');
 
         $('#login-form').on('submit', function (e) {
             e.preventDefault();

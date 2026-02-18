@@ -68,5 +68,12 @@ $currentPage = $_GET['page'] ?? 'home';
             <span class="text-[9px] font-bold uppercase tracking-wider">Perfil</span>
         </a>
 
+        <!-- Ajuda (Novo) -->
+        <a href="index.php?page=help"
+            class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'help') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+            <i class="bi bi-question-circle<?= ($currentPage == 'help') ? '-fill' : '' ?> text-2xl"></i>
+            <span class="text-[9px] font-bold uppercase tracking-wider">Ajuda</span>
+        </a>
+
     </div>
 </div>
