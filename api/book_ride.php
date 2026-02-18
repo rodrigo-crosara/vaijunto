@@ -72,8 +72,9 @@ try {
 
     // 4. Vaga garantida atomicamente — inserir booking
     $meetingPoint = trim($input['meetingPoint'] ?? '');
-    $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, status, created_at) VALUES (?, ?, ?, 'confirmed', NOW())");
-    $stmtBook->execute([$rideId, $passengerId, $meetingPoint]);
+    $note = trim($input['note'] ?? '');
+    $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, note, status, created_at) VALUES (?, ?, ?, ?, 'confirmed', NOW())");
+    $stmtBook->execute([$rideId, $passengerId, $meetingPoint, $note]);
 
     $pdo->commit();
 
@@ -82,7 +83,11 @@ try {
     $stmtMe->execute([$passengerId]);
     $passengerName = $stmtMe->fetchColumn() ?: 'Alguém';
 
-    createNotification($pdo, $ride['driver_id'], 'booking', "🎉 Nova reserva de {$passengerName}!", 'index.php?page=my_rides');
+    $notifMsg = "🎉 Nova reserva de {$passengerName}!";
+    if ($note)
+        $notifMsg .= " Obs: {$note}";
+
+    createNotification($pdo, $ride['driver_id'], 'booking', $notifMsg, 'index.php?page=my_rides');
 
     // 6. Retorno de Sucesso com Dados Revelados
     echo json_encode([

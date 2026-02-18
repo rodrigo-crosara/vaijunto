@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,
     passenger_id INT NOT NULL,
+    note VARCHAR(100) NULL COMMENT 'Ponto de encontro ou obs do passageiro',
     status ENUM('pending', 'confirmed', 'rejected', 'completed') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ride_id) REFERENCES rides(id) ON DELETE CASCADE,

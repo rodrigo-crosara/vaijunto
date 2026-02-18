@@ -31,7 +31,7 @@ try {
     // 2. Para cada carona, buscar os passageiros
     foreach ($myRides as &$ride) {
         $stmtPassengers = $pdo->prepare("
-            SELECT b.id as booking_id, u.name, u.photo_url, u.phone, b.meeting_point, b.status as booking_status, b.payment_status
+            SELECT b.id as booking_id, u.name, u.photo_url, u.phone, b.meeting_point, b.note, b.status as booking_status, b.payment_status
             FROM bookings b
             JOIN users u ON b.passenger_id = u.id
             WHERE b.ride_id = ? AND b.status != 'rejected'
@@ -133,6 +133,13 @@ try {
                                     </button>
                         </div>
 
+                        <?php if ($nextRide['seats_available'] == 0): ?>
+                            <button onclick="copiarLotado(<?= $nextRide['id'] ?>, '<?= $time ?>', '<?= addslashes($nextRide['destination_text']) ?>')"
+                                class="w-full mb-6 bg-red-500 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all">
+                                <i class="bi bi-slash-circle"></i> Copiar Aviso de "LOTADO"
+                            </button>
+                        <?php endif; ?>
+
                         <!-- Checklist Express (Dentro do Card) -->
                         <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/5">
                             <div class="flex items-center justify-between mb-3">
@@ -163,6 +170,11 @@ try {
                                                         <span class="text-[10px] text-blue-200 truncate max-w-[100px]">
                                                             <i class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?>
                                                         </span>
+                                                        <?php if (!empty($p['note'])): ?>
+                                                            <span class="text-[10px] text-white/70 truncate max-w-[120px] mt-0.5 italic">
+                                                                📍 <?= htmlspecialchars($p['note']) ?>
+                                                            </span>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                                 <div class="flex gap-2">
@@ -305,6 +317,23 @@ try {
                 }
             });
         }, 5000);
+    }
+
+    async function copiarLotado(id, hora, destino) {
+        const texto = `❌ Carona das ${hora} para ${destino} -> ENCERRADA/LOTADA. Obrigado!`;
+        try {
+            await navigator.clipboard.writeText(texto);
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'success',
+                title: 'Aviso de LOTADO copiado!',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        } catch (err) {
+            Swal.fire('Erro', 'Não foi possível copiar.', 'error');
+        }
     }
 
     async function driverAction(data) {

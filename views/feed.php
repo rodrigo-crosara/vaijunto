@@ -39,6 +39,15 @@ try {
     $rides = [];
     $myBookings = [];
 }
+
+// USER PHOTO CHECK (For frontend validation)
+$userHasPhoto = false;
+if ($currentUserId) {
+    $stmtUserVal = $pdo->prepare("SELECT photo_url FROM users WHERE id = ?");
+    $stmtUserVal->execute([$currentUserId]);
+    $uPhoto = $stmtUserVal->fetchColumn();
+    $userHasPhoto = !empty($uPhoto);
+}
 ?>
 
 <div id="view-container" class="max-w-lg mx-auto">
@@ -231,6 +240,7 @@ try {
 </div>
 
 <script>
+    const userHasPhoto = <?= json_encode($userHasPhoto) ?>;
     let lastRideId = <?= (int) ($maxRideId ?? 0) ?>;
     let offset = 10;
     let searchTimeout;
@@ -313,45 +323,73 @@ try {
     }
 
     async function reservarCarona(id, price, origin, dest, waypointsJson) {
-        // 1. Preparar Opções de Ponto de Encontro
-        let options = {};
-        options[origin] = origin + ' (Saída)';
+        // 0. Validação de Foto (Critical Step)
+        if (!userHasPhoto) {
+            const { isConfirmed } = await Swal.fire({
+                title: 'Perfil sem foto',
+                html: '⚠️ Motoristas preferem perfis com foto. Suas chances de aceite aumentam 80%.<br><b>Quer adicionar agora?</b>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Adicionar Foto',
+                cancelButtonText: 'Tentar sem foto',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary',
+                    cancelButton: 'btn btn-light'
+                }
+            });
 
+            if (isConfirmed) {
+                window.location.href = 'index.php?page=profile'; // Redirect to profile
+                return;
+            }
+        }
+
+        // 1. Preparar Opções de Ponto de Encontro
+        let optionsHtml = `<option value="${origin}">${origin} (Saída)</option>`;
         try {
             const points = JSON.parse(waypointsJson);
             if (Array.isArray(points)) {
-                points.forEach(p => options[p] = p);
+                points.forEach(p => {
+                    optionsHtml += `<option value="${p}">${p}</option>`;
+                });
             }
         } catch (e) { }
 
-        // 2. Modal de Escolha
-        const { value: meetingPoint } = await Swal.fire({
-            title: 'Onde você vai embarcar?',
-            text: 'Selecione o melhor ponto de encontro para você.',
-            input: 'select',
-            inputOptions: options,
-            inputPlaceholder: 'Selecione um local...',
+        // 2. Modal de Escolha (Com Note)
+        const { value: formValues } = await Swal.fire({
+            title: 'Confirmar Reserva',
+            html: `
+                <div class="text-left">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Onde você vai embarcar?</label>
+                    <select id="swal-meeting-point" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 font-bold focus:ring-2 focus:ring-primary mb-4 outline-none">
+                        ${optionsHtml}
+                    </select>
+
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Observação (Opcional)</label>
+                    <input id="swal-note" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:ring-2 focus:ring-primary outline-none" placeholder="Onde você vai esperar? (Ex: Parada do Mercado)">
+                </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Confirmar Reserva',
             cancelButtonText: 'Cancelar',
             customClass: {
                 confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold',
                 cancelButton: 'bg-gray-100 text-gray-400 px-6 py-3 rounded-2xl font-bold ml-2',
-                input: 'rounded-xl border-gray-200 focus:ring-primary/20 focus:border-primary py-3'
+                popup: 'rounded-[2.5rem] p-6'
             },
             buttonsStyling: false,
-            inputValidator: (value) => {
-                return new Promise((resolve) => {
-                    if (value) {
-                        resolve();
-                    } else {
-                        resolve('Você precisa escolher um local de embarque!');
-                    }
-                });
+            preConfirm: () => {
+                return {
+                    meetingPoint: document.getElementById('swal-meeting-point').value,
+                    note: document.getElementById('swal-note').value
+                }
             }
         });
 
-        if (meetingPoint) {
+        if (formValues) {
+            const { meetingPoint, note } = formValues;
+
             // Loading
             Swal.fire({ title: 'Reservando...', didOpen: () => Swal.showLoading() });
 
@@ -359,13 +397,15 @@ try {
                 url: 'api/book_ride.php',
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ rideId: id, meetingPoint: meetingPoint }),
+                data: JSON.stringify({ rideId: id, meetingPoint: meetingPoint, note: note }),
                 success: function (res) {
                     if (res.success) {
                         // 3. Sucesso & WhatsApp (Grand Finale)
                         const phone = res.driver_phone.replace(/\D/g, '');
-                        const msg = `Olá! Reservei sua carona no VaiJunto. Te espero em: *${meetingPoint}*. Pode ser?`;
-                        const link = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`;
+                        // Check if note exists to include in WhatsApp message
+                        const noteText = note ? ` (%2A${encodeURIComponent(note)}%2A)` : '';
+                        const msg = `Olá! Reservei sua carona no VaiJunto. Te espero em: *${meetingPoint}*${noteText}. Pode ser?`;
+                        const link = `https://wa.me/55${phone}?text=${msg}`;
 
                         Swal.fire({
                             title: 'Vaga Garantida! ✅',
@@ -376,6 +416,7 @@ try {
                                     <hr class="my-3 border-gray-200">
                                     <p class="text-sm text-gray-500 mb-1">Motorista notificado para te pegar em:</p>
                                     <p class="font-bold text-primary">${meetingPoint}</p>
+                                    ${note ? `<p class="text-xs text-gray-400 mt-1 italic">"${note}"</p>` : ''}
                                 </div>
                                 <p class="text-sm text-gray-400">Combine os detalhes finais no WhatsApp.</p>
                             `,
