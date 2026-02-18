@@ -218,9 +218,9 @@ if ($currentUserId) {
                                 <button
                                     onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", `<?= addslashes($ride['waypoints'] ?? "[]") ?>`)'
                                     class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
-                                    Reservar
+                                    Solicitar Vaga
                                 </button>
-                            <?php endif; ?>
+                                <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -358,7 +358,7 @@ if ($currentUserId) {
 
         // 2. Modal de Escolha (Com Note)
         const { value: formValues } = await Swal.fire({
-            title: 'Confirmar Reserva',
+            title: 'Solicitar Vaga 🙋‍♂️',
             html: `
                 <div class="text-left">
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Onde você vai embarcar?</label>
@@ -371,7 +371,7 @@ if ($currentUserId) {
                 </div>
             `,
             showCancelButton: true,
-            confirmButtonText: 'Confirmar Reserva',
+            confirmButtonText: 'Enviar Solicitação',
             cancelButtonText: 'Cancelar',
             customClass: {
                 confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold',
@@ -408,22 +408,12 @@ if ($currentUserId) {
                         const link = `https://wa.me/55${phone}?text=${msg}`;
 
                         Swal.fire({
-                            title: 'Vaga Garantida! ✅',
-                            html: `
-                                <div class="text-left bg-gray-50 p-4 rounded-xl border border-gray-100 mb-4">
-                                    <p class="text-sm text-gray-500 mb-1">Você vai de:</p>
-                                    <p class="font-bold text-gray-900 text-lg">${res.car_model} - ${res.car_plate}</p>
-                                    <hr class="my-3 border-gray-200">
-                                    <p class="text-sm text-gray-500 mb-1">Motorista notificado para te pegar em:</p>
-                                    <p class="font-bold text-primary">${meetingPoint}</p>
-                                    ${note ? `<p class="text-xs text-gray-400 mt-1 italic">"${note}"</p>` : ''}
-                                </div>
-                                <p class="text-sm text-gray-400">Combine os detalhes finais no WhatsApp.</p>
-                            `,
-                            icon: 'success',
+                            title: 'Solicitação Enviada! ⏳',
+                            text: 'Sua vaga está pré-reservada. Para garantir, envie uma mensagem ao motorista agora.',
+                            icon: 'info',
                             showCancelButton: true,
-                            confirmButtonText: '<i class="bi bi-whatsapp"></i> Confirmar no Zap',
-                            cancelButtonText: 'Fechar',
+                            confirmButtonText: '<i class="bi bi-whatsapp"></i> Confirmar no WhatsApp',
+                            cancelButtonText: 'Aguardar no App',
                             customClass: {
                                 confirmButton: 'bg-green-500 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-green-200 hover:scale-105 transition-all',
                                 cancelButton: 'text-gray-400 font-bold hover:text-gray-600'

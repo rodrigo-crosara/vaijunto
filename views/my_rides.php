@@ -116,6 +116,14 @@ try {
                             </div>
                         </div>
 
+                        <!-- Botão FECHAR VAGAS -->
+                        <?php if ($nextRide['seats_available'] > 0): ?>
+                            <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
+                                class="w-full mb-4 bg-red-500/80 hover:bg-red-500 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                <i class="bi bi-slash-circle"></i> 🚫 Lotou Externamente / Fechar Vagas
+                            </button>
+                        <?php endif; ?>
+
                         <!-- Ações Rápidas -->
                         <div class="flex gap-2 mb-6">
                                     <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
@@ -190,10 +198,21 @@ try {
                                                             💰 Confirmar Pagamento
                                                         </button>
                                                     <?php endif; ?>
-                                                </div>
+                                                <?php elseif ($p['booking_status'] === 'pending'): ?>
+                                                    <div class="flex gap-1">
+                                                        <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'confirm')"
+                                                            class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" title="Aceitar">
+                                                            <i class="bi bi-check-lg"></i>
+                                                        </button>
+                                                        <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'reject')"
+                                                            class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform" title="Recusar">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
-                                        <?php endforeach; ?>
-                                    </div>
+                                        </div>
+                                    <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -317,6 +336,57 @@ try {
                 }
             });
         }, 5000);
+    }
+
+
+    function fecharVagas(rideId) {
+        Swal.fire({
+            title: 'Fechar Vagas?',
+            text: 'Sua carona vai sumir do feed imediatamente.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, fechar!',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d33'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const res = await fetch('api/close_ride.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ rideId: rideId })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        Swal.fire({ text: 'Vagas encerradas!', icon: 'success', timer: 1500, showConfirmButton: false }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Erro', data.message, 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Erro', 'Falha na conexão', 'error');
+                }
+            }
+        });
+    }
+
+    async function responderSolicitacao(bookingId, action) {
+        // action: 'confirm' ou 'reject'
+        Swal.fire({ title: 'Processando...', didOpen: () => Swal.showLoading() });
+        try {
+            const res = await fetch('api/driver_actions.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action + '_booking', bookingId: bookingId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                Swal.fire('Erro', data.message, 'error');
+            }
+        } catch (e) {
+            Swal.fire('Erro', 'Falha na conexão', 'error');
+        }
     }
 
     async function copiarLotado(id, hora, destino) {

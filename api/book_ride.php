@@ -70,32 +70,33 @@ try {
         throw new Exception("Vagas esgotadas! Alguém reservou antes de você.");
     }
 
-    // 4. Vaga garantida atomicamente — inserir booking
+    // 4. Vaga reservada provisoriamente (PENDING)
     $meetingPoint = trim($input['meetingPoint'] ?? '');
     $note = trim($input['note'] ?? '');
-    $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, note, status, created_at) VALUES (?, ?, ?, ?, 'confirmed', NOW())");
+
+    // Status 'pending' é o gatilho para a confirmação do motorista
+    $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, note, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
     $stmtBook->execute([$rideId, $passengerId, $meetingPoint, $note]);
 
     $pdo->commit();
 
-    // 5. Notificar o Motorista (Buscar nome real do passageiro no banco para evitar fakes de sessão)
+    // 5. Notificar o Motorista
     $stmtMe = $pdo->prepare("SELECT name FROM users WHERE id = ?");
     $stmtMe->execute([$passengerId]);
     $passengerName = $stmtMe->fetchColumn() ?: 'Alguém';
 
-    $notifMsg = "🎉 Nova reserva de {$passengerName}!";
+    $notifMsg = "🔔 Solicitação de vaga: {$passengerName} quer entrar!";
     if ($note)
         $notifMsg .= " Obs: {$note}";
 
-    createNotification($pdo, $ride['driver_id'], 'booking', $notifMsg, 'index.php?page=my_rides');
+    createNotification($pdo, $ride['driver_id'], 'booking_request', $notifMsg, 'index.php?page=my_rides');
 
-    // 6. Retorno de Sucesso com Dados Revelados
+    // 6. Retorno de Sucesso (Flow 'Solicitação')
     echo json_encode([
         'success' => true,
-        'message' => 'Vaga garantida!',
+        'message' => 'Solicitação enviada!',
         'driver_phone' => $ride['driver_phone'],
-        'pix_key' => $ride['pix_key'] ?? '',
-        'car_plate' => $ride['car_plate'] ?? 'Placa não inf.',
+        // Não enviamos dados sensíveis (placa/pix) ainda
         'car_model' => $ride['car_model'] ?? 'Carro'
     ]);
 
