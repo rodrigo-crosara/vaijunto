@@ -23,7 +23,7 @@
         const link = `${window.location.origin}${window.location.pathname}?ride_id=${ride.id}`;
 
         // Montar Mensagem
-        const msg = `🚘 *Vaga Disponível!*%0a` +
+        const msg = `🚘 *Carona.online - Vaga Disponível!*%0a` +
             `📍 *De:* ${ride.origin}%0a` +
             `🏁 *Para:* ${ride.destination}%0a` +
             `🕒 *Saída:* ${timeFormatted}%0a` +
@@ -206,7 +206,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('VaiJunto: App Ready');
+        console.log('Carona.online: App Ready');
         // Verificar avaliações pendentes ao carregar qualquer página
         checkPendingRating();
         // Polling de notificações: imediato + a cada 15s

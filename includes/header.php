@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>VaiJunto - Caronas Sem Atrito</title>
+    <title>Carona.online | Suas caronas facilitadas</title>
 
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">

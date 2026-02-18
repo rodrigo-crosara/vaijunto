@@ -72,7 +72,8 @@ $section = $_GET['section'] ?? 'faq';
             <div class="prose prose-sm text-gray-600">
                 <h3 class="text-gray-900 font-bold mb-2">1. Termos de Uso</h3>
                 <p class="mb-4">
-                    Ao usar o VaiJunto, você concorda que o serviço é apenas uma plataforma de conexão entre motoristas e
+                    Ao usar o Carona.online, você concorda que o serviço é apenas uma plataforma de conexão entre motoristas
+                    e
                     passageiros. Não nos responsabilizamos por cancelamentos, atrasos ou incidentes durante o trajeto.
                 </p>
 

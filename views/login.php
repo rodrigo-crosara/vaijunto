@@ -11,8 +11,9 @@
             class="w-20 h-20 bg-primary rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-primary/30">
             <i class="bi bi-car-front-fill text-white text-4xl"></i>
         </div>
-        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Vai<span class="text-primary">Junto</span></h1>
-        <p class="text-gray-500 mt-2 font-medium">Caronas sem atrito para sua rotina.</p>
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Carona.<span class="text-primary">online</span>
+        </h1>
+        <p class="text-gray-500 mt-2 font-medium">Bem-vindo ao Carona.online</p>
     </div>
 
     <!-- Login Card -->
