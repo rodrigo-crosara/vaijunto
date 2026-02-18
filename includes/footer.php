@@ -260,6 +260,13 @@
                 setTimeout(() => location.reload(), 1500);
             }
         });
+
+        // Iniciar Tour
+        setTimeout(checkFirstVisit, 1500);
+        // Tentar mostrar install (se não for tour, mostra direto, se for tour, mostra no final)
+        if (localStorage.getItem('tutorial_seen')) {
+            setTimeout(showInstallPromotion, 3000);
+        }
     });
 
     // Capturar evento de instalação
@@ -268,7 +275,126 @@
         e.preventDefault();
         deferredPrompt = e;
         console.log('PWA: Pronto para instalar');
+        showInstallPromotion(); // Se disponível, mostrar
     });
+
+    // ===== ONBOARDING (BOAS-VINDAS) =====
+    function checkFirstVisit() {
+        if (!localStorage.getItem('tutorial_seen')) {
+            const steps = [
+                {
+                    title: 'Bem-vindo ao Carona.online!',
+                    text: 'A forma mais fácil de dividir custos e fazer amigos. 👋',
+                    icon: 'info',
+                    confirmButtonText: 'Próximo >'
+                },
+                {
+                    title: 'Como funciona?',
+                    text: '1. Ache a carona.\n2. Solicite a vaga.\n3. Combine tudo pelo WhatsApp do motorista! 💬',
+                    icon: 'question',
+                    confirmButtonText: 'Entendi >'
+                },
+                {
+                    title: 'Tudo pronto!',
+                    text: 'Instale nosso App para receber notificações. 🚀',
+                    icon: 'success',
+                    confirmButtonText: 'Começar!'
+                }
+            ];
+
+            // Queue Swals
+            let stepIndex = 0;
+            const showStep = () => {
+                if (stepIndex >= steps.length) {
+                    localStorage.setItem('tutorial_seen', 'true');
+                    // Tentar mostrar install promo após o tutorial
+                    if (deferredPrompt) showInstallPromotion();
+                    return;
+                }
+                const s = steps[stepIndex];
+                Swal.fire({
+                    title: s.title,
+                    text: s.text,
+                    icon: s.icon,
+                    confirmButtonText: s.confirmButtonText,
+                    customClass: {
+                        popup: 'rounded-[2.5rem] !p-6',
+                        confirmButton: 'bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg'
+                    },
+                    allowOutsideClick: false
+                }).then(() => {
+                    stepIndex++;
+                    showStep();
+                });
+            };
+            showStep();
+        }
+    }
+
+    // ===== PROMOÇÃO DE INSTALAÇÃO (BANNER/TOAST) =====
+    function showInstallPromotion() {
+        if (localStorage.getItem('install_dismissed')) return;
+
+        // Verificar se está em modo standalone (já instalado)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (isStandalone) return;
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        if (isIOS) {
+            // Toast iOS
+            Swal.fire({
+                toast: true,
+                position: 'bottom',
+                html: `
+                    <div class="flex flex-col items-start gap-2">
+                        <span class="font-bold text-sm">📲 Instale o App para melhor experiência!</span>
+                        <span class="text-xs">Toque em <span class="font-bold">Compartilhar</span> <i class="bi bi-box-arrow-up"></i> e depois em <span class="font-bold">Adicionar à Tela de Início</span> ➕</span>
+                         <button onclick="dismissInstall()" class="text-primary text-xs font-bold mt-1 self-end">Entendi</button>
+                    </div>
+                `,
+                showConfirmButton: false,
+                customClass: { popup: 'rounded-t-3xl !pb-8 !px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]' },
+                timer: 0 // Persistente
+            });
+        } else if (deferredPrompt) {
+            // Android / Desktop Button
+            const btn = document.createElement('div');
+            btn.id = 'install-fab';
+            btn.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-bounce cursor-pointer';
+            btn.innerHTML = `
+                <button onclick="triggerInstall()" class="bg-primary text-white font-bold text-sm px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 border-2 border-white">
+                    <i class="bi bi-phone"></i> Instalar App
+                </button>
+                <div class="text-center mt-1">
+                    <button onclick="dismissInstall()" class="text-[10px] text-gray-400 font-bold bg-white/80 px-2 rounded">Não agora</button>
+                </div>
+            `;
+            document.body.appendChild(btn);
+        }
+    }
+
+    function triggerInstall() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((result) => {
+                if (result.outcome === 'accepted') {
+                    console.log('User accepted install');
+                    dismissInstall();
+                }
+                deferredPrompt = null;
+            });
+        }
+    }
+
+    window.dismissInstall = function () { // Global scope for HTML onclick
+        localStorage.setItem('install_dismissed', 'true');
+        // Remove FAB if exists
+        const fab = document.getElementById('install-fab');
+        if (fab) fab.remove();
+        // Close Swal if exists (iOS)
+        Swal.close();
+    };
 </script>
 </body>
 
