@@ -245,6 +245,46 @@ if ($currentUserId) {
     let offset = 10;
     let searchTimeout;
 
+    // Adicionar esta função no script de views/feed.php
+    async function loadMoreRides() {
+        const btn = $('#load-more-btn');
+        const originalText = btn.html();
+
+        // Feedback de carregamento
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Carregando...');
+
+        try {
+            // Chama a API com o offset atual
+            const response = await fetch(`api/get_rides.php?offset=${offset}`);
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.count > 0) {
+                    // Adiciona as novas caronas na lista
+                    $('#rides-list').append(result.html);
+
+                    // Incrementa o offset para a próxima busca
+                    offset += 10;
+
+                    // Se vieram menos de 10 caronas, significa que acabou
+                    if (result.count < 10) {
+                        $('#load-more-container').addClass('hidden');
+                    }
+                } else {
+                    // Se não veio nada, esconde o botão
+                    $('#load-more-container').addClass('hidden');
+                }
+            } else {
+                console.error(result.message);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar mais caronas:', error);
+        } finally {
+            // Restaura o botão
+            btn.prop('disabled', false).html(originalText);
+        }
+    }
+
     // XSS Protection for JS
     function escapeHtml(text) {
         if (!text) return text;
