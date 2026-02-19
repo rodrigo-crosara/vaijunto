@@ -114,7 +114,17 @@ $msg = $_GET['msg'] ?? '';
                 <i class="bi bi-shield-lock text-primary"></i> Segurança
             </h3>
             <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Alterar PIN (Opcional)</label>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN Atual</label>
+                <div class="relative mb-4">
+                    <input type="tel" name="current_pin" id="current-pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                        class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
+                        placeholder="••••" style="-webkit-text-security: disc;">
+                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                        <i class="bi bi-shield-lock"></i>
+                     </div>
+                </div>
+
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Novo PIN (Opcional)</label>
                 <div class="relative">
                     <input type="tel" name="pin" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
                         class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
@@ -567,5 +577,6 @@ $msg = $_GET['msg'] ?? '';
         });
         
         $('#pin-input').mask('0000');
+        $('#current-pin-input').mask('0000');
     });
 </script>

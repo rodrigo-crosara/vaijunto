@@ -108,11 +108,11 @@ try {
 
                         <div class="flex items-center gap-3 mb-8">
                             <div class="font-bold text-lg truncate">
-                                <?= $nextRide['origin_text'] ?>
+                                <?= htmlspecialchars($nextRide['origin_text']) ?>
                             </div>
                             <i class="bi bi-arrow-right text-blue-300"></i>
                             <div class="font-bold text-lg truncate">
-                                <?= $nextRide['destination_text'] ?>
+                                <?= htmlspecialchars($nextRide['destination_text']) ?>
                             </div>
                         </div>
 

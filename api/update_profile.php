@@ -61,9 +61,23 @@ try {
 
     // PIN Update Logic
     $pin = $input['pin'] ?? '';
+    $currentPin = $input['current_pin'] ?? '';
+
     // Se o usuário digitou um novo PIN (4 dígitos)
     if (!empty($pin)) {
         if (preg_match('/^\d{4}$/', $pin)) {
+            // Busca o hash atual no banco
+            $stmt = $pdo->prepare("SELECT pin_hash FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch();
+
+            // Verifica se o PIN atual bate (ou se é a primeira vez/null, permite sem)
+            if ($user['pin_hash'] && !password_verify($currentPin, $user['pin_hash'])) {
+                $pdo->rollBack();
+                echo json_encode(['success' => false, 'message' => 'PIN atual incorreto.']);
+                exit;
+            }
+
             $pinHash = password_hash($pin, PASSWORD_DEFAULT);
             $stmtPin = $pdo->prepare("UPDATE users SET pin_hash = ? WHERE id = ?");
             $stmtPin->execute([$pinHash, $userId]);
