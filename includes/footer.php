@@ -142,6 +142,7 @@
     }
 
     // ===== SISTEMA DE POLLING DE NOTIFICAÇÕES =====
+    <?php if (isset($_SESSION['user_id'])): ?>
     let knownNotifIds = new Set();
     let firstPoll = true;
 
@@ -234,7 +235,13 @@
         } catch (e) {
             // Silencioso
         }
+        } catch (e) {
+            // Silencioso
+        }
     }
+    <?php else: ?>
+    function pollNotifications() {} // No-op for guests
+    <?php endif; ?>
 
     document.addEventListener('DOMContentLoaded', () => {
         console.log('Carona.online: App Ready');

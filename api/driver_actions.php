@@ -97,6 +97,17 @@ try {
             $stmtUpdate = $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?");
             $stmtUpdate->execute([$bookingId]);
 
+            // DEVOLVER VAGA
+            // Buscar rideId da reserva
+            $stmtRideId = $pdo->prepare("SELECT ride_id FROM bookings WHERE id = ?");
+            $stmtRideId->execute([$bookingId]);
+            $rideIdForReturn = $stmtRideId->fetchColumn();
+
+            if ($rideIdForReturn) {
+                $stmtInc = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
+                $stmtInc->execute([$rideIdForReturn]);
+            }
+
             // 3. Incrementar vagas na carona
             $stmtInc = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
             $stmtInc->execute([$booking['ride_id']]);
