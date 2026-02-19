@@ -70,10 +70,10 @@ try {
                     </div>
                     <div class="flex flex-col items-end">
                         <span class="text-[10px] font-bold text-gray-400 uppercase">
-                            <?= $day ?>
+                            <?= date('d/m \à\s H:i', strtotime($ride['departure_time'])) ?>
                         </span>
                         <span class="text-lg font-extrabold text-primary">
-                            <?= $time ?>
+                            <!-- Hora já mostrada acima, aqui só destaque se quiser -->
                         </span>
                     </div>
                 </div>

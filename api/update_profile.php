@@ -59,6 +59,22 @@ try {
         $phoneChanged = true;
     }
 
+    // PIN Update Logic
+    $pin = $input['pin'] ?? '';
+    // Se o usuário digitou um novo PIN (4 dígitos)
+    if (!empty($pin)) {
+        if (preg_match('/^\d{4}$/', $pin)) {
+            $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+            $stmtPin = $pdo->prepare("UPDATE users SET pin_hash = ? WHERE id = ?");
+            $stmtPin->execute([$pinHash, $userId]);
+        } else {
+            // Rollback if PIN is invalid format but was attempted
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'message' => 'O PIN deve ter 4 dígitos numéricos.']);
+            exit;
+        }
+    }
+
     // Update User
     $pixKey = trim($input['pix_key'] ?? '');
     $isDriver = !empty($input['is_driver']) ? 1 : 0;

@@ -105,6 +105,26 @@ $msg = $_GET['msg'] ?? '';
                         placeholder="Ex: Trabalho no Setor Bancário..."><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
                 </div>
             </div>
+            </div>
+        </div>
+
+        <!-- Segurança -->
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
+             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <i class="bi bi-shield-lock text-primary"></i> Segurança
+            </h3>
+            <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Alterar PIN (Opcional)</label>
+                <div class="relative">
+                    <input type="tel" name="pin" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                        class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
+                        placeholder="••••" style="-webkit-text-security: disc;">
+                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                        <i class="bi bi-key-fill"></i>
+                     </div>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-2 ml-1">Deixe em branco para manter o atual. Use 4 números.</p>
+            </div>
         </div>
 
         <!-- Toggle Motorista -->
@@ -544,5 +564,8 @@ $msg = $_GET['msg'] ?? '';
                 }
             });
         });
+        });
+        
+        $('#pin-input').mask('0000');
     });
 </script>

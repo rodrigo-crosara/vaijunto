@@ -42,6 +42,11 @@ try {
     }
 
     // 2. Bloqueios de Lógica
+    // Validar status e vagas novamente
+    if ($ride['seats_available'] < 1 || $ride['status'] !== 'active') {
+        throw new Exception("Carona lotada ou indisponível.");
+    }
+
     if ($ride['driver_id'] == $passengerId) {
         throw new Exception("Você não pode reservar sua própria carona.");
     }
@@ -58,7 +63,7 @@ try {
     $stmtCheck = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? AND status != 'canceled'");
     $stmtCheck->execute([$rideId, $passengerId]);
     if ($stmtCheck->fetch()) {
-        throw new Exception("Você já reservou um lugar nesta carona.");
+        throw new Exception("Você já solicitou vaga nesta carona.");
     }
 
     // 3. RESERVA ATÔMICA: Tenta decrementar SOMENTE se tiver vaga (> 0)
