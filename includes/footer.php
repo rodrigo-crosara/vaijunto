@@ -163,11 +163,15 @@
                 }
             }
 
-            // Toasts para notificações NOVAS (não no primeiro poll)
+            }
+
+            // Toasts e Alertas para notificações NOVAS (não no primeiro poll)
             if (!firstPoll && data.notifications) {
+                let hasNew = false;
                 data.notifications.forEach(n => {
                     if (!knownNotifIds.has(n.id)) {
-                        // Nova notificação! Toast!
+                        hasNew = true;
+                        // Nova notificação! Toast Visual
                         const iconMap = {
                             'booking': 'success',
                             'cancel': 'warning',
@@ -175,6 +179,8 @@
                             'payment': 'success',
                             'system': 'info'
                         };
+                        
+                        // Toast Visual do App
                         Swal.fire({
                             toast: true,
                             position: 'top-end',
@@ -190,8 +196,33 @@
                                 });
                             }
                         });
+
+                        // Notificação do Sistema (Nativo)
+                        if (Notification.permission === "granted") {
+                           try {
+                                new Notification("Carona.online", {
+                                    body: n.message,
+                                    icon: "assets/media/app/icon-192.png",
+                                    vibrate: [200, 100, 200],
+                                    tag: 'carona-online-' + n.id
+                                });
+                           } catch(e) {}
+                        }
                     }
                 });
+
+                // Feedback Físico (Som e Vibração) - Apenas uma vez por lote
+                if (hasNew) {
+                    // Vibrar
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    
+                    // Som
+                    try {
+                        const audio = new Audio('assets/media/notification.mp3');
+                        audio.volume = 0.5;
+                        audio.play().catch(() => {}); // Falha silenciosa se não houver interação prévia
+                    } catch (e) {}
+                }
             }
 
             // Atualizar IDs conhecidos
@@ -260,6 +291,27 @@
                 setTimeout(() => location.reload(), 1500);
             }
         });
+
+        // Solicitar Permissão de Notificações
+        if (Notification.permission === 'default') {
+            setTimeout(() => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top',
+                    icon: 'info',
+                    title: 'Ativar Alertas Sonoros? 🔔',
+                    showConfirmButton: true,
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim',
+                    cancelButtonText: 'Não',
+                    customClass: { popup: 'rounded-2xl !text-sm' }
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        Notification.requestPermission();
+                    }
+                });
+            }, 5000); // 5s delay
+        }
 
         // Iniciar Tour
         setTimeout(checkFirstVisit, 1500);
