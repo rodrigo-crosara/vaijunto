@@ -60,6 +60,9 @@ if (!isset($_SESSION['user_id'])) {
         case 'admin':
             include 'views/admin.php';
             break;
+        case 'help':
+            include 'views/help.php';
+            break;
         default:
             include 'views/feed.php';
             break;

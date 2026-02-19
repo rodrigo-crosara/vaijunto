@@ -100,7 +100,7 @@ try {
             $pdo,
             $newUserId,
             'system',
-            "Dica: Adicione uma foto de perfil e o modelo do seu carro (se for motorista) para ser aceito mais rápido!",
+            "Dica: Perfis com foto são aceitos 3x mais rápido! Adicione a sua agora em 'Meu Perfil'.",
             "index.php?page=profile"
         );
 
