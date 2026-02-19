@@ -79,6 +79,7 @@ try {
         $_SESSION['user_photo'] = $user['photo_url'] ?? '';
         $_SESSION['is_driver'] = (int) $user['is_driver'];
         $_SESSION['is_admin'] = (int) $user['is_admin'];
+        $_SESSION['user_phone'] = $cleanPhone;
         echo json_encode(['success' => true, 'type' => 'login']);
 
     } else {
@@ -94,6 +95,7 @@ try {
         $_SESSION['user_photo'] = '';
         $_SESSION['is_driver'] = 0;
         $_SESSION['is_admin'] = 0;
+        $_SESSION['user_phone'] = $cleanPhone;
 
         require_once '../helpers/notification.php';
         createNotification(

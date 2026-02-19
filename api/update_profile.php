@@ -96,6 +96,7 @@ try {
     if ($phoneChanged) {
         $stmtUser = $pdo->prepare("UPDATE users SET name = ?, bio = ?, phone = ?, pix_key = ?, is_driver = ? WHERE id = ?");
         $stmtUser->execute([$name, $bio, $newPhone, $pixKey, $isDriver, $userId]);
+        $_SESSION['user_phone'] = $newPhone;
     } else {
         $stmtUser = $pdo->prepare("UPDATE users SET name = ?, bio = ?, pix_key = ?, is_driver = ? WHERE id = ?");
         $stmtUser->execute([$name, $bio, $pixKey, $isDriver, $userId]);

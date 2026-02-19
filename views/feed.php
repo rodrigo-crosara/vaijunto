@@ -69,14 +69,21 @@ if ($currentUserId) {
         <div class="flex gap-2">
             <div class="relative flex-grow">
                 <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
                 <input type="text" id="search-query" oninput="debounceSearch()"
-                    class="w-full pl-12 pr-4 py-4 rounded-[2rem] bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium"
+                    class="w-full pl-12 pr-12 py-4 rounded-[2rem] bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium"
                     placeholder="Para onde você vai?">
+
+                <button id="btn-clear-search" onclick="clearSearch()"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 transition-colors hidden p-1">
+                    <i class="bi bi-x-circle-fill text-xl"></i>
+                </button>
             </div>
+
             <div class="relative w-32 shrink-0">
-                <i class="bi bi-clock absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input type="time" id="search-time" onchange="performSearch()"
-                    class="w-full pl-10 pr-2 py-4 rounded-3xl bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium">
+                    onclick="try{this.showPicker()}catch(e){}"
+                    class="w-full pl-6 pr-2 py-4 rounded-3xl bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium text-center cursor-pointer">
             </div>
         </div>
     </div>
@@ -308,18 +315,37 @@ if ($currentUserId) {
         searchTimeout = setTimeout(performSearch, 500);
     }
 
+    function clearSearch() {
+        $('#search-query').val('');
+        $('#search-time').val('');
+        $('#btn-clear-search').addClass('hidden');
+        performSearch(); // Recarrega a lista completa
+    }
+
     async function performSearch() {
         const query = $('#search-query').val();
         const time = $('#search-time').val();
         const container = $('#rides-list');
+        const btnClear = $('#btn-clear-search');
 
-        if (query === '' && time === '') { location.reload(); return; }
+        // Lógica de Visibilidade do Botão Limpar
+        if (query !== '' || time !== '') {
+            btnClear.removeClass('hidden');
+        } else {
+            btnClear.addClass('hidden');
+        }
+
+        // Se vazio, recarrega a página (reset limpo) ou busca tudo
+        if (query === '' && time === '') { 
+            offset = 0; // Reset paginação
+        }
 
         showSkeleton(container);
         $('#load-more-container').addClass('hidden');
 
         try {
-            const response = await fetch(`api/search_rides.php?query=${encodeURIComponent(query)}&time=${encodeURIComponent(time)}`);
+            // Adiciona timestamp para evitar cache
+            const response = await fetch(`api/search_rides.php?query=${encodeURIComponent(query)}&time=${encodeURIComponent(time)}&t=${new Date().getTime()}`);
             const result = await response.json();
             if (result.success) {
                 if (result.count > 0) {
@@ -488,7 +514,7 @@ if ($currentUserId) {
                                 window.open(link, '_blank');
                             }
                             location.reload();
-                        });
+               });
                     } else {
                         Swal.fire({ text: res.message, icon: 'error' });
                     }

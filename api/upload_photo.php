@@ -20,11 +20,13 @@ if (!isset($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
 }
 
 $file = $_FILES['photo'];
-$allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-$mimeType = mime_content_type($file['tmp_name']);
+$finfo = new finfo(FILEINFO_MIME_TYPE);
+$mimeType = $finfo->file($file['tmp_name']);
+
+$allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
 if (!in_array($mimeType, $allowedTypes)) {
-    echo json_encode(['success' => false, 'message' => 'Apenas imagens JPG ou PNG são permitidas.']);
+    echo json_encode(['success' => false, 'message' => 'Arquivo inválido. Apenas JPG, PNG ou WEBP são permitidos.']);
     exit;
 }
 
