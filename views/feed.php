@@ -205,7 +205,7 @@ if ($currentUserId) {
                         <div class="flex gap-2">
                             <?php if ($isDriver): ?>
                                 <button
-                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", "<?= $time ?>", "<?= addslashes(implode(' -> ', $waypoints)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
+                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
                                     class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>
@@ -216,7 +216,7 @@ if ($currentUserId) {
                                 </a>
                             <?php else: ?>
                                 <button
-                                    onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", `<?= addslashes($ride['waypoints'] ?? "[]") ?>`)'
+                                    onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", `<?= addslashes(htmlspecialchars($ride['waypoints'] ?? "[]")) ?>`)'
                                     class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
                                     Solicitar Vaga
                                 </button>
@@ -244,6 +244,17 @@ if ($currentUserId) {
     let lastRideId = <?= (int) ($maxRideId ?? 0) ?>;
     let offset = 10;
     let searchTimeout;
+
+    // XSS Protection for JS
+    function escapeHtml(text) {
+        if (!text) return text;
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor) {
         const texto = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
@@ -316,8 +327,8 @@ if ($currentUserId) {
                                 <span class="text-[10px] font-bold uppercase bg-white/20 px-3 py-1 rounded-full">Próxima Viagem</span>
                                 ${isPaid ? '<span class="text-[10px] font-bold uppercase bg-green-400 px-3 py-1 rounded-full">PAGO ✅</span>' : ''}
                             </div>
-                            <h3 class="text-2xl font-black mb-1">Para ${ride.destination_text}</h3>
-                            <p class="text-blue-50 text-sm mb-6">Com ${ride.driver_name}</p>
+                            <h3 class="text-2xl font-black mb-1">Para ${escapeHtml(ride.destination_text)}</h3>
+                            <p class="text-blue-50 text-sm mb-6">Com ${escapeHtml(ride.driver_name)}</p>
                             
                             ${isPaid ? `
                                 <div class="bg-white/20 p-4 rounded-2xl flex items-center justify-center gap-3 font-bold">
