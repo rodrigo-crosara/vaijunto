@@ -574,7 +574,6 @@ $msg = $_GET['msg'] ?? '';
                 }
             });
         });
-        });
         
         $('#pin-input').mask('0000');
         $('#current-pin-input').mask('0000');

@@ -72,7 +72,6 @@
             animation: pulse-slow 4s infinite ease-in-out;
         }
     </style>
-    </style>
 
     <!-- Core Scripts (Loaded in Head) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>

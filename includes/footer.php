@@ -143,104 +143,99 @@
 
     // ===== SISTEMA DE POLLING DE NOTIFICAÇÕES =====
     <?php if (isset($_SESSION['user_id'])): ?>
-    let knownNotifIds = new Set();
-    let firstPoll = true;
+        let knownNotifIds = new Set();
+        let firstPoll = true;
 
-    async function pollNotifications() {
-        try {
-            const res = await fetch('api/check_notifications.php');
-            const data = await res.json();
+        async function pollNotifications() {
+            try {
+                const res = await fetch('api/check_notifications.php');
+                const data = await res.json();
 
-            // Atualizar badge do sino
-            const badge = document.getElementById('notif-badge');
-            if (badge) {
-                if (data.count > 0) {
-                    badge.textContent = data.count > 9 ? '9+' : data.count;
-                    badge.classList.remove('hidden');
-                    badge.classList.add('flex');
-                } else {
-                    badge.classList.add('hidden');
-                    badge.classList.remove('flex');
-                }
-            }
-
-            }
-
-            // Toasts e Alertas para notificações NOVAS (não no primeiro poll)
-            if (!firstPoll && data.notifications) {
-                let hasNew = false;
-                data.notifications.forEach(n => {
-                    if (!knownNotifIds.has(n.id)) {
-                        hasNew = true;
-                        // Nova notificação! Toast Visual
-                        const iconMap = {
-                            'booking': 'success',
-                            'cancel': 'warning',
-                            'confirmed': 'success',
-                            'payment': 'success',
-                            'system': 'info'
-                        };
-                        
-                        // Toast Visual do App
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: iconMap[n.type] || 'info',
-                            title: n.message,
-                            showConfirmButton: false,
-                            timer: 4000,
-                            timerProgressBar: true,
-                            customClass: { popup: 'rounded-2xl !text-sm' },
-                            didOpen: (toast) => {
-                                toast.addEventListener('click', () => {
-                                    if (n.link_url) window.location.href = n.link_url;
-                                });
-                            }
-                        });
-
-                        // Notificação do Sistema (Nativo)
-                        if (Notification.permission === "granted") {
-                           try {
-                                new Notification("Carona.online", {
-                                    body: n.message,
-                                    icon: "assets/media/app/icon-192.png",
-                                    vibrate: [200, 100, 200],
-                                    tag: 'carona-online-' + n.id
-                                });
-                           } catch(e) {}
-                        }
+                // Atualizar badge do sino
+                const badge = document.getElementById('notif-badge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count > 9 ? '9+' : data.count;
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                    } else {
+                        badge.classList.add('hidden');
+                        badge.classList.remove('flex');
                     }
-                });
-
-                // Feedback Físico (Som e Vibração) - Apenas uma vez por lote
-                if (hasNew) {
-                    // Vibrar
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                    
-                    // Som
-                    try {
-                        const audio = new Audio('assets/media/notification.mp3');
-                        audio.volume = 0.5;
-                        audio.play().catch(() => {}); // Falha silenciosa se não houver interação prévia
-                    } catch (e) {}
                 }
-            }
 
-            // Atualizar IDs conhecidos
-            if (data.notifications) {
-                data.notifications.forEach(n => knownNotifIds.add(n.id));
-            }
-            firstPoll = false;
+                // Toasts e Alertas para notificações NOVAS (não no primeiro poll)
+                if (!firstPoll && data.notifications) {
+                    let hasNew = false;
+                    data.notifications.forEach(n => {
+                        if (!knownNotifIds.has(n.id)) {
+                            hasNew = true;
+                            // Nova notificação! Toast Visual
+                            const iconMap = {
+                                'booking': 'success',
+                                'cancel': 'warning',
+                                'confirmed': 'success',
+                                'payment': 'success',
+                                'system': 'info'
+                            };
 
-        } catch (e) {
-            // Silencioso
+                            // Toast Visual do App
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: iconMap[n.type] || 'info',
+                                title: n.message,
+                                showConfirmButton: false,
+                                timer: 4000,
+                                timerProgressBar: true,
+                                customClass: { popup: 'rounded-2xl !text-sm' },
+                                didOpen: (toast) => {
+                                    toast.addEventListener('click', () => {
+                                        if (n.link_url) window.location.href = n.link_url;
+                                    });
+                                }
+                            });
+
+                            // Notificação do Sistema (Nativo)
+                            if (Notification.permission === "granted") {
+                                try {
+                                    new Notification("Carona.online", {
+                                        body: n.message,
+                                        icon: "assets/media/app/icon-192.png",
+                                        vibrate: [200, 100, 200],
+                                        tag: 'carona-online-' + n.id
+                                    });
+                                } catch (e) { }
+                            }
+                        }
+                    });
+
+                    // Feedback Físico (Som e Vibração) - Apenas uma vez por lote
+                    if (hasNew) {
+                        // Vibrar
+                        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+
+                        // Som
+                        try {
+                            const audio = new Audio('assets/media/notification.mp3');
+                            audio.volume = 0.5;
+                            audio.play().catch(() => { }); // Falha silenciosa se não houver interação prévia
+                        } catch (e) { }
+                    }
+                }
+
+                // Atualizar IDs conhecidos
+                if (data.notifications) {
+                    data.notifications.forEach(n => knownNotifIds.add(n.id));
+                }
+                firstPoll = false;
+
+            } catch (e) {
+                // Silencioso
+            }
         }
-        } catch (e) {
-            // Silencioso
-        }
-    }
     <?php else: ?>
-    function pollNotifications() {} // No-op for guests
+        function pollNotifications() { } // No-op for guests
     <?php endif; ?>
 
     document.addEventListener('DOMContentLoaded', () => {
