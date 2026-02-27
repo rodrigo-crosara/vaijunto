@@ -54,7 +54,7 @@ $historyBookings = [];
 
 foreach ($bookings as $b) {
     $isFuture = strtotime($b['departure_time']) >= time();
-    $isActive = ($b['booking_status'] === 'confirmed' && $isFuture && $b['ride_status'] !== 'canceled');
+    $isActive = (in_array($b['booking_status'], ['confirmed', 'pending']) && $isFuture && $b['ride_status'] !== 'canceled');
 
     if (!$nextBooking && $isActive) {
         $nextBooking = $b;
@@ -193,7 +193,14 @@ foreach ($bookings as $b) {
                         </div>
 
                         <!-- Status de Pagamento -->
-                        <?php if ($isPaid): ?>
+                        <?php if ($nb['booking_status'] === 'pending'): ?>
+                            <div
+                                class="flex items-center justify-center gap-2 bg-yellow-400/20 border border-yellow-300/20 rounded-2xl py-3 mb-5">
+                                <i class="bi bi-hourglass-split text-yellow-300 text-xl animate-pulse"></i>
+                                <span class="text-yellow-100 font-black text-[10px] uppercase tracking-widest">Aguardando
+                                    Aceite</span>
+                            </div>
+                        <?php elseif ($isPaid): ?>
                             <div
                                 class="flex items-center justify-center gap-2 bg-green-400/20 border border-green-300/20 rounded-2xl py-3 mb-5">
                                 <i class="bi bi-patch-check-fill text-green-300 text-2xl"></i>
@@ -291,7 +298,15 @@ foreach ($bookings as $b) {
                             </div>
                             <div class="shrink-0">
                                 <?php if ($isCanceled): ?>
-                                    <span class="text-[10px] font-bold text-red-400 bg-red-50 px-2.5 py-1 rounded-full">Cancelada</span>
+                                    <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">Cancelada</span>
+                                <?php elseif ($b['booking_status'] === 'pending' && $isFuture && $b['ride_status'] !== 'canceled'): ?>
+                                    <div class="flex gap-1.5 items-center">
+                                        <span
+                                            class="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">Pendente</span>
+                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>)"
+                                            class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors"
+                                            title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                                    </div>
                                 <?php elseif ($isActive): ?>
                                     <div class="flex gap-1.5">
                                         <a href="https://wa.me/<?= preg_replace('/\D/', '', $b['driver_phone']) ?>" target="_blank"
@@ -308,7 +323,7 @@ foreach ($bookings as $b) {
                                         ✓</span>
                                 <?php else: ?>
                                     <span
-                                        class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">Concluída</span>
+                                        class="text-[10px] font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">Concluída</span>
                                 <?php endif; ?>
                             </div>
                         </div>

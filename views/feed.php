@@ -480,14 +480,27 @@ if ($currentUserId) {
         const { value: formValues } = await Swal.fire({
             title: 'Solicitar Vaga 🙋‍♂️',
             html: `
-                <div class="text-left">
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Onde você vai embarcar?</label>
-                    <select id="swal-meeting-point" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 font-bold focus:ring-2 focus:ring-primary mb-4 outline-none">
-                        ${optionsHtml}
-                    </select>
+                <div class="text-left mt-2">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Onde você vai embarcar?</label>
+                    <div class="relative mb-5">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="bi bi-geo-alt-fill text-primary"></i>
+                        </div>
+                        <select id="swal-meeting-point" class="w-full pl-11 pr-10 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-800 font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none transition-all cursor-pointer shadow-sm">
+                            ${optionsHtml}
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <i class="bi bi-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
 
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Observação (Opcional)</label>
-                    <input id="swal-note" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 focus:ring-2 focus:ring-primary outline-none" placeholder="Onde você vai esperar? (Ex: Parada do Mercado)">
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Observação (Opcional)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="bi bi-chat-left-text text-gray-400"></i>
+                        </div>
+                        <input type="text" id="swal-note" class="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" placeholder="Ex: Estarei de camisa azul...">
+                    </div>
                 </div>
             `,
             showCancelButton: true,
@@ -524,7 +537,7 @@ if ($currentUserId) {
                         const phone = res.driver_phone.replace(/\D/g, '');
                         // Check if note exists to include in WhatsApp message
                         const noteText = note ? ` (%2A${encodeURIComponent(note)}%2A)` : '';
-                        const msg = `Olá! Reservei sua carona no VaiJunto. Te espero em: *${meetingPoint}*${noteText}. Pode ser?`;
+                        const msg = `Olá! Solicitei vaga na sua carona pelo Carona.online. Te espero em: *${meetingPoint}*${noteText}. Pode confirmar?`;
                         const link = `https://wa.me/55${phone}?text=${msg}`;
 
                         Swal.fire({
