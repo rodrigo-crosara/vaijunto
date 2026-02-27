@@ -46,7 +46,7 @@ if (!is_dir($uploadDir)) {
 $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
 $fileName = 'user_' . $userId . '_' . time() . '.' . $extension;
 $targetPath = $uploadDir . $fileName;
-$publicPath = 'assets/media/uploads/users/' . $fileName; // Caminho para salvar no banco
+$publicPath = '/assets/media/uploads/users/' . $fileName; // Caminho para salvar no banco
 
 // Mover arquivo
 if (move_uploaded_file($file['tmp_name'], $targetPath)) {

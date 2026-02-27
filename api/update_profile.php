@@ -143,7 +143,7 @@ try {
 
             $carPath = $uploadDir . DIRECTORY_SEPARATOR . $carFileName;
             if (move_uploaded_file($carFile['tmp_name'], $carPath)) {
-                $carPhotoUrl = "assets/media/uploads/cars/{$carFileName}";
+                $carPhotoUrl = "/assets/media/uploads/cars/{$carFileName}";
                 $stmtCarPhoto = $pdo->prepare("UPDATE cars SET photo_url = ? WHERE user_id = ?");
                 $stmtCarPhoto->execute([$carPhotoUrl, $userId]);
             }
