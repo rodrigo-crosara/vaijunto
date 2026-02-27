@@ -108,35 +108,6 @@ $msg = $_GET['msg'] ?? '';
             </div>
         </div>
 
-        <!-- Segurança -->
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
-             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="bi bi-shield-lock text-primary"></i> Segurança
-            </h3>
-            <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN Atual</label>
-                <div class="relative mb-4">
-                    <input type="tel" name="current_pin" id="current-pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
-                        class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
-                        placeholder="••••" style="-webkit-text-security: disc;">
-                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                        <i class="bi bi-shield-lock"></i>
-                     </div>
-                </div>
-
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Novo PIN (Opcional)</label>
-                <div class="relative">
-                    <input type="tel" name="pin" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
-                        class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
-                        placeholder="••••" style="-webkit-text-security: disc;">
-                     <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-                        <i class="bi bi-key-fill"></i>
-                     </div>
-                </div>
-                <p class="text-[10px] text-gray-400 mt-2 ml-1">Deixe em branco para manter o atual. Use 4 números.</p>
-            </div>
-        </div>
-
         <!-- Toggle Motorista -->
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
             <div class="flex items-center justify-between">
@@ -240,6 +211,42 @@ $msg = $_GET['msg'] ?? '';
             </div>
         </div>
 
+        <!-- Segurança -->
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50 mt-6">
+            <div class="flex items-center justify-between cursor-pointer" onclick="$('#security-fields').slideToggle()">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="bi bi-shield-lock text-primary"></i> Segurança (PIN)
+                </h3>
+                <i class="bi bi-chevron-down text-gray-400"></i>
+            </div>
+
+            <div id="security-fields" class="hidden mt-6 space-y-4">
+                <hr class="border-gray-100 mb-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN Atual</label>
+                    <div class="relative mb-4">
+                        <input type="tel" name="current_pin" id="current-pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                            class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
+                            placeholder="••••" style="-webkit-text-security: disc;">
+                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                            <i class="bi bi-shield-lock"></i>
+                         </div>
+                    </div>
+
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Novo PIN (Opcional)</label>
+                    <div class="relative">
+                        <input type="tel" name="pin" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                            class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
+                            placeholder="••••" style="-webkit-text-security: disc;">
+                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                            <i class="bi bi-key-fill"></i>
+                         </div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2 ml-1">Deixe em branco para manter o atual. Use 4 números.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Botão Salvar -->
         <button type="submit" id="save-btn"
             class="w-full py-5 bg-gray-900 text-white font-extrabold rounded-3xl shadow-xl hover:bg-black transition-all text-lg fixed bottom-24 left-0 right-0 max-w-lg mx-auto z-40">
@@ -251,7 +258,7 @@ $msg = $_GET['msg'] ?? '';
             <i class="bi bi-box-arrow-right text-lg"></i> Sair da Conta
         </a>
 
-        <div class="h-10"></div>
+        <div class="h-40"></div>
 
     </form>
 

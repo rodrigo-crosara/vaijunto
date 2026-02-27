@@ -399,23 +399,23 @@
             // Toast iOS
             Swal.fire({
                 toast: true,
-                position: 'bottom',
+                position: 'top',
                 html: `
-                    <div class="flex flex-col items-start gap-2">
+                    <div class="flex flex-col items-start gap-2 mt-4">
                         <span class="font-bold text-sm">📲 Instale o App para melhor experiência!</span>
                         <span class="text-xs">Toque em <span class="font-bold">Compartilhar</span> <i class="bi bi-box-arrow-up"></i> e depois em <span class="font-bold">Adicionar à Tela de Início</span> ➕</span>
                          <button onclick="dismissInstall()" class="text-primary text-xs font-bold mt-1 self-end">Entendi</button>
                     </div>
                 `,
                 showConfirmButton: false,
-                customClass: { popup: 'rounded-t-3xl !pb-8 !px-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]' },
+                customClass: { popup: 'rounded-3xl !py-4 !px-6 shadow-xl mt-20' },
                 timer: 0 // Persistente
             });
         } else if (deferredPrompt) {
             // Android / Desktop Button
             const btn = document.createElement('div');
             btn.id = 'install-fab';
-            btn.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 z-40 animate-bounce cursor-pointer';
+            btn.className = 'fixed top-20 right-4 z-[100] animate-bounce cursor-pointer';
             btn.innerHTML = `
                 <button onclick="triggerInstall()" class="bg-primary text-white font-bold text-sm px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 border-2 border-white">
                     <i class="bi bi-phone"></i> Instalar App
