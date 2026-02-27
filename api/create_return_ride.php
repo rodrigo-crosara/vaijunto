@@ -38,8 +38,17 @@ try {
     $newOriginCoords = $original['destination_coords'];
     $newDestinationCoords = $original['origin_coords'];
 
-    // 3. Ajustar Horário (+9 horas por padrão) ou usar o enviado
-    $newDepartureTime = $input['newDepartureTime'] ?? date('Y-m-d H:i:s', strtotime($original['departure_time'] . ' + 9 hours'));
+    // 3. Ajustar Horário
+    $originalDate = date('Y-m-d', strtotime($original['departure_time']));
+    $reqTime = $input['repeat_time'] ?? '';
+
+    if (!empty($reqTime)) {
+        // Se enviou o horário (ex: "18:00"), usa a mesma data da original
+        $newDepartureTime = $originalDate . ' ' . $reqTime . ':00';
+    } else {
+        // Fallback: +9 horas ou o que foi enviado completo
+        $newDepartureTime = $input['newDepartureTime'] ?? date('Y-m-d H:i:s', strtotime($original['departure_time'] . ' + 9 hours'));
+    }
 
     // Validação Temporal
     if (strtotime($newDepartureTime) < time()) {

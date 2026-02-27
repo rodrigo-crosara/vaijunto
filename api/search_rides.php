@@ -35,8 +35,12 @@ try {
     }
 
     if ($timeFilter !== '') {
-        // Ordenar caronas mais próximas do horário desejado (considerando o dia de hoje)
-        $targetTime = date('Y-m-d') . ' ' . $timeFilter . ':00';
+        // Se o horário buscado já passou hoje (ex: buscou 08:00 e agora são 22:00), 
+        // presume-se que o usuário quer caronas para amanhã.
+        $currentHMin = date('H:i');
+        $dateStr = ($timeFilter < $currentHMin) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d');
+
+        $targetTime = $dateStr . ' ' . $timeFilter . ':00';
         $sql .= " ORDER BY ABS(TIMESTAMPDIFF(SECOND, r.departure_time, ?)) ASC";
         $params[] = $targetTime;
     } else {

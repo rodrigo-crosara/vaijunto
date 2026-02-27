@@ -243,10 +243,14 @@ try {
                             <?php endif; ?>
                         </div>
 
-                        <div class="mt-5 text-center">
                             <button onclick="confirmarCancelamento(<?= $nextRide['id'] ?>)" 
                                 class="text-[11px] font-bold text-blue-200 hover:text-red-300 transition-colors flex items-center justify-center gap-1.5 mx-auto">
                                 <i class="bi bi-trash3"></i> Cancelar esta viagem
+                            </button>
+
+                            <button onclick="gerarVolta(<?= $nextRide['id'] ?>, '<?= addslashes($nextRide['origin_text']) ?>', '<?= addslashes($nextRide['destination_text']) ?>')" 
+                                class="mt-4 text-[11px] font-bold text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto border border-white/10 uppercase tracking-tighter">
+                                <i class="bi bi-arrow-repeat"></i> Criar Viagem de Volta
                             </button>
                         </div>
                     </div>
@@ -335,6 +339,11 @@ try {
                                 <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
                                     class="bg-white border border-red-50 text-red-400 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
                                     <i class="bi bi-trash"></i>
+                                </button>
+                                <button onclick="gerarVolta(<?= $ride['id'] ?>, '<?= addslashes($ride['origin_text']) ?>', '<?= addslashes($ride['destination_text']) ?>')"
+                                    class="bg-blue-50 border border-blue-100 text-blue-600 px-3 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm"
+                                    title="Gerar Volta">
+                                    <i class="bi bi-arrow-repeat"></i> Volta
                                 </button>
                             </div>
 
@@ -516,6 +525,7 @@ try {
     // Polling Automático de Passageiros
     if (currentRideId > 0) {
         setInterval(() => {
+            if (document.hidden) return; // Economia de energia: Pausa se o app estiver em 2º plano
             $.get('api/get_passengers_html.php?ride_id=' + currentRideId, function(data) {
                 if (data.trim() !== "") {
                     $('#passenger-list-container').html(data);
@@ -676,5 +686,61 @@ try {
                 driverAction({ action: 'confirm_payment', bookingId: bookingId });
             }
         });
+    }
+
+    async function gerarVolta(originalRideId, origem, destino) {
+        const { value: time } = await Swal.fire({
+            title: 'Horário de Volta',
+            html: `De: <b>${destino}</b><br>Para: <b>${origem}</b>`,
+            input: 'time',
+            inputLabel: 'Que horas você volta?',
+            inputValue: '18:00',
+            showCancelButton: true,
+            confirmButtonText: 'Criar Volta 🚀',
+            cancelButtonText: 'Cancelar',
+            customClass: { confirmButton: 'btn btn-primary px-6', cancelButton: 'btn btn-light ml-2' }
+        });
+
+        if (time) {
+            Swal.fire({
+                title: 'Processando...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch('api/create_return_ride.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        originalRideId, 
+                        newDepartureTime: null, // O backend cuidará de manter o dia e mudar a hora
+                        repeat_time: time // Passamos a hora desejada
+                    })
+                });
+                
+                // Nota: O backend create_return_ride.php original só aceita newDepartureTime full.
+                // Mas podemos enviar o time e deixar o swal mais amigável.
+                // Para simplificar, vamos enviar o horário formatado para o dia da carona original.
+                
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Viagem de Volta Criada!',
+                        text: 'Deseja ver na agenda agora?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sim, Ver Agora',
+                        cancelButtonText: 'OK'
+                    }).then((r) => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Erro', result.message, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro', 'Falha na conexão.', 'error');
+            }
+        }
     }
 </script>

@@ -147,6 +147,7 @@
         let firstPoll = true;
 
         async function pollNotifications() {
+            if (document.hidden) return; // Economia de recursos: Pausa o robô em 2º plano
             try {
                 const res = await fetch('api/check_notifications.php');
                 const data = await res.json();
@@ -173,11 +174,17 @@
                             // Nova notificação! Toast Visual
                             const iconMap = {
                                 'booking': 'success',
+                                'booking_request': 'info',
                                 'cancel': 'warning',
                                 'confirmed': 'success',
                                 'payment': 'success',
                                 'system': 'info'
                             };
+
+                            // Sincronia Inteligente: Se estiver no Painel do Motorista e chegar novo pedido/cancelamento
+                            if (window.location.href.includes('page=my_rides') && (n.type === 'booking_request' || n.type === 'cancel')) {
+                                setTimeout(() => location.reload(), 2500);
+                            }
 
                             // Toast Visual do App
                             Swal.fire({
