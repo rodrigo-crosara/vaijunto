@@ -146,7 +146,8 @@ $msg = $_GET['msg'] ?? '';
                 <div class="bg-blue-50 text-blue-800 border border-blue-100 rounded-xl p-4 mb-2 flex gap-3 items-start">
                     <i class="bi bi-shield-lock-fill text-xl text-blue-500 shrink-0 mt-0.5"></i>
                     <p class="text-xs leading-relaxed">
-                        <b>🔒 Segurança Garantida:</b> Sua placa e a foto do carro ficam ocultas no feed público. Elas só aparecem para o passageiro após confirmada a reserva.
+                        <b>🔒 Segurança Garantida:</b> Sua placa e a foto do carro ficam ocultas no feed público. Elas
+                        só aparecem para o passageiro após confirmada a reserva.
                     </p>
                 </div>
 
@@ -222,26 +223,30 @@ $msg = $_GET['msg'] ?? '';
             <div id="security-fields" class="hidden mt-6 space-y-4">
                 <hr class="border-gray-100 mb-4">
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN Atual</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN
+                        Atual</label>
                     <div class="relative mb-4">
-                        <input type="tel" name="current_pin" id="current-pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
+                        <input type="tel" name="current_pin" id="current-pin-input" maxlength="4" pattern="[0-9]*"
+                            inputmode="numeric"
                             class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
                             placeholder="••••" style="-webkit-text-security: disc;">
-                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                             <i class="bi bi-shield-lock"></i>
-                         </div>
+                        </div>
                     </div>
 
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Novo PIN (Opcional)</label>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Novo PIN
+                        (Opcional)</label>
                     <div class="relative">
                         <input type="tel" name="pin" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric"
                             class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all tracking-[1em] text-center"
                             placeholder="••••" style="-webkit-text-security: disc;">
-                         <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
                             <i class="bi bi-key-fill"></i>
-                         </div>
+                        </div>
                     </div>
-                    <p class="text-[10px] text-gray-400 mt-2 ml-1 mb-6">Deixe em branco para manter o atual. Use 4 números.</p>
+                    <p class="text-[10px] text-gray-400 mt-2 ml-1 mb-6">Deixe em branco para manter o atual. Use 4
+                        números.</p>
                 </div>
 
                 <hr class="border-gray-100 my-4">
@@ -253,7 +258,7 @@ $msg = $_GET['msg'] ?? '';
                     <p class="text-xs text-red-300 mb-4">Ações irreversíveis. Prossiga com cuidado.</p>
                     <button type="button" onclick="excluirConta()"
                         class="w-full py-3 px-4 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
-                        <i class="bi bi-trash3 shrink-0"></i> 
+                        <i class="bi bi-trash3 shrink-0"></i>
                         <span class="truncate">Excluir minha conta</span>
                     </button>
                 </div>
@@ -268,10 +273,10 @@ $msg = $_GET['msg'] ?? '';
 
         <div class="h-10"></div>
 
-        <a href="api/logout.php"
+        <button type="button" onclick="confirmarLogout()"
             class="block w-full text-center py-4 bg-red-50 text-red-600 font-bold rounded-2xl border border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
             <i class="bi bi-box-arrow-right text-lg"></i> Sair da Conta
-        </a>
+        </button>
 
         <div class="h-32"></div>
 
@@ -418,6 +423,27 @@ $msg = $_GET['msg'] ?? '';
                 preview.style.opacity = '1';
             }
         }
+    }
+
+    function confirmarLogout() {
+        Swal.fire({
+            title: 'Sair da conta?',
+            text: "Você precisará digitar seu Telefone e PIN para entrar novamente.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, sair agora',
+            cancelButtonText: 'Cancelar',
+            customClass: {
+                popup: 'rounded-[2.5rem]',
+                confirmButton: 'bg-red-500 text-white font-bold px-8 py-3 rounded-2xl shadow-lg hover:bg-red-600 transition-all',
+                cancelButton: 'bg-gray-100 text-gray-500 font-bold px-8 py-3 rounded-2xl ml-2'
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = 'api/logout.php';
+            }
+        });
     }
 
     function excluirConta() {
@@ -586,7 +612,7 @@ $msg = $_GET['msg'] ?? '';
                 }
             });
         });
-        
+
         $('#pin-input').mask('0000');
         $('#current-pin-input').mask('0000');
     });

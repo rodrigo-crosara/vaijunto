@@ -261,7 +261,7 @@ try {
 
         <?php if (!empty($futureRides)): ?>
         <div class="mb-10">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Planejamento Próximas</h2>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Sua Agenda (Semana)</h2>
             <div class="space-y-4">
                 <?php foreach ($futureRides as $ride): 
                     $rideTime = strtotime($ride['departure_time']);
@@ -274,12 +274,19 @@ try {
                         if($p['booking_status'] === 'pending') $pendingCount++;
                         if($p['booking_status'] === 'confirmed') $confirmedCount++;
                     }
+
+                    $wpArr = json_decode($ride['waypoints'] ?? '[]', true);
+                    if(!is_array($wpArr)) $wpArr = [];
+                    $rotaStr = empty($wpArr) ? 'Via padrão' : implode(' -> ', $wpArr);
+                    $tagsArr = json_decode($ride['tags'] ?? '{}', true);
+                    $detalhesStr = $tagsArr['details'] ?? '';
                 ?>
-                    <!-- Card de Planejamento -->
-                    <div class="bg-white rounded-2xl p-4 border border-blue-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-400">
+                    <!-- Card de Agenda -->
+                    <div class="bg-white rounded-2xl p-4 border border-blue-100 shadow-sm flex items-center justify-between border-l-4 <?= $pendingCount > 0 ? 'border-l-red-500 animate-[pulse_2s_infinite]' : 'border-l-blue-400' ?>">
                         <div class="flex items-center gap-4">
-                            <div class="bg-blue-50 h-10 w-10 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xs flex-col">
+                            <div class="<?= $pendingCount > 0 ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600' ?> h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs flex-col">
                                 <span><?= $date ?></span>
+                                <span class="text-[8px] opacity-70"><?= $time ?></span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
@@ -312,8 +319,26 @@ try {
                     </div>
 
                     <!-- Detalhes (Collapse) -->
-                    <div class="collapse" id="ride-details-<?= $ride['id'] ?>">
+                    <div class="collapse <?= $pendingCount > 0 ? 'show' : '' ?>" id="ride-details-<?= $ride['id'] ?>">
                         <div class="bg-gray-50 rounded-xl p-4 mx-2 text-xs space-y-3 mb-4">
+                            <div class="flex gap-2">
+                                <button onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
+                                    class="flex-1 bg-white border border-blue-100 text-blue-600 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="bi bi-whatsapp"></i> Divulgar
+                                </button>
+                                <button onclick="editarVagas(<?= $ride['id'] ?>, <?= $ride['seats_available'] ?>)"
+                                    class="bg-white border border-blue-100 text-blue-600 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
+                                    class="bg-white border border-red-50 text-red-400 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+
+                            <hr class="border-gray-200/50">
+                            
+                            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Passageiros</h4>
                             <?php if (empty($ride['passengers'])): ?>
                                 <p class="text-gray-400 italic">Sem passageiros.</p>
                             <?php else: ?>
@@ -339,10 +364,6 @@ try {
                                     </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
-                            <div class="pt-2 flex justify-end gap-3">
-                                <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)" class="text-red-500 font-bold hover:underline">Cancelar Viagem</button>
-                                <button onclick="editarVagas(<?= $ride['id'] ?>, <?= $ride['seats_available'] ?>)" class="text-blue-500 font-bold hover:underline">Editar Vagas</button>
-                            </div>
                         </div>
                     </div>
                 <?php endforeach; ?>

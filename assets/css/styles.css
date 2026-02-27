@@ -4,7 +4,6 @@ body {
     background-color: #f8fafc; /* Slate-50 */
     -webkit-tap-highlight-color: transparent; /* Remove flash azul ao tocar */
     -webkit-touch-callout: none; /* Desativa menu de toque longo em imagens */
-    overscroll-behavior-y: none; /* Desativa o "bounce" de rolagem do navegador */
 }
 /* Esconder Scrollbar (Mas permitir rolagem) */
 ::-webkit-scrollbar {
@@ -15214,5 +15213,6 @@ button[data-vc-week-day] {
          p o i n t e r - e v e n t s :   n o n e   ! i m p o r t a n t ; 
          f i l t e r :   g r a y s c a l e ( 1 )   ! i m p o r t a n t ; 
  } 
-  
+ 
+ 
  
