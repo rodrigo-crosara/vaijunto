@@ -120,23 +120,23 @@ try {
                         <?php if ($nextRide['seats_available'] > 0): ?>
                             <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
                                 class="w-full mb-4 bg-red-500/80 hover:bg-red-500 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                                <i class="bi bi-slash-circle"></i> 🚫 Lotou Externamente / Fechar Vagas
+                                🚫 Lotou / Fechar Vagas
                             </button>
                         <?php endif; ?>
 
                         <!-- Ações Rápidas -->
-                        <div class="flex gap-2 mb-6">
+                        <div class="flex flex-col sm:flex-row gap-3 w-full mb-6">
                                     <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                        class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                        class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                         <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
                                     </button>
                                     <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                        class="w-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
+                                        class="w-full sm:w-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
                                         title="Copiar Texto">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
                                     <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
-                                        class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                        class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                         <i class="bi bi-pencil-square"></i> Editar
                                     </button>
                         </div>
@@ -153,7 +153,7 @@ try {
                             
                             <button onclick="copiarLotado(<?= $nextRide['id'] ?>, '<?= $time ?>', '<?= addslashes($nextRide['destination_text']) ?>')"
                                 class="w-full mb-6 bg-red-500 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all">
-                                <i class="bi bi-slash-circle"></i> Copiar Aviso de "LOTADO"
+                                🚫 Copiar Aviso de "LOTADO"
                             </button>
                         <?php endif; ?>
 
@@ -197,15 +197,15 @@ try {
                                                 <?php if ($p['booking_status'] === 'confirmed'): ?>
                                                     <div class="flex gap-2">
                                                         <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
-                                                            class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
-                                                            <i class="bi bi-whatsapp text-sm"></i>
+                                                            class="h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center px-3 hover:bg-green-500 hover:text-white transition-all text-[10px] font-bold gap-1">
+                                                            <i class="bi bi-whatsapp"></i> <span class="hidden sm:inline">WhatsApp</span>
                                                         </a>
                                                         <?php if ($isPaid): ?>
                                                             <span class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg">PAGO ✅</span>
                                                         <?php else: ?>
                                                             <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
                                                                 class="btn btn-xs btn-light-success text-[9px] font-bold py-1 px-2 rounded-lg flex items-center gap-1">
-                                                                💰 Confirmar Pagamento
+                                                                💰 <span class="hidden sm:inline">Confirmar</span> Pagamento
                                                             </button>
                                                         <?php endif; ?>
                                                     </div>
