@@ -347,53 +347,72 @@
         }
 
         if (!localStorage.getItem('tutorial_seen')) {
-            const steps = [
-                {
-                    title: 'Bem-vindo ao Carona.online!',
-                    text: 'A forma mais fácil de dividir custos e fazer amigos. 👋',
-                    icon: 'info',
-                    confirmButtonText: 'Próximo >'
-                },
-                {
-                    title: 'Como funciona?',
-                    text: '1. Ache a carona.\n2. Solicite a vaga.\n3. Combine tudo pelo WhatsApp do motorista! 💬',
-                    icon: 'question',
-                    confirmButtonText: 'Entendi >'
-                },
-                {
-                    title: 'Tudo pronto!',
-                    text: 'Instale nosso App para receber notificações. 🚀',
-                    icon: 'success',
-                    confirmButtonText: 'Começar!'
-                }
-            ];
-
-            // Queue Swals
             let stepIndex = 0;
+
             const showStep = () => {
-                if (stepIndex >= steps.length) {
+                let s = {};
+
+                if (stepIndex === 0) {
+                    s = {
+                        title: 'Bem-vindo! 👋',
+                        html: 'A forma mais inteligente de <b class="text-primary">dividir custos</b> e viajar com a comunidade.',
+                        icon: 'info',
+                        confirmButtonText: 'Próximo <i class="bi bi-chevron-right text-xs ml-1"></i>'
+                    };
+                } else if (stepIndex === 1) {
+                    s = {
+                        title: 'Como funciona? 🤔',
+                        html: '<div class="text-left bg-gray-50 p-4 rounded-2xl mt-2 text-sm text-gray-700 space-y-3"><p><b class="text-primary">1.</b> Ache a carona ideal</p><p><b class="text-primary">2.</b> Solicite sua vaga no app</p><p><b class="text-primary">3.</b> Combine os detalhes pelo WhatsApp! 💬</p></div>',
+                        icon: 'question',
+                        confirmButtonText: 'Entendi <i class="bi bi-chevron-right text-xs ml-1"></i>'
+                    };
+                } else if (stepIndex === 2) {
+                    // Verifica se o celular já liberou a instalação
+                    const canInstallNow = (typeof deferredPrompt !== 'undefined' && deferredPrompt !== null);
+                    s = {
+                        title: 'Tudo pronto! 🚀',
+                        html: 'Para a melhor experiência, instale o aplicativo e receba <b>alertas de novas vagas</b> direto no celular.',
+                        icon: 'success',
+                        confirmButtonText: canInstallNow ? '<i class="bi bi-download mr-1"></i> Instalar App' : 'Começar a usar!'
+                    };
+                } else {
                     localStorage.setItem('tutorial_seen', 'true');
-                    // Tentar mostrar install promo após o tutorial
-                    if (deferredPrompt) showInstallPromotion();
+                    // Se pulou tudo e não instalou, tenta o fallback
+                    if (typeof deferredPrompt !== 'undefined' && deferredPrompt !== null) {
+                        showInstallPromotion();
+                    } else if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream && !window.navigator.standalone) {
+                        showInstallPromotion(); // Mostra dica de iOS
+                    }
                     return;
                 }
-                const s = steps[stepIndex];
+
                 Swal.fire({
                     title: s.title,
-                    text: s.text,
+                    html: s.html,
                     icon: s.icon,
                     confirmButtonText: s.confirmButtonText,
                     customClass: {
                         popup: 'rounded-[2.5rem] !p-6',
-                        confirmButton: 'bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg'
+                        confirmButton: 'bg-primary text-white font-bold px-8 py-3.5 rounded-2xl shadow-lg w-full text-base hover:scale-[1.02] transition-transform'
                     },
+                    buttonsStyling: false,
                     allowOutsideClick: false
                 }).then((result) => {
-                    if (result.isConfirmed) {
+                    if (stepIndex === 2 && result.isConfirmed) {
+                        localStorage.setItem('tutorial_seen', 'true');
+
+                        // Se for Android/PC e puder instalar, dispara IMEDIATAMENTE a instalação
+                        if (typeof deferredPrompt !== 'undefined' && deferredPrompt !== null) {
+                            triggerInstall();
+                        } else {
+                            // Se for iOS, a gente exibe a dica nativa após fechar
+                            if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream && !window.navigator.standalone) {
+                                showInstallPromotion();
+                            }
+                        }
+                    } else if (result.isConfirmed) {
                         stepIndex++;
                         showStep();
-                    } else {
-                        // Se for fechado por outro alerta, aborta o fluxo sem marcar como visto
                     }
                 });
             };
