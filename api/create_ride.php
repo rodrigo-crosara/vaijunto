@@ -44,9 +44,11 @@ $detailsInput = trim($input['details'] ?? ''); // Novo campo de observações
 $departure_time = $input['departure_time'] ?? '';
 $seats = intval($input['seats'] ?? 0);
 
-// Sanitização de preço: brasileiro usa vírgula (R$ 10,50), MySQL quer ponto (10.50)
-$priceInput = $input['price'] ?? '0';
-$price = floatval(str_replace(',', '.', str_replace('.', '', $priceInput)));
+// Sanitização de preço blindada para <input type="number">
+// O navegador geralmente envia "7.00", mas caso venha "7,00", cobrimos ambas as opções.
+$priceInput = (string) ($input['price'] ?? '0');
+$priceInput = str_replace(',', '.', $priceInput); // Garante que qualquer vírgula vire ponto decimal
+$price = floatval($priceInput);
 
 $driver_id = $_SESSION['user_id'];
 
