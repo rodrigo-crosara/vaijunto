@@ -116,21 +116,20 @@ try {
                             </div>
                         </div>
 
-                        <?php 
-                            $wpArr = json_decode($nextRide['waypoints'] ?? '[]', true);
-                            if(!is_array($wpArr)) $wpArr = [];
                             $rotaStr = empty($wpArr) ? 'Via padrão' : implode(' -> ', $wpArr);
+                            $tagsArr = json_decode($nextRide['tags'] ?? '{}', true);
+                            $detalhesStr = $tagsArr['details'] ?? '';
                         ?>
 
                         <!-- Ações Rápidas -->
                         <div class="flex flex-col sm:flex-row gap-3 w-full mb-6">
                             <div class="flex gap-2 w-full sm:w-auto sm:flex-1">
-                                <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>", "<?= $nextRide['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
                                     class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                     <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
                                 </button>
 
-                                <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>", "<?= $nextRide['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
                                     class="w-14 shrink-0 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center transition-all"
                                     title="Copiar Texto">
                                     <i class="bi bi-clipboard"></i>
@@ -231,8 +230,8 @@ try {
 
                             <?php if ($nextRide['seats_available'] > 0): ?>
                                 <div class="mt-4">
-                                    <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
-                                        class="w-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-100 py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                                    <button onclick="fecharVagas(<?= $nextRide['id'] ?>, '<?= addslashes($nextRide['destination_text']) ?>', '<?= $time ?>')"
+                                        class="w-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-100 py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 mt-4">
                                         🚫 Lotou fora do app (Fechar Vagas)
                                     </button>
                                 </div>
@@ -343,15 +342,33 @@ try {
         window.location.href = 'index.php?page=offer&mode=repeat';
     }
 
-    function getRideText(origem, destino, hora, rota, valor, link) {
-        const rotaFormatada = rota && rota.trim() !== '' ? rota : 'Via padrão';
-        return `🚗 *Carona Online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+    function getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link) {
+        let texto = `*${vagas} Vaga(s) para ${destino}* 🚘\n`;
+        texto += `⏰ Saída: ${hora}\n\n`;
+
+        // Constroi a rota em lista vertical
+        let pontos = [origem];
+        if (rota && rota.trim() !== '' && rota !== 'Via padrão' && rota !== '[]') {
+            let rotaArray = rota.includes(' -> ') ? rota.split(' -> ') : rota.split(',');
+            rotaArray.forEach(p => pontos.push(p.trim()));
+        }
+        pontos.push(destino);
+        pontos = [...new Set(pontos)]; // Remove repetidos
+
+        pontos.forEach(p => { if (p) texto += `🚘 ${p}\n`; });
+
+        texto += `\n💰 R$ ${valor}\n`;
+        if (detalhes && detalhes.trim() !== '') {
+            texto += `⚠️ ${detalhes}\n`;
+        }
+        texto += `\n👉 *Reservar vaga:* ${link}`;
+        return texto;
     }
 
     // CORRIGIDO: rideId agora é o primeiro parâmetro, igual no HTML
-    async function copiarOferta(rideId, origem, destino, hora, rota, valor) {
+    async function copiarOferta(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
         const link = `${window.location.origin}/${rideId}`;
-        const texto = getRideText(origem, destino, hora, rota, valor, link);
+        const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         try {
             await navigator.clipboard.writeText(texto);
             Swal.fire({
@@ -367,9 +384,9 @@ try {
         }
     }
 
-    function compartilharRide(rideId, origem, destino, hora, rota, valor) {
+    function compartilharRide(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
         const link = `${window.location.origin}/${rideId}`;
-        const texto = getRideText(origem, destino, hora, rota, valor, link);
+        const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
     }
@@ -386,51 +403,47 @@ try {
     }
 
 
-    function fecharVagas(rideId) {
+    function fecharVagas(rideId, destino = '', hora = '') {
         Swal.fire({
-            title: 'Lotou? Fechar vagas?',
-            text: "Sua carona sairá do feed imediatamente.",
-            icon: 'question',
+            title: 'Fechar Vagas?',
+            text: "Isso encerrará a carona e ninguém mais poderá reservar pelo app.",
+            icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
-            confirmButtonText: 'Sim, fechar!',
+            confirmButtonText: 'Sim, lotou!',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                $.post('api/close_ride.php', { rideId: rideId }, function(res) {
-                    // Nota: api/close_ride.php espera JSON raw, mas $.post envia form-urlencoded. 
-                    // Se o backend espera raw input, melhor usar fetch ou ajustar backend. 
-                    // Pelo código anterior backend usa `json_decode(file_get_contents('php://input'))`.
-                    // Vamos usar fetch para garantir compatibilidade com o backend existente.
-                });
-                
-                // Correção para usar fetch e garantir envio correto
-                fetch('api/close_ride.php', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({rideId: rideId})
-                })
-                .then(r => r.json())
-                .then(data => {
-                     Swal.fire({
-                        title: 'Vagas Encerradas!',
-                        html: '<p class="mb-3 text-sm text-gray-600">Copie o aviso abaixo e cole no grupo:</p>' +
-                              '<textarea id="msg-encerrado" class="form-control mb-3 text-center font-bold" rows="2" readonly>❌ Carona ENCERRADA/LOTADA. Obrigado!</textarea>',
-                        showCancelButton: true,
-                        confirmButtonText: '📝 Copiar e ir pro Zap <i class="bi bi-box-arrow-up-right text-[10px]"></i>',
-                        confirmButtonColor: '#25D366',
-                        cancelButtonText: 'Concluir',
-                        reverseButtons: true
-                    }).then((res2) => {
-                        if (res2.isConfirmed) {
-                            var copyText = document.getElementById("msg-encerrado");
-                            copyText.select();
-                            document.execCommand("copy");
-                            window.open('https://wa.me/', '_blank');
-                        }
-                        location.reload();
-                    });
-                });
+                $.post('api/driver_actions.php', { action: 'close_ride', ride_id: rideId }, function(res) {
+                    if(res.success) {
+
+                        // Monta a mensagem para o WhatsApp
+                        const textoZap = `❌ *Carona Lotada / Encerrada!*\n\nPessoal, a vaga para *${destino}* (Saída: ${hora}) já foi preenchida.\nObrigado!`;
+                        const waLink = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
+
+                        Swal.fire({
+                            title: 'Vagas Fechadas!',
+                            text: 'Deseja avisar no grupo do WhatsApp que a carona lotou?',
+                            icon: 'success',
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="bi bi-whatsapp"></i> Avisar no Grupo',
+                            cancelButtonText: 'Apenas fechar',
+                            customClass: {
+                                confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all',
+                                cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
+                            },
+                            buttonsStyling: false
+                        }).then((resZap) => {
+                            if (resZap.isConfirmed) {
+                                window.open(waLink, '_blank');
+                            }
+                            location.reload();
+                        });
+
+                    } else {
+                        Swal.fire('Erro', res.message, 'error');
+                    }
+                }, 'json');
             }
         });
     }

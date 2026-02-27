@@ -14,14 +14,17 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $driverId = $_SESSION['user_id'];
-$input = json_decode(file_get_contents('php://input'), true);
+// Suporte a JSON ou POST tradicional
+$rawInput = json_decode(file_get_contents('php://input'), true) ?: [];
+$input = array_merge($_POST, $rawInput);
+
 $action = $input['action'] ?? '';
-$rideId = intval($input['rideId'] ?? 0);
+$rideId = intval($input['rideId'] ?? $input['ride_id'] ?? 0);
 
 // Validação: remove_passenger e confirm_payment não precisam de rideId, usam bookingId
 if (
     !$action ||
-    ($action !== 'remove_passenger' && $action !== 'confirm_payment' && $rideId <= 0)
+    ($action !== 'remove_passenger' && $action !== 'confirm_payment' && $action !== 'close_ride' && $rideId <= 0)
 ) {
     echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos.']);
     exit;
@@ -29,6 +32,18 @@ if (
 
 try {
     switch ($action) {
+        case 'close_ride':
+            // Fecha as vagas (seats_available = 0)
+            $stmt = $pdo->prepare("UPDATE rides SET seats_available = 0 WHERE id = ? AND driver_id = ?");
+            $stmt->execute([$rideId, $driverId]);
+
+            if ($stmt->rowCount() > 0) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Carona não encontrada ou já encerrada.']);
+            }
+            break;
+
         case 'cancel_ride':
             // Verificar se a carona é do motorista
             $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ?");

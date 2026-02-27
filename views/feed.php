@@ -214,7 +214,7 @@ if ($currentUserId) {
                         <div class="flex gap-2">
                             <?php if ($isDriver): ?>
                                 <button
-                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
+                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
                                     class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>
@@ -305,9 +305,32 @@ if ($currentUserId) {
             .replace(/'/g, "&#039;");
     }
 
-    function compartilharRide(rideId, origem, destino, hora, rota, valor) {
-        const rotaFormatada = rota && String(rota).trim() !== '' ? rota : 'Via padrão';
-        const texto = `🚗 *Carona Online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}/${rideId}`;
+    function getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link) {
+        let texto = `*${vagas} Vaga(s) para ${destino}* 🚘\n`;
+        texto += `⏰ Saída: ${hora}\n\n`;
+
+        // Constroi a rota em lista vertical
+        let pontos = [origem];
+        if (rota && rota.trim() !== '' && rota !== 'Via padrão' && rota !== '[]') {
+            let rotaArray = rota.includes(' -> ') ? rota.split(' -> ') : rota.split(',');
+            rotaArray.forEach(p => pontos.push(p.trim()));
+        }
+        pontos.push(destino);
+        pontos = [...new Set(pontos)]; // Remove repetidos
+
+        pontos.forEach(p => { if (p) texto += `🚘 ${p}\n`; });
+
+        texto += `\n💰 R$ ${valor}\n`;
+        if (detalhes && detalhes.trim() !== '') {
+            texto += `⚠️ ${detalhes}\n`;
+        }
+        texto += `\n👉 *Reservar vaga:* ${link}`;
+        return texto;
+    }
+
+    function compartilharRide(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
+        const link = `${window.location.origin}/${rideId}`;
+        const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
     }

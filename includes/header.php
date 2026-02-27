@@ -1,15 +1,10 @@
 <?php
-// 1. Valores Padrão (Fallback para a página inicial)
-$pageTitle = "Carona Online | Suas caronas facilitadas";
-$pageDesc = "Encontre e ofereça caronas de forma rápida e segura. Junte-se à nossa comunidade!";
+$pageTitle = "Carona Online";
+$pageDesc = "Encontre e ofereça caronas de forma rápida e segura.";
 
-// URL da imagem padrão
-$ogImage = "https://carona.online/assets/media/app/icon-512.png";
-
-// 2. Se a URL tiver o ID de uma carona (ex: /1 ou index.php?ride_id=1)
 if (isset($_GET['ride_id']) && is_numeric($_GET['ride_id'])) {
     try {
-        $stmtMeta = $pdo->prepare("SELECT origin_text, destination_text, departure_time, price, waypoints FROM rides WHERE id = ?");
+        $stmtMeta = $pdo->prepare("SELECT origin_text, destination_text, departure_time, price, seats_available, waypoints, details FROM rides WHERE id = ?");
         $stmtMeta->execute([$_GET['ride_id']]);
         $rideMeta = $stmtMeta->fetch(PDO::FETCH_ASSOC);
 
@@ -18,18 +13,29 @@ if (isset($_GET['ride_id']) && is_numeric($_GET['ride_id'])) {
             $destinoMeta = htmlspecialchars($rideMeta['destination_text']);
             $horaMeta = date('H:i', strtotime($rideMeta['departure_time']));
             $precoMeta = number_format($rideMeta['price'], 2, ',', '.');
+            $vagasMeta = $rideMeta['seats_available'];
 
             $wpArrMeta = json_decode($rideMeta['waypoints'] ?? '[]', true);
             if (!is_array($wpArrMeta))
                 $wpArrMeta = [];
-            $rotaMeta = empty($wpArrMeta) ? '' : ' | Via: ' . htmlspecialchars(implode(', ', $wpArrMeta));
 
-            // 3. Substitui pelos valores Dinâmicos da Carona
-            $pageTitle = "🚗 Vaga: $origemMeta ➝ $destinoMeta";
-            $pageDesc = "⏰ $horaMeta • 💰 R$ $precoMeta $rotaMeta. Toque para garantir a sua vaga!";
+            // Junta origem + waypoints + destino e remove duplicatas
+            $pontosMeta = [$origemMeta];
+            $pontosMeta = array_merge($pontosMeta, $wpArrMeta);
+            $pontosMeta[] = $destinoMeta;
+            $pontosMeta = array_unique($pontosMeta);
+
+            $rotaDesc = "";
+            foreach ($pontosMeta as $p) {
+                if (trim($p) !== '')
+                    $rotaDesc .= "🚘 $p | ";
+            }
+            $rotaDesc = rtrim($rotaDesc, " | ");
+
+            $pageTitle = "$vagasMeta Vaga(s) para $destinoMeta 🚘";
+            $pageDesc = "⏰ Saída: $horaMeta\n$rotaDesc\n💰 R$ $precoMeta";
         }
     } catch (Exception $e) {
-        // Se der erro de banco, segue com o título padrão
     }
 }
 
@@ -44,9 +50,7 @@ $currentUrl = $protocol . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title>
-        <?= $pageTitle ?>
-    </title>
+    <title><?= $pageTitle ?></title>
     <meta name="title" content="<?= $pageTitle ?>">
     <meta name="description" content="<?= $pageDesc ?>">
 
@@ -55,14 +59,13 @@ $currentUrl = $protocol . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'
     <meta property="og:url" content="<?= $currentUrl ?>">
     <meta property="og:title" content="<?= $pageTitle ?>">
     <meta property="og:description" content="<?= $pageDesc ?>">
-    <meta property="og:image" content="<?= $ogImage ?>">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:card" content="summary">
     <meta property="twitter:url" content="<?= $currentUrl ?>">
     <meta property="twitter:title" content="<?= $pageTitle ?>">
     <meta property="twitter:description" content="<?= $pageDesc ?>">
-    <meta property="twitter:image" content="<?= $ogImage ?>">
+
 
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">

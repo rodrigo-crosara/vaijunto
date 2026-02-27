@@ -20,7 +20,8 @@
             <div id="smart-replay-box"
                 class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
                 <div class="flex items-center gap-3 w-full">
-                    <div class="bg-blue-100 text-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                    <div
+                        class="bg-blue-100 text-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
                         <i class="bi bi-arrow-repeat text-xl"></i>
                     </div>
                     <div class="flex-grow overflow-hidden">
@@ -201,7 +202,16 @@
 
         $('input[name="origin"]').val(lastRideData.origin);
         $('input[name="destination"]').val(lastRideData.destination);
-        $('input[name="price"]').val(lastRideData.price);
+
+        // --- CORREÇÃO DO VALOR (Prevenção do bug 700,00) ---
+        let rawPrice = String(lastRideData.price).replace(',', '.'); // Força ponto decimal
+        let priceNum = parseFloat(rawPrice);
+        if (!isNaN(priceNum)) {
+            // O <input type="number"> do HTML5 sempre exige o formato universal (com ponto) internamente
+            $('input[name="price"]').val(priceNum.toFixed(2));
+        }
+        // ---------------------------------------------------
+
         $('select[name="seats"]').val(lastRideData.seats);
         $('input[name="details"]').val(lastRideData.details);
 
@@ -323,17 +333,34 @@
                 }
 
                 if (result.success) {
-                    // Captura origem, destino e rota do formulário para deixar a mensagem rica
-                    const origem = $('input[name="origin"]').val() || 'Origem';
-                    const destino = $('input[name="destination"]').val() || 'Destino';
-                    const rotaRaw = $('textarea[name="waypoints"]').val() || '';
-                    const rotaFormatada = rotaRaw && rotaRaw.trim() !== '' ? rotaRaw : 'Via padrão';
+                    const origem = data.origin;
+                    const destino = data.destination;
+                    const horaRaw = data.departure_time;
+                    const hora = new Date(horaRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const valor = parseFloat(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    const rota = data.waypoints || '';
+                    const vagas = data.seats;
+                    const detalhes = data.details || '';
+                    const link = `${window.location.origin}/${result.ride_id}`;
 
-                    // A cereja do bolo: URL super curta!
-                    const linkStr = `${window.location.origin}/${result.ride_id}`;
+                    let textoZap = `*${vagas} Vaga(s) para ${destino}* 🚘\n`;
+                    textoZap += `⏰ Saída: ${hora}\n\n`;
 
-                    const texto = `🚗 *Carona Online - Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n🛣️ Rota: ${rotaFormatada}\n\n👉 *Reserve aqui:* ${linkStr}`;
-                    const waLink = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+                    let pontos = [origem];
+                    if (rota && rota.trim() !== '') {
+                        let rotaArray = rota.includes(',') ? rota.split(',') : [rota];
+                        rotaArray.forEach(p => pontos.push(p.trim()));
+                    }
+                    pontos.push(destino);
+                    pontos = [...new Set(pontos)];
+
+                    pontos.forEach(p => { if (p) textoZap += `🚘 ${p}\n`; });
+
+                    textoZap += `\n� R$ ${valor}\n`;
+                    if (detalhes && detalhes.trim() !== '') textoZap += `⚠️ ${detalhes}\n`;
+                    textoZap += `\n👉 *Reservar vaga:* ${link}`;
+
+                    const waLink = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
 
                     Swal.fire({
                         title: 'Carona Criada! 🚀',
