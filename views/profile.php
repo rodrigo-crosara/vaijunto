@@ -60,7 +60,7 @@ $msg = $_GET['msg'] ?? '';
     </div>
 
     <!-- Formulário Principal -->
-    <form id="profile-form" class="space-y-6" enctype="multipart/form-data">
+    <form id="profile-form" class="space-y-4" enctype="multipart/form-data">
 
         <!-- Dados Pessoais -->
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
@@ -104,7 +104,6 @@ $msg = $_GET['msg'] ?? '';
                         class="w-full p-4 rounded-2xl bg-gray-50 border-0 focus:ring-2 focus:ring-primary/20 font-medium transition-all"
                         placeholder="Ex: Trabalho no Setor Bancário..."><?= htmlspecialchars($user['bio'] ?? '') ?></textarea>
                 </div>
-            </div>
             </div>
         </div>
 
@@ -242,7 +241,21 @@ $msg = $_GET['msg'] ?? '';
                             <i class="bi bi-key-fill"></i>
                          </div>
                     </div>
-                    <p class="text-[10px] text-gray-400 mt-2 ml-1">Deixe em branco para manter o atual. Use 4 números.</p>
+                    <p class="text-[10px] text-gray-400 mt-2 ml-1 mb-6">Deixe em branco para manter o atual. Use 4 números.</p>
+                </div>
+
+                <hr class="border-gray-100 my-4">
+
+                <div class="bg-red-50/50 p-5 rounded-3xl border border-red-100 mt-2">
+                    <h3 class="text-sm font-bold text-red-400 mb-2 flex items-center gap-2">
+                        <i class="bi bi-exclamation-octagon-fill"></i> Zona de Perigo
+                    </h3>
+                    <p class="text-xs text-red-300 mb-4">Ações irreversíveis. Prossiga com cuidado.</p>
+                    <button type="button" onclick="excluirConta()"
+                        class="w-full py-3 px-4 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm">
+                        <i class="bi bi-trash3 shrink-0"></i> 
+                        <span class="truncate">Excluir minha conta</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -320,20 +333,7 @@ $msg = $_GET['msg'] ?? '';
         </div>
     <?php endif; ?>
 
-    <!-- ======================== -->
-    <!-- ZONA DE PERIGO           -->
-    <!-- ======================== -->
-    <div class="mt-8 bg-red-50/50 p-6 rounded-[2rem] border border-red-100">
-        <h3 class="text-sm font-bold text-red-400 mb-2 flex items-center gap-2">
-            <i class="bi bi-exclamation-octagon-fill"></i> Zona de Perigo
-        </h3>
-        <p class="text-xs text-red-300 mb-4">Ações irreversíveis. Prossiga com cuidado.</p>
-        <button type="button" onclick="excluirConta()"
-            class="w-full py-3.5 px-4 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2">
-            <i class="bi bi-trash3 shrink-0"></i> 
-            <span class="truncate">Excluir minha conta</span>
-        </button>
-    </div>
+
 
     <div class="h-40"></div>
 </div>
