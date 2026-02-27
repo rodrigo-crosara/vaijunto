@@ -25,7 +25,7 @@ try {
         SELECT COUNT(*) 
         FROM rides 
         WHERE id > ? 
-          AND status = 'scheduled' 
+          AND status IN ('scheduled', 'active') 
           AND driver_id != ?
           AND departure_time >= NOW()
     ");

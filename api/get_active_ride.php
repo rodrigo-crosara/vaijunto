@@ -34,7 +34,7 @@ try {
         JOIN users u ON r.driver_id = u.id
         WHERE b.passenger_id = ? 
           AND b.status = 'confirmed'
-          AND r.status = 'scheduled'
+          AND r.status IN ('scheduled', 'active')
           AND r.departure_time >= DATE_SUB(NOW(), INTERVAL 4 HOUR)
           AND r.departure_time <= DATE_ADD(NOW(), INTERVAL 2 HOUR)
         LIMIT 1

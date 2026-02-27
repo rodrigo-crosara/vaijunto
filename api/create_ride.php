@@ -89,7 +89,7 @@ if (!empty($detailsInput)) {
 try {
     // Definir a query SQL que será usada em ambas as lógicas
     $sql = "INSERT INTO rides (driver_id, origin_text, destination_text, waypoints, departure_time, seats_total, seats_available, price, tags, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW())";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())";
 
     $ridesCreated = [];
     $repeat_days = $input['repeat_days'] ?? [];

@@ -67,6 +67,11 @@ try {
         $day = date('d/m', strtotime($ride['departure_time']));
         $avatar = $ride['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($ride['driver_name']) . "&background=random";
 
+        $waypointsArr = json_decode($ride['waypoints'] ?? '[]', true);
+        if (!is_array($waypointsArr))
+            $waypointsArr = [];
+        $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
+
         // Verificar se passou por waypoints para exibir badge
         $passByMatch = null;
         if ($query !== '') {
@@ -99,7 +104,7 @@ try {
                 </div>
                 <div class="flex items-center gap-4">
                     <button
-                        onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
+                        onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $details ?? ''))) ?>")'
                         class="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
                         title="Compartilhar carona">
                         <i class="bi bi-share-fill text-xs"></i>
@@ -194,7 +199,7 @@ try {
                         if (strlen($dPhoneSearch) === 11 || strlen($dPhoneSearch) === 10)
                             $dPhoneSearch = '55' . $dPhoneSearch;
                         ?>
-                                    <a href="https://wa.me/<?= $dPhoneSearch ?>" target="_blank"
+                        <a href="https://wa.me/<?= $dPhoneSearch ?>" target="_blank"
                             class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2 active:scale-95 transition-all">
                             <i class="bi bi-whatsapp"></i> WhatsApp
                         </a>

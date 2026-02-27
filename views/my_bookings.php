@@ -99,6 +99,8 @@ foreach ($bookings as $b) {
             $nbDayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date('w', strtotime($nb['departure_time']))];
             $nbAvatar = $nb['driver_avatar'] ?: "https://ui-avatars.com/api/?name=" . urlencode($nb['driver_name']) . "&background=0D8FFD&color=fff&bold=true";
             $nbPhone = preg_replace('/\D/', '', $nb['driver_phone']);
+            if (strlen($nbPhone) === 11 || strlen($nbPhone) === 10)
+                $nbPhone = '55' . $nbPhone;
             $isPaid = ($nb['payment_status'] === 'paid');
             ?>
             <div class="mb-8">
@@ -309,7 +311,12 @@ foreach ($bookings as $b) {
                                     </div>
                                 <?php elseif ($isActive): ?>
                                     <div class="flex gap-1.5">
-                                        <a href="https://wa.me/<?= preg_replace('/\D/', '', $b['driver_phone']) ?>" target="_blank"
+                                        <?php
+                                        $hPhone = preg_replace('/\D/', '', $b['driver_phone']);
+                                        if (strlen($hPhone) === 11 || strlen($hPhone) === 10)
+                                            $hPhone = '55' . $hPhone;
+                                        ?>
+                                        <a href="https://wa.me/<?= $hPhone ?>" target="_blank"
                                             class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm">
                                             <i class="bi bi-whatsapp"></i>
                                         </a>

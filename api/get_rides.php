@@ -34,7 +34,7 @@ try {
     if ($rides) {
         $rideIds = array_column($rides, 'id');
         $placeholders = implode(',', array_fill(0, count($rideIds), '?'));
-        $stmtBookings = $pdo->prepare("SELECT ride_id FROM bookings WHERE passenger_id = ? AND ride_id IN ($placeholders)");
+        $stmtBookings = $pdo->prepare("SELECT ride_id FROM bookings WHERE passenger_id = ? AND status NOT IN ('canceled', 'rejected') AND ride_id IN ($placeholders)");
         $stmtBookings->execute(array_merge([$currentUserId], $rideIds));
         $myBookings = $stmtBookings->fetchAll(PDO::FETCH_COLUMN);
     }
@@ -46,6 +46,11 @@ try {
         $time = date('H:i', strtotime($ride['departure_time']));
         $day = date('d/m', strtotime($ride['departure_time']));
         $avatar = $ride['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($ride['driver_name']) . "&background=random";
+
+        // Normalização do Telefone para WhatsApp
+        $dPhone = preg_replace('/\D/', '', $ride['driver_phone']);
+        if (strlen($dPhone) === 11 || strlen($dPhone) === 10)
+            $dPhone = '55' . $dPhone;
 
         ob_start();
         ?>
@@ -117,7 +122,7 @@ try {
                             Carona</span>
                     <?php elseif ($isBooked): ?>
                         <div class="flex gap-2">
-                            <a href="https://wa.me/<?= preg_replace('/\D/', '', $ride['driver_phone']) ?>" target="_blank"
+                            <a href="https://wa.me/<?= $dPhone ?>" target="_blank"
                                 class="btn btn-sm btn-light-success rounded-xl font-bold px-4">
                                 WhatsApp
                             </a>
