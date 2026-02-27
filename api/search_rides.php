@@ -54,7 +54,7 @@ try {
     if ($rides) {
         $rideIds = array_column($rides, 'id');
         $placeholders = implode(',', array_fill(0, count($rideIds), '?'));
-        $stmtBookings = $pdo->prepare("SELECT ride_id FROM bookings WHERE passenger_id = ? AND ride_id IN ($placeholders)");
+        $stmtBookings = $pdo->prepare("SELECT ride_id FROM bookings WHERE passenger_id = ? AND status NOT IN ('canceled', 'rejected') AND ride_id IN ($placeholders)");
         $stmtBookings->execute(array_merge([$currentUserId], $rideIds));
         $myBookings = $stmtBookings->fetchAll(PDO::FETCH_COLUMN);
     }
@@ -189,8 +189,12 @@ try {
                             class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                             <i class="bi bi-whatsapp text-lg"></i> Divulgar
                         </button>
-                    <?php elseif ($isBooked): ?>
-                        <a href="https://wa.me/<?= preg_replace('/\D/', '', $ride['driver_phone']) ?>" target="_blank"
+                    <?php elseif ($isBooked):
+                        $dPhoneSearch = preg_replace('/\D/', '', $ride['driver_phone']);
+                        if (strlen($dPhoneSearch) === 11 || strlen($dPhoneSearch) === 10)
+                            $dPhoneSearch = '55' . $dPhoneSearch;
+                        ?>
+                                    <a href="https://wa.me/<?= $dPhoneSearch ?>" target="_blank"
                             class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2 active:scale-95 transition-all">
                             <i class="bi bi-whatsapp"></i> WhatsApp
                         </a>

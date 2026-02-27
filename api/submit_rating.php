@@ -52,7 +52,13 @@ try {
         exit;
     }
 
-    // 3. Verificar se a viagem já aconteceu
+    // 3. Verificar se o status da reserva era válido para avaliação (Só avalia viagens reais)
+    if (!in_array($booking['status'], ['confirmed', 'paid'])) {
+        echo json_encode(['success' => false, 'message' => 'Você não pode avaliar uma viagem que foi cancelada ou não foi confirmada.']);
+        exit;
+    }
+
+    // 4. Verificar se a viagem já aconteceu
     if (strtotime($booking['departure_time']) > time()) {
         echo json_encode(['success' => false, 'message' => 'A viagem ainda não aconteceu.']);
         exit;
