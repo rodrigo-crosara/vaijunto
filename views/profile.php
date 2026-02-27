@@ -253,12 +253,14 @@ $msg = $_GET['msg'] ?? '';
             Salvar Alterações
         </button>
 
+        <div class="h-10"></div>
+
         <a href="api/logout.php"
             class="block w-full text-center py-4 bg-red-50 text-red-600 font-bold rounded-2xl border border-red-100 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center gap-2">
             <i class="bi bi-box-arrow-right text-lg"></i> Sair da Conta
         </a>
 
-        <div class="h-40"></div>
+        <div class="h-32"></div>
 
     </form>
 
@@ -331,6 +333,8 @@ $msg = $_GET['msg'] ?? '';
             <i class="bi bi-trash3"></i> Excluir minha conta permanentemente
         </button>
     </div>
+
+    <div class="h-40"></div>
 </div>
 
 <script>

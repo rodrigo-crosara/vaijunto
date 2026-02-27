@@ -412,6 +412,7 @@
                 timer: 0 // Persistente
             });
         } else if (deferredPrompt) {
+            if (document.getElementById('install-fab')) return;
             // Android / Desktop Button
             const btn = document.createElement('div');
             btn.id = 'install-fab';
