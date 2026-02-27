@@ -356,7 +356,7 @@
 
                     pontos.forEach(p => { if (p) textoZap += `🚘 ${p}\n`; });
 
-                    textoZap += `\n� R$ ${valor}\n`;
+                    textoZap += `\n💰 R$ ${valor}\n`;
                     if (detalhes && detalhes.trim() !== '') textoZap += `⚠️ ${detalhes}\n`;
                     textoZap += `\n👉 *Reservar vaga:* ${link}`;
 
