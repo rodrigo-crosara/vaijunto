@@ -48,7 +48,7 @@ if (!isset($_SESSION['user_id'])) {
     // Middleware de Onboarding (Força cadastro completo)
     // Permite acessar profile, logout e script de update
     if (
-        (empty($_SESSION['user_name']) || empty($_SESSION['user_photo'])) &&
+        empty($_SESSION['user_name']) &&
         $page !== 'profile' &&
         $page !== 'logout'
     ) {

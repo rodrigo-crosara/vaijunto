@@ -34,11 +34,15 @@ try {
     switch ($action) {
         case 'confirm_booking':
             $bookingId = intval($input['bookingId'] ?? 0);
-            $stmt = $pdo->prepare("SELECT b.id, b.passenger_id, r.driver_id FROM bookings b JOIN rides r ON b.ride_id = r.id WHERE b.id = ? AND r.driver_id = ?");
+            $stmt = $pdo->prepare("SELECT b.id, b.status, b.passenger_id, r.driver_id FROM bookings b JOIN rides r ON b.ride_id = r.id WHERE b.id = ? AND r.driver_id = ?");
             $stmt->execute([$bookingId, $driverId]);
             $b = $stmt->fetch();
 
             if ($b) {
+                if ($b['status'] !== 'pending') {
+                    echo json_encode(['success' => false, 'message' => 'Esta reserva já foi processada ou cancelada.']);
+                    exit;
+                }
                 $pdo->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?")->execute([$bookingId]);
                 createNotification($pdo, $b['passenger_id'], 'confirmed', '✅ Sua solicitação de carona foi aceita pelo motorista!', 'index.php?page=my_bookings');
                 echo json_encode(['success' => true, 'message' => 'Passageiro confirmado na carona!']);
@@ -49,16 +53,24 @@ try {
 
         case 'reject_booking':
             $bookingId = intval($input['bookingId'] ?? 0);
-            $stmt = $pdo->prepare("SELECT b.id, b.ride_id, b.passenger_id, r.driver_id FROM bookings b JOIN rides r ON b.ride_id = r.id WHERE b.id = ? AND r.driver_id = ?");
+            $stmt = $pdo->prepare("SELECT b.id, b.status, b.ride_id, b.passenger_id, r.driver_id FROM bookings b JOIN rides r ON b.ride_id = r.id WHERE b.id = ? AND r.driver_id = ?");
             $stmt->execute([$bookingId, $driverId]);
             $b = $stmt->fetch();
 
             if ($b) {
+                if ($b['status'] === 'rejected' || $b['status'] === 'canceled') {
+                    echo json_encode(['success' => false, 'message' => 'Esta reserva já está inativa.']);
+                    exit;
+                }
+
+                $pdo->beginTransaction();
                 // Devolve a vaga para a carona (pois ela foi reservada no ato do pedido)
                 $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?")->execute([$b['ride_id']]);
                 // Rejeita a solicitação
                 $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?")->execute([$bookingId]);
                 createNotification($pdo, $b['passenger_id'], 'cancel', '❌ O motorista não pôde aceitar sua solicitação.', 'index.php?page=home');
+                $pdo->commit();
+
                 echo json_encode(['success' => true, 'message' => 'Solicitação recusada. Vaga liberada.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada.']);
@@ -82,13 +94,21 @@ try {
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {
-                // Notificar TODOS os passageiros desta carona
+                // Notificar TODOS os passageiros desta carona (Confirmados e Pendentes)
                 $driverName = $_SESSION['user_name'] ?? 'O motorista';
-                $stmtPass = $pdo->prepare("SELECT passenger_id FROM bookings WHERE ride_id = ? AND status = 'confirmed'");
+                $stmtPass = $pdo->prepare("SELECT id, passenger_id, status FROM bookings WHERE ride_id = ? AND status IN ('confirmed', 'pending')");
                 $stmtPass->execute([$rideId]);
-                $passengers = $stmtPass->fetchAll(PDO::FETCH_COLUMN);
-                foreach ($passengers as $pid) {
-                    createNotification($pdo, $pid, 'cancel', "🚨 URGENTE: Viagem cancelada por {$driverName}.", 'index.php?page=my_bookings');
+                $bookingsToCancel = $stmtPass->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($bookingsToCancel as $b) {
+                    // Marca como rejeitado/cancelado pelo sistema
+                    $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?")->execute([$b['id']]);
+
+                    $msg = ($b['status'] === 'confirmed')
+                        ? "🚨 URGENTE: Viagem cancelada por {$driverName}."
+                        : "❌ Viagem cancelada: O motorista cancelou a carona antes de aceitar seu pedido.";
+
+                    createNotification($pdo, $b['passenger_id'], 'cancel', $msg, 'index.php?page=home');
                 }
                 echo json_encode(['success' => true, 'message' => 'Carona cancelada com sucesso.']);
             } else {
@@ -124,7 +144,7 @@ try {
 
             // 1. Buscar a reserva e verificar se a carona pertence ao motorista
             $stmt = $pdo->prepare("
-                SELECT b.ride_id, b.status 
+                SELECT b.ride_id, b.status, b.passenger_id
                 FROM bookings b
                 JOIN rides r ON b.ride_id = r.id
                 WHERE b.id = ? AND r.driver_id = ?
@@ -136,37 +156,22 @@ try {
                 throw new Exception("Reserva não encontrada ou sem permissão.");
             }
 
-            if ($booking['status'] === 'rejected') {
-                throw new Exception("Esta reserva já foi removida.");
+            // Só devolve vaga se a reserva não estiver já em estado de "vaga devolvida"
+            if ($booking['status'] === 'rejected' || $booking['status'] === 'canceled') {
+                throw new Exception("Esta reserva já foi cancelada ou removida.");
             }
 
             // 2. Marcar como rejeitada
             $stmtUpdate = $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?");
             $stmtUpdate->execute([$bookingId]);
 
-            // DEVOLVER VAGA
-            // Buscar rideId da reserva
-            $stmtRideId = $pdo->prepare("SELECT ride_id FROM bookings WHERE id = ?");
-            $stmtRideId->execute([$bookingId]);
-            $rideIdForReturn = $stmtRideId->fetchColumn();
-
-            if ($rideIdForReturn) {
-                $stmtInc = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
-                $stmtInc->execute([$rideIdForReturn]);
-            }
-
-            // 3. Incrementar vagas na carona
+            // 3. Devolver a vaga apenas UMA vez
             $stmtInc = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
             $stmtInc->execute([$booking['ride_id']]);
 
-            // Notificar o passageiro removido
-            $stmtPid = $pdo->prepare("SELECT passenger_id FROM bookings WHERE id = ?");
-            $stmtPid->execute([$bookingId]);
-            $removedPassengerId = $stmtPid->fetchColumn();
+            // 4. Notificar o passageiro removido
             $driverName = $_SESSION['user_name'] ?? 'O motorista';
-            if ($removedPassengerId) {
-                createNotification($pdo, $removedPassengerId, 'cancel', "😔 {$driverName} removeu você da carona.", 'index.php?page=my_bookings');
-            }
+            createNotification($pdo, $booking['passenger_id'], 'cancel', "😔 {$driverName} removeu você da carona.", 'index.php?page=my_bookings');
 
             $pdo->commit();
             echo json_encode(['success' => true, 'message' => 'Passageiro removido e vaga liberada.']);

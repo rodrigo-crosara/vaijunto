@@ -29,7 +29,7 @@ if (empty($input)) {
 // 1. Atualizar User
 $name = trim($input['name'] ?? '');
 $bio = trim($input['bio'] ?? '');
-$newPhone = trim($input['phone'] ?? '');
+$newPhone = preg_replace('/\D/', '', $input['phone'] ?? ''); // Limpa máscara (61) 9999-9999 -> 61999999999
 
 if (empty($name)) {
     echo json_encode(['success' => false, 'message' => 'O nome é obrigatório.']);
