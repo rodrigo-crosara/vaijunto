@@ -4,6 +4,8 @@
  * Uses PDO for secure and flexible database interaction.
  */
 
+define('SECRET_KEY', 'vaijunto_app_token_secreto_2024');
+
 date_default_timezone_set('America/Sao_Paulo');
 
 $host = 'localhost';

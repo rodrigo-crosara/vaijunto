@@ -80,6 +80,14 @@ try {
         $_SESSION['is_driver'] = (int) $user['is_driver'];
         $_SESSION['is_admin'] = (int) $user['is_admin'];
         $_SESSION['user_phone'] = $cleanPhone;
+
+        // Gera uma assinatura única para evitar que fraudem o cookie
+        $signature = hash_hmac('sha256', $user['id'], SECRET_KEY);
+        $token = $user['id'] . '|' . $signature;
+
+        // Salva o cookie por 30 dias (86400 segundos = 1 dia)
+        setcookie('vj_remember', $token, time() + (86400 * 30), "/");
+
         echo json_encode(['success' => true, 'type' => 'login']);
 
     } else {
@@ -96,6 +104,13 @@ try {
         $_SESSION['is_driver'] = 0;
         $_SESSION['is_admin'] = 0;
         $_SESSION['user_phone'] = $cleanPhone;
+
+        // Gera uma assinatura única para evitar que fraudem o cookie
+        $signature = hash_hmac('sha256', $newUserId, SECRET_KEY);
+        $token = $newUserId . '|' . $signature;
+
+        // Salva o cookie por 30 dias (86400 segundos = 1 dia)
+        setcookie('vj_remember', $token, time() + (86400 * 30), "/");
 
         require_once '../helpers/notification.php';
         createNotification(
