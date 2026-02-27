@@ -37,7 +37,7 @@ switch ($action) {
 
             // 1. Verificar se a reserva pertence ao usuário logado e está ativa
             $stmt = $pdo->prepare("
-                SELECT b.id, b.ride_id, b.status, r.driver_id 
+                SELECT b.id, b.ride_id, b.status, r.driver_id, r.departure_time
                 FROM bookings b 
                 JOIN rides r ON b.ride_id = r.id 
                 WHERE b.id = ? AND b.passenger_id = ?
@@ -48,6 +48,13 @@ switch ($action) {
             if (!$booking) {
                 $pdo->rollBack();
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou não pertence a você.']);
+                exit;
+            }
+
+            // Bloqueio Temporal: Não permitir cancelar o passado
+            if (strtotime($booking['departure_time']) < time()) {
+                $pdo->rollBack();
+                echo json_encode(['success' => false, 'message' => 'Não é possível cancelar uma carona que já aconteceu.']);
                 exit;
             }
 

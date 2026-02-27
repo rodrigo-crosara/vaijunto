@@ -43,7 +43,7 @@ try {
 
     // 2. Bloqueios de Lógica
     // Validar status e vagas novamente
-    if ($ride['seats_available'] < 1 || $ride['status'] !== 'active') {
+    if ($ride['seats_available'] < 1 || !in_array($ride['status'], ['scheduled', 'active'])) {
         throw new Exception("Carona lotada ou indisponível.");
     }
 

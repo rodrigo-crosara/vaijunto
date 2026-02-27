@@ -328,6 +328,9 @@ foreach ($bookings as $b) {
                                 <?php elseif ($isPaid): ?>
                                     <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2.5 py-1 rounded-full">Pago
                                         ✓</span>
+                                <?php elseif ($b['booking_status'] === 'pending' && !$isFuture): ?>
+                                    <span
+                                        class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Expirada</span>
                                 <?php else: ?>
                                     <span
                                         class="text-[10px] font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">Concluída</span>

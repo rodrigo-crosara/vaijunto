@@ -16,12 +16,11 @@ if ($rideId <= 0) {
 }
 
 try {
-    // Buscar passageiros desta carona
     $stmt = $pdo->prepare("
         SELECT b.id as booking_id, u.name, u.photo_url, u.phone, b.meeting_point, b.status as booking_status, b.payment_status
         FROM bookings b
         JOIN users u ON b.passenger_id = u.id
-        WHERE b.ride_id = ? AND b.status != 'rejected'
+        WHERE b.ride_id = ? AND b.status NOT IN ('rejected', 'canceled')
         ORDER BY b.created_at ASC
     ");
     $stmt->execute([$rideId]);

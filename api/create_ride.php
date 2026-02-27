@@ -57,8 +57,8 @@ if (empty($origin) || empty($destination) || empty($departure_time) || $seats <=
     exit;
 }
 
-// Validação: Data no passado
-if (strtotime($departure_time) < time()) {
+// Validação: Data no passado (com margem de 1 minuto para evitar erros de latência)
+if (strtotime($departure_time) < (time() - 60)) {
     echo json_encode(['success' => false, 'message' => 'A data e hora de saída devem ser futuras.']);
     exit;
 }

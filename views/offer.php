@@ -89,7 +89,7 @@
                     <!-- Single Date Input -->
                     <div id="single-date-container" class="flex flex-col">
                         <label class="form-label font-bold text-gray-800 text-sm mb-2 required">Data e Hora</label>
-                        <input type="datetime-local" name="departure_time"
+                        <input type="datetime-local" name="departure_time" min="<?= date('Y-m-d\TH:i') ?>"
                             class="form-control form-control-solid rounded-lg p-3 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                             required>
                     </div>

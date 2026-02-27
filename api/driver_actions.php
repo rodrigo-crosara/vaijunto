@@ -89,8 +89,8 @@ try {
             break;
 
         case 'cancel_ride':
-            // Verificar se a carona é do motorista
-            $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ?");
+            // Verificar se a carona é do motorista e é futura
+            $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ? AND departure_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)");
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {
@@ -123,7 +123,7 @@ try {
                 exit;
             }
 
-            $stmt = $pdo->prepare("UPDATE rides SET seats_available = ? WHERE id = ? AND driver_id = ?");
+            $stmt = $pdo->prepare("UPDATE rides SET seats_available = ? WHERE id = ? AND driver_id = ? AND departure_time >= NOW()");
             $stmt->execute([$newSeats, $rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {

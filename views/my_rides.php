@@ -34,7 +34,8 @@ try {
             SELECT b.id as booking_id, u.name, u.photo_url, u.phone, b.meeting_point, b.note, b.status as booking_status, b.payment_status
             FROM bookings b
             JOIN users u ON b.passenger_id = u.id
-            WHERE b.ride_id = ? AND b.status != 'rejected'
+            WHERE b.ride_id = ? AND b.status NOT IN ('rejected', 'canceled')
+            ORDER BY b.created_at ASC
         ");
         $stmtPassengers->execute([$ride['id']]);
         $ride['passengers'] = $stmtPassengers->fetchAll(PDO::FETCH_ASSOC);

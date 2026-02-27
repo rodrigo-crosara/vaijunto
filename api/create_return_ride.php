@@ -41,6 +41,12 @@ try {
     // 3. Ajustar Horário (+9 horas por padrão) ou usar o enviado
     $newDepartureTime = $input['newDepartureTime'] ?? date('Y-m-d H:i:s', strtotime($original['departure_time'] . ' + 9 hours'));
 
+    // Validação Temporal
+    if (strtotime($newDepartureTime) < time()) {
+        echo json_encode(['success' => false, 'message' => 'O horário da volta deve ser futuro.']);
+        exit;
+    }
+
     // 4. Inserir nova carona
     $stmtInsert = $pdo->prepare("
         INSERT INTO rides (
