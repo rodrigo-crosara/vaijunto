@@ -37,7 +37,7 @@ $currentPage = $_GET['page'] ?? 'home';
             </a>
 
             <!-- Botão Flutuante Criar -->
-            <div class="relative -top-10">
+            <div class="relative -top-10 <?= ($currentPage === 'offer') ? 'hidden' : '' ?>">
                 <a href="index.php?page=offer"
                     class="flex items-center justify-center w-16 h-16 rounded-3xl bg-primary text-white shadow-2xl shadow-primary/40 hover:scale-110 active:scale-95 transition-all outline-none border-4 border-white">
                     <i class="bi bi-plus-lg text-3xl font-bold"></i>

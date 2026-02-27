@@ -18,19 +18,18 @@
         <div class="card-body p-8">
             <!-- Smart Box: Repetir Última (Hidden by default) -->
             <div id="smart-replay-box"
-                class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex items-center justify-between shadow-sm">
-                <div class="flex items-center gap-3">
-                    <div
-                        class="bg-blue-100 text-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+                class="hidden bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-3 w-full">
+                    <div class="bg-blue-100 text-primary w-10 h-10 rounded-full flex items-center justify-center shrink-0">
                         <i class="bi bi-arrow-repeat text-xl"></i>
                     </div>
-                    <div>
+                    <div class="flex-grow overflow-hidden">
                         <p class="text-sm font-bold text-gray-800">Fazer o trajeto de sempre?</p>
-                        <p id="last-route-text" class="text-xs text-gray-500 truncate max-w-[200px]"></p>
+                        <p id="last-route-text" class="text-xs text-gray-500 truncate w-full"></p>
                     </div>
                 </div>
                 <button type="button" onclick="fillWithLastRide()"
-                    class="text-xs font-bold bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                    class="w-full sm:w-auto text-sm font-bold bg-primary text-white px-5 py-3 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shrink-0 shadow-md">
                     <i class="bi bi-magic"></i> Preencher
                 </button>
             </div>
@@ -141,20 +140,20 @@
                     <label class="form-label font-bold text-gray-800 text-sm mb-2">Observações</label>
                     <input type="text" name="details"
                         class="form-control form-control-solid rounded-lg p-3 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
-                        placeholder="Ex: Só aceito Pix, sem foto não levo">
+                        placeholder="Ex: Sem foto não levo">
                 </div>
 
                 <!-- Separator -->
                 <div class="border-t border-gray-100 my-6"></div>
 
                 <!-- Actions -->
-                <div class="flex justify-end">
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 mt-4">
                     <button type="button" onclick="history.back()"
-                        class="btn btn-light text-gray-600 hover:bg-gray-100 font-bold py-3 px-6 rounded-lg mr-3">
+                        class="w-full sm:w-auto bg-gray-100 text-gray-600 hover:bg-gray-200 font-bold py-4 px-6 rounded-xl transition-colors">
                         Cancelar
                     </button>
                     <button type="submit" id="btn-submit-offer"
-                        class="btn btn-primary font-bold py-3 px-8 rounded-lg shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow">
+                        class="w-full sm:w-auto bg-primary text-white font-extrabold py-4 px-8 rounded-xl shadow-xl shadow-primary/30 hover:bg-blue-700 transition-all flex justify-center items-center text-lg">
                         Publicar Carona
                     </button>
                 </div>
