@@ -116,6 +116,9 @@ try {
                             </div>
                         </div>
 
+                        <?php 
+                            $wpArr = json_decode($nextRide['waypoints'] ?? '[]', true);
+                            if(!is_array($wpArr)) $wpArr = [];
                             $rotaStr = empty($wpArr) ? 'Via padrão' : implode(' -> ', $wpArr);
                             $tagsArr = json_decode($nextRide['tags'] ?? '{}', true);
                             $detalhesStr = $tagsArr['details'] ?? '';

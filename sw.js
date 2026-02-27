@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vaijunto-v2'; // Bump version
+const CACHE_NAME = 'vaijunto-v3'; // Bump version
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
@@ -33,6 +33,34 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const requestUrl = new URL(event.request.url);
+
+  // 1. Regra para Imagens de Usuários/Carros (Cache Dinâmico: Stale-While-Revalidate)
+  if (requestUrl.pathname.includes('/assets/media/uploads/')) {
+      event.respondWith(
+          caches.open('vaijunto-dynamic-images-v1').then(cache => {
+              return cache.match(event.request).then(cachedResponse => {
+                  // Vai na rede buscar a imagem para atualizar o cache
+                  const fetchPromise = fetch(event.request).then(networkResponse => {
+                      // Salva uma cópia atualizada no cache dinâmico de mídias
+                      if (networkResponse && networkResponse.status === 200) {
+                          cache.put(event.request, networkResponse.clone());
+                      }
+                      return networkResponse;
+                  }).catch(() => {
+                      // Offline: Silencioso, usará o cache fallback se existir
+                  });
+                  
+                  // Se existir no cache, retorna IMEDIATAMENTE (Stale).
+                  // Se não, retorna a Promise de buscar na rede (network).
+                  return cachedResponse || fetchPromise;
+              });
+          })
+      );
+      return; // Interrompe o fluxo para não cair na regra geral abaixo
+  }
+
+  // 2. Regra Geral (Network-First Fallback)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
