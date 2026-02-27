@@ -316,10 +316,10 @@
         }
 
         // Iniciar Tour
-        setTimeout(checkFirstVisit, 1500);
+        setTimeout(checkFirstVisit, 3500);
         // Tentar mostrar install (se não for tour, mostra direto, se for tour, mostra no final)
         if (localStorage.getItem('tutorial_seen')) {
-            setTimeout(showInstallPromotion, 3000);
+            setTimeout(showInstallPromotion, 4000);
         }
     });
 
@@ -334,6 +334,17 @@
 
     // ===== ONBOARDING (BOAS-VINDAS) =====
     function checkFirstVisit() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasWelcomeMsg = urlParams.has('msg');
+
+        if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+            return; // Aborta para não fechar o alerta atual
+        }
+
+        if (hasWelcomeMsg) {
+            return; // Aborta para focar no bem-vindo
+        }
+
         if (!localStorage.getItem('tutorial_seen')) {
             const steps = [
                 {
@@ -388,6 +399,11 @@
     // ===== PROMOÇÃO DE INSTALAÇÃO (BANNER/TOAST) =====
     function showInstallPromotion() {
         if (localStorage.getItem('install_dismissed')) return;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('msg') || (typeof Swal !== 'undefined' && Swal.isVisible())) {
+            return; // Evita conflitos com outros modais ou o bem-vindo
+        }
 
         // Verificar se está em modo standalone (já instalado)
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
