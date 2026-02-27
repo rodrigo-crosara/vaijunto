@@ -42,6 +42,9 @@ if (isset($_GET['ride_id']) && is_numeric($_GET['ride_id'])) {
 // Captura a URL atual limpa
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
 $currentUrl = $protocol . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+
+// Define a imagem obrigatória para o WhatsApp gerar o Card
+$ogImage = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/assets/media/app/icon-512.png";
 ?>
 <!DOCTYPE html>
 <html lang="pt-br" class="h-full">
@@ -59,12 +62,14 @@ $currentUrl = $protocol . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'
     <meta property="og:url" content="<?= $currentUrl ?>">
     <meta property="og:title" content="<?= $pageTitle ?>">
     <meta property="og:description" content="<?= $pageDesc ?>">
+    <meta property="og:image" content="<?= $ogImage ?>">
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary">
+    <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="<?= $currentUrl ?>">
     <meta property="twitter:title" content="<?= $pageTitle ?>">
     <meta property="twitter:description" content="<?= $pageDesc ?>">
+    <meta property="twitter:image" content="<?= $ogImage ?>">
 
 
     <!-- PWA Meta Tags -->
