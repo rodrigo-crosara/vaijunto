@@ -50,7 +50,7 @@ if ($currentUserId) {
 }
 ?>
 
-<div id="view-container" class="max-w-lg mx-auto">
+<div id="view-container" class="max-w-lg mx-auto px-4">
 
     <!-- Notificação Flutuante -->
     <div id="new-rides-notification" class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] hidden">
@@ -65,25 +65,27 @@ if ($currentUserId) {
     <div id="active-ride-container" class="mb-4"></div>
 
     <!-- Smart Search Bar -->
-    <div class="sticky top-20 z-40 bg-gray-50/95 backdrop-blur-md py-4 mb-8">
-        <div class="flex gap-2">
+    <div class="sticky top-16 z-40 bg-gray-50/95 backdrop-blur-md py-3 mb-6 px-4 -mx-4 shadow-sm">
+        <div class="flex gap-2 items-center">
             <div class="relative flex-grow">
                 <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-
                 <input type="text" id="search-query" oninput="debounceSearch()"
-                    class="w-full pl-12 pr-12 py-4 rounded-[2rem] bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium"
+                    class="w-full pl-10 pr-10 py-3.5 rounded-full bg-white border border-gray-200 shadow-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-medium"
                     placeholder="Para onde você vai?">
-
                 <button id="btn-clear-search" onclick="clearSearch()"
-                    class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 transition-colors hidden p-1">
-                    <i class="bi bi-x-circle-fill text-xl"></i>
+                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500 hidden p-2">
+                    <i class="bi bi-x-circle-fill text-lg"></i>
                 </button>
             </div>
 
-            <div class="relative w-32 shrink-0">
+            <div
+                class="relative w-12 h-12 shrink-0 bg-white rounded-full border border-gray-200 shadow-sm flex items-center justify-center text-primary hover:bg-primary/10 transition-colors">
+                <i class="bi bi-clock-fill text-xl pointer-events-none"></i>
                 <input type="time" id="search-time" onchange="performSearch()"
                     onclick="try{this.showPicker()}catch(e){}"
-                    class="w-full pl-6 pr-2 py-4 rounded-3xl bg-white border border-gray-100 shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-sm font-medium text-center cursor-pointer">
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <div id="time-badge"
+                    class="hidden absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
             </div>
         </div>
     </div>
@@ -304,7 +306,7 @@ if ($currentUserId) {
     }
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor) {
-        const texto = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const texto = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}/${rideId}`;
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
     }
@@ -319,6 +321,7 @@ if ($currentUserId) {
         $('#search-query').val('');
         $('#search-time').val('');
         $('#btn-clear-search').addClass('hidden');
+        $('#time-badge').addClass('hidden');
         performSearch(); // Recarrega a lista completa
     }
 
@@ -335,8 +338,11 @@ if ($currentUserId) {
             btnClear.addClass('hidden');
         }
 
+        if (time !== '') $('#time-badge').removeClass('hidden');
+        else $('#time-badge').addClass('hidden');
+
         // Se vazio, recarrega a página (reset limpo) ou busca tudo
-        if (query === '' && time === '') { 
+        if (query === '' && time === '') {
             offset = 0; // Reset paginação
         }
 
@@ -514,7 +520,7 @@ if ($currentUserId) {
                                 window.open(link, '_blank');
                             }
                             location.reload();
-               });
+                        });
                     } else {
                         Swal.fire({ text: res.message, icon: 'error' });
                     }

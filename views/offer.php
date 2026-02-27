@@ -324,34 +324,34 @@
                 }
 
                 if (result.success) {
+                    // Captura origem e destino do formulário para deixar a mensagem rica
+                    const origem = $('input[name="origin"]').val() || 'Origem';
+                    const destino = $('input[name="destination"]').val() || 'Destino';
+                    // A cereja do bolo: URL super curta!
+                    const linkStr = `${window.location.origin}/${result.ride_id}`;
+
+                    const texto = `🚗 *Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n\n👉 *Reserve aqui:* ${linkStr}`;
+                    const waLink = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+
                     Swal.fire({
                         title: 'Carona Criada! 🚀',
-                        text: 'Agora, publique no seu grupo de caronas para lotar rápido.',
+                        text: 'Deseja divulgar sua vaga no grupo do WhatsApp agora?',
                         icon: 'success',
                         showCancelButton: true,
-                        confirmButtonText: '📢 Publicar no WhatsApp <i class="bi bi-box-arrow-up-right text-[10px]"></i>',
-                        cancelButtonText: 'Ir para o Feed',
+                        confirmButtonText: '<i class="bi bi-whatsapp"></i> Divulgar no Grupo',
+                        cancelButtonText: 'Agora Não',
                         customClass: {
-                            confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:bg-green-600 transition-all',
-                            cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2 hover:bg-gray-200'
+                            confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all',
+                            cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
                         },
                         buttonsStyling: false
-                    }).then((r) => {
-                        window.location.href = 'index.php?page=my_rides';
-                        if (r.isConfirmed) {
-                            const origem = data.origin;
-                            const destino = data.destination;
-                            const horaRaw = data.departure_time;
-                            const hora = new Date(horaRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            const valor = parseFloat(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                            const rota = data.waypoints || 'Via padrão';
-
-                            const link = `${window.location.origin}${window.location.pathname}?ride_id=${result.ride_id}`;
-                            const textoZap = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
-                            const urlZap = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
-
-                            window.open(urlZap, '_blank');
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Abre o WhatsApp em nova aba
+                            window.open(waLink, '_blank');
                         }
+                        // Redireciona a aba original para o painel do motorista
+                        window.location.href = 'index.php?page=my_rides';
                     });
                 } else {
                     throw new Error(result.message || 'Erro ao publicar carona.');

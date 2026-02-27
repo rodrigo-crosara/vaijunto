@@ -337,7 +337,7 @@ try {
     }
 
     async function copiarOferta(origem, destino, hora, rota, valor, rideId) {
-        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const link = `${window.location.origin}/${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, link);
         try {
             await navigator.clipboard.writeText(texto);
@@ -355,7 +355,7 @@ try {
     }
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor) {
-        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
+        const link = `${window.location.origin}/${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, link);
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');

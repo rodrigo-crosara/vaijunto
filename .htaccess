@@ -1,0 +1,12 @@
+RewriteEngine On
+
+# 1. Forçar HTTPS (Segurança e PWA)
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# 2. Ignorar arquivos e diretórios reais (css, js, imagens)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 3. Reescrever URLs numéricas curtas (ex: /15) para o index.php
+RewriteRule ^([0-9]+)$ index.php?ride_id=$1 [L,QSA]

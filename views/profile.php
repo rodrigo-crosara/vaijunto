@@ -329,8 +329,9 @@ $msg = $_GET['msg'] ?? '';
         </h3>
         <p class="text-xs text-red-300 mb-4">Ações irreversíveis. Prossiga com cuidado.</p>
         <button type="button" onclick="excluirConta()"
-            class="w-full py-3.5 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2">
-            <i class="bi bi-trash3"></i> Excluir minha conta permanentemente
+            class="w-full py-3.5 px-4 bg-white text-red-500 border border-red-200 font-bold rounded-2xl text-sm hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2">
+            <i class="bi bi-trash3 shrink-0"></i> 
+            <span class="truncate">Excluir minha conta</span>
         </button>
     </div>
 
