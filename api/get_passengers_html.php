@@ -52,17 +52,32 @@ try {
                 </div>
             </div>
             <div class="flex gap-2">
-                <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
-                    class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
-                    <i class="bi bi-whatsapp text-sm"></i>
-                </a>
-                <?php if ($isPaid): ?>
-                    <span class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg">PAGO ✅</span>
-                <?php else: ?>
-                    <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
-                        class="btn btn-xs btn-light-success text-[9px] font-bold py-1 px-2 rounded-lg flex items-center gap-1">
-                        💰 Confirmar Pagamento
-                    </button>
+                <?php if ($p['booking_status'] === 'confirmed'): ?>
+                    <a href="https://wa.me/<?= $pPhone ?>" target="_blank"
+                        class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
+                        <i class="bi bi-whatsapp text-sm"></i>
+                    </a>
+                    <?php if ($isPaid): ?>
+                        <span class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg">PAGO ✅</span>
+                    <?php else: ?>
+                        <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
+                            class="btn btn-xs btn-light-success text-[9px] font-bold py-1 px-2 rounded-lg flex items-center gap-1">
+                            💰 <span class="hidden sm:inline">Confirmar</span>
+                        </button>
+                    <?php endif; ?>
+                <?php elseif ($p['booking_status'] === 'pending'): ?>
+                    <div class="flex gap-1">
+                        <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'confirm')"
+                            class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                            title="Aceitar">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'reject')"
+                            class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                            title="Recusar">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

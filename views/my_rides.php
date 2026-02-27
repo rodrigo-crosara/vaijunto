@@ -252,78 +252,167 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- 2. Histórico / Outras Viagens -->
-        <div>
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico & Planejamento</h2>
-            <div class="space-y-4 opacity-100">
-                <?php foreach ($myRides as $ride):
-                    if ($nextRide && $ride['id'] == $nextRide['id'])
-                        continue; // Pula a que já exibimos
-                    // Rest of the loop logic keeps the simplified card style for history
-                    $time = date('H:i', strtotime($ride['departure_time']));
-                    $date = date('d/m', strtotime($ride['departure_time']));
+        <!-- 2. Planejamento (Próximas Viagens) -->
+        <?php 
+        $futureRides = array_filter($myRides, function($r) use ($nextRide) {
+            return (!$nextRide || $r['id'] != $nextRide['id']) && strtotime($r['departure_time']) >= time();
+        });
+        ?>
+
+        <?php if (!empty($futureRides)): ?>
+        <div class="mb-10">
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Planejamento Próximas</h2>
+            <div class="space-y-4">
+                <?php foreach ($futureRides as $ride): 
+                    $rideTime = strtotime($ride['departure_time']);
+                    $time = date('H:i', $rideTime);
+                    $date = date('d/m', $rideTime);
                     $isCanceled = ($ride['status'] === 'canceled');
-                    ?>
-                    <!-- Mini Card de Histórico -->
-                    <div
-                        class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between <?= $isCanceled ? 'opacity-50' : '' ?>">
+                    $pendingCount = 0;
+                    $confirmedCount = 0;
+                    foreach($ride['passengers'] as $p) {
+                        if($p['booking_status'] === 'pending') $pendingCount++;
+                        if($p['booking_status'] === 'confirmed') $confirmedCount++;
+                    }
+                ?>
+                    <!-- Card de Planejamento -->
+                    <div class="bg-white rounded-2xl p-4 border border-blue-100 shadow-sm flex items-center justify-between border-l-4 border-l-blue-400">
                         <div class="flex items-center gap-4">
-                            <div
-                                class="bg-gray-50 h-10 w-10 rounded-xl flex items-center justify-center text-gray-400 font-bold text-xs flex-col">
+                            <div class="bg-blue-50 h-10 w-10 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xs flex-col">
                                 <span><?= $date ?></span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                <div>
-                                <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
                                     <div><?= $ride['origin_text'] ?></div>
                                     <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
                                     <div><?= $ride['destination_text'] ?></div>
+                                    <?php if ($pendingCount > 0): ?>
+                                        <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
+                                    <?php endif; ?>
                                 </div>
-                                <span class="text-xs text-gray-400"><?= count($ride['passengers']) ?> passageiros • R$
-                                    <?= number_format($ride['price'], 2, ',', '.') ?></span>
+                                <span class="text-xs text-gray-400">
+                                    <?= $confirmedCount ?> confirmados
+                                    <?php if ($pendingCount > 0): ?>
+                                        • <b class="text-red-500"><?= $pendingCount ?> pendentes</b>
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
-                        <?php if (!$isCanceled): ?>
-                            <button class="text-gray-400 hover:text-primary" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#ride-history-<?= $ride['id'] ?>">
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                        <?php else: ?>
-                            <span class="text-[10px] font-bold text-red-400 uppercase bg-red-50 px-2 py-1 rounded">Cancelada</span>
-                        <?php endif; ?>
+                        <div class="flex items-center gap-2">
+                            <?php if ($pendingCount > 0): ?>
+                                 <button class="bg-red-500 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-red-200 animate-bounce" type="button" data-bs-toggle="collapse" data-bs-target="#ride-details-<?= $ride['id'] ?>">
+                                    <i class="bi bi-bell-fill"></i> REVISAR
+                                 </button>
+                            <?php else: ?>
+                                <button class="text-gray-400 hover:text-primary transition-all p-2" type="button" data-bs-toggle="collapse" data-bs-target="#ride-details-<?= $ride['id'] ?>">
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
-                    <!-- Detalhes do Histórico (Collapse) -->
-                    <div class="collapse" id="ride-history-<?= $ride['id'] ?>">
-                        <div class="bg-gray-50 rounded-xl p-4 mx-2 text-xs space-y-2 mb-4">
-                            <!-- Detalhes básicos e lista de passageiros simplificada -->
+                    <!-- Detalhes (Collapse) -->
+                    <div class="collapse" id="ride-details-<?= $ride['id'] ?>">
+                        <div class="bg-gray-50 rounded-xl p-4 mx-2 text-xs space-y-3 mb-4">
                             <?php if (empty($ride['passengers'])): ?>
                                 <p class="text-gray-400 italic">Sem passageiros.</p>
                             <?php else: ?>
-                                <?php foreach ($ride['passengers'] as $p): ?>
-                                    <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
-                                        <span><?= $p['name'] ?></span>
-                                        <span
-                                            class="<?= $p['payment_status'] == 'paid' ? 'text-green-500' : 'text-gray-400' ?> font-bold">
-                                            <?= $p['payment_status'] == 'paid' ? 'Pago' : 'Pendente' ?>
-                                        </span>
+                                <?php foreach ($ride['passengers'] as $p): 
+                                    $pPhone = preg_replace('/\D/', '', $p['phone']);
+                                ?>
+                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                        <div class="flex items-center gap-2">
+                                            <img src="<?= $p['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($p['name']) ?>" class="w-6 h-6 rounded-full">
+                                            <span class="font-bold text-gray-700"><?= $p['name'] ?></span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <?php if ($p['booking_status'] === 'pending'): ?>
+                                                <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'confirm')" class="bg-green-500 text-white px-2 py-1 rounded-lg font-bold">Aceitar</button>
+                                                <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'reject')" class="bg-red-50 text-red-500 px-2 py-1 rounded-lg border border-red-100">Recusar</button>
+                                            <?php else: ?>
+                                                <a href="https://wa.me/<?= $pPhone ?>" target="_blank" class="text-green-500"><i class="bi bi-whatsapp"></i></a>
+                                                <span class="font-bold <?= $p['payment_status'] == 'paid' ? 'text-green-500' : 'text-gray-300' ?>">
+                                                    <?= $p['payment_status'] == 'paid' ? 'Pago ✓' : 'Pendente' ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
-                            <div class="pt-2 flex justify-end">
-                                    <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)"
-                                    class="text-red-500 font-bold hover:underline">Cancelar Viagem</button>
-                                    
-                                    <button onclick='repetirViagem(<?= json_encode($ride) ?>)' 
-                                            class="text-primary font-bold hover:underline flex items-center gap-1">
-                                        <i class="bi bi-arrow-repeat"></i> Repetir
-                                    </button>
+                            <div class="pt-2 flex justify-end gap-3">
+                                <button onclick="confirmarCancelamento(<?= $ride['id'] ?>)" class="text-red-500 font-bold hover:underline">Cancelar Viagem</button>
+                                <button onclick="editarVagas(<?= $ride['id'] ?>, <?= $ride['seats_available'] ?>)" class="text-blue-500 font-bold hover:underline">Editar Vagas</button>
                             </div>
                         </div>
                     </div>
-
                 <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- 3. Histórico (Viagens Passadas ou Canceladas) -->
+        <div>
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico de Caronas</h2>
+            <div class="space-y-4">
+                <?php 
+                $pastRides = array_filter($myRides, function($r) {
+                    return strtotime($r['departure_time']) < time() || $r['status'] === 'canceled';
+                });
+                // Inverter para mostrar as mais recentes primeiro no histórico
+                $pastRides = array_reverse($pastRides);
+                ?>
+
+                <?php if (empty($pastRides)): ?>
+                    <p class="text-center text-gray-400 text-xs py-4">Nenhum histórico encontrado.</p>
+                <?php else: ?>
+                    <?php foreach ($pastRides as $ride): 
+                        $time = date('H:i', strtotime($ride['departure_time']));
+                        $date = date('d/m', strtotime($ride['departure_time']));
+                        $isCanceled = ($ride['status'] === 'canceled');
+                    ?>
+                        <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200 shadow-sm flex items-center justify-between opacity-70 grayscale-[0.5]">
+                            <div class="flex items-center gap-4">
+                                <div class="bg-white h-10 w-10 rounded-xl flex items-center justify-center text-gray-500 font-bold text-xs flex-col border border-gray-100">
+                                    <span><?= $date ?></span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
+                                        <div><?= $ride['origin_text'] ?></div>
+                                        <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
+                                        <div><?= $ride['destination_text'] ?></div>
+                                    </div>
+                                    <span class="text-[10px] text-gray-400">
+                                        <?= count($ride['passengers']) ?> passageiros • R$ <?= number_format($ride['price'], 2, ',', '.') ?>
+                                        <?php if ($isCanceled): ?> • <span class="text-red-400">Cancelada</span><?php endif; ?>
+                                    </span>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 p-2" type="button" data-bs-toggle="collapse" data-bs-target="#ride-history-<?= $ride['id'] ?>">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                        </div>
+
+                        <!-- Collapse Histórico -->
+                        <div class="collapse" id="ride-history-<?= $ride['id'] ?>">
+                            <div class="bg-white rounded-xl p-4 mx-2 text-xs mb-4 border border-gray-100">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-bold text-gray-500">Passageiros:</span>
+                                    <button onclick='repetirViagem(<?= json_encode($ride) ?>)' class="text-primary font-bold flex items-center gap-1">
+                                        <i class="bi bi-arrow-repeat"></i> Repetir Carona
+                                    </button>
+                                </div>
+                                <div class="space-y-1">
+                                    <?php foreach ($ride['passengers'] as $p): ?>
+                                        <div class="flex justify-between items-center text-gray-500">
+                                            <span><?= $p['name'] ?></span>
+                                            <span class="font-bold"><?= $p['payment_status'] == 'paid' ? 'Pago' : 'Não Pago' ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
