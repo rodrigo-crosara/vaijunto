@@ -36,6 +36,8 @@ try {
     foreach ($passengers as $p) {
         $isPaid = ($p['payment_status'] === 'paid');
         $pPhone = preg_replace('/\D/', '', $p['phone']);
+        if (strlen($pPhone) === 11 || strlen($pPhone) === 10)
+            $pPhone = '55' . $pPhone;
         ?>
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">

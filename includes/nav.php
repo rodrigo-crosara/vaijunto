@@ -3,6 +3,14 @@
  * View: Navegação Inferior (App Style Native)
  */
 $currentPage = $_GET['page'] ?? 'home';
+
+// Busca notificações não lidas para o badge inicial
+$unreadCount = 0;
+if (isset($_SESSION['user_id'])) {
+    $stmtNotif = $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+    $stmtNotif->execute([$_SESSION['user_id']]);
+    $unreadCount = $stmtNotif->fetchColumn();
+}
 ?>
 
 <div
@@ -22,7 +30,9 @@ $currentPage = $_GET['page'] ?? 'home';
             <div class="relative">
                 <i class="bi bi-bell<?= ($currentPage == 'notifications') ? '-fill' : '' ?> text-2xl"></i>
                 <span id="notif-badge"
-                    class="hidden absolute -top-1 -right-1.5 w-4.5 h-4.5 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center min-w-[18px] h-[18px] shadow-lg shadow-red-200 border-2 border-white"></span>
+                    class="<?= ($unreadCount > 0) ? 'flex' : 'hidden' ?> absolute -top-1 -right-1.5 w-4.5 h-4.5 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center min-w-[18px] h-[18px] shadow-lg shadow-red-200 border-2 border-white">
+                    <?= $unreadCount > 9 ? '9+' : $unreadCount ?>
+                </span>
             </div>
             <span class="text-[9px] font-bold uppercase tracking-wider">Alertas</span>
         </a>

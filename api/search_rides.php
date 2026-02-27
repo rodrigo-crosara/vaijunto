@@ -84,7 +84,7 @@ try {
         <div
             class="bg-white rounded-[2.5rem] p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col hover:shadow-xl hover:shadow-gray-200/40 transition-all active:scale-[0.98] mb-4">
             <!-- Topo -->
-            <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center justify-between mb-5 relative">
                 <div class="flex items-center gap-3">
                     <img src="<?= htmlspecialchars($avatar) ?>" alt="D"
                         class="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover">
@@ -97,9 +97,18 @@ try {
                         </div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <span class="block text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1"><?= $day ?></span>
-                    <span class="text-2xl font-black text-primary tracking-tighter"><?= $time ?></span>
+                <div class="flex items-center gap-4">
+                    <button
+                        onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
+                        class="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                        title="Compartilhar carona">
+                        <i class="bi bi-share-fill text-xs"></i>
+                    </button>
+                    <div class="text-right">
+                        <span
+                            class="block text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1"><?= $day ?></span>
+                        <span class="text-2xl font-black text-primary tracking-tighter"><?= $time ?></span>
+                    </div>
                 </div>
             </div>
 
