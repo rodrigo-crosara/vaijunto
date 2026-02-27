@@ -241,6 +241,12 @@ try {
                             <?php endif; ?>
                         </div>
 
+                        <div class="mt-5 text-center">
+                            <button onclick="confirmarCancelamento(<?= $nextRide['id'] ?>)" 
+                                class="text-[11px] font-bold text-blue-200 hover:text-red-300 transition-colors flex items-center justify-center gap-1.5 mx-auto">
+                                <i class="bi bi-trash3"></i> Cancelar esta viagem
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
