@@ -297,6 +297,7 @@
         // Solicitar Permissão de Notificações
         if (Notification.permission === 'default') {
             setTimeout(() => {
+                if (typeof Swal !== 'undefined' && Swal.isVisible()) return; // Não atropela alertas rodando
                 Swal.fire({
                     toast: true,
                     position: 'top',
@@ -312,7 +313,7 @@
                         Notification.requestPermission();
                     }
                 });
-            }, 5000); // 5s delay
+            }, 6000); // 6s delay
         }
 
         // Iniciar Tour
@@ -387,9 +388,13 @@
                         confirmButton: 'bg-primary text-white font-bold px-8 py-3 rounded-2xl shadow-lg'
                     },
                     allowOutsideClick: false
-                }).then(() => {
-                    stepIndex++;
-                    showStep();
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        stepIndex++;
+                        showStep();
+                    } else {
+                        // Se for fechado por outro alerta, aborta o fluxo sem marcar como visto
+                    }
                 });
             };
             showStep();

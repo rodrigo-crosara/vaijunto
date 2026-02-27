@@ -59,7 +59,7 @@ if (!isset($_SESSION['user_id'])) {
     }
 
     // Autenticado: Carrega a App Shell
-    echo '<main id="app-content" class="min-h-screen pb-32 pt-6 px-4 max-w-lg mx-auto overflow-x-hidden">';
+    echo '<main id="app-content" class="min-h-screen pb-32 pt-2 px-4 max-w-lg mx-auto overflow-x-hidden">';
 
     switch ($page) {
         case 'home':
