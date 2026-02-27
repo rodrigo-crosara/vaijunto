@@ -116,29 +116,37 @@ try {
                             </div>
                         </div>
 
+                        <?php 
+                            $wpArr = json_decode($nextRide['waypoints'] ?? '[]', true);
+                            if(!is_array($wpArr)) $wpArr = [];
+                            $rotaStr = empty($wpArr) ? 'Via padrão' : implode(' -> ', $wpArr);
+                        ?>
+
                         <!-- Botão FECHAR VAGAS -->
                         <?php if ($nextRide['seats_available'] > 0): ?>
                             <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
                                 class="w-full mb-4 bg-red-500/80 hover:bg-red-500 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                                🚫 Lotou / Fechar Vagas
+                                🚫 Fechar Vagas
                             </button>
                         <?php endif; ?>
 
                         <!-- Ações Rápidas -->
                         <div class="flex flex-col sm:flex-row gap-3 w-full mb-6">
-                                    <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                        class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                        <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
-                                    </button>
-                                    <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                        class="w-full sm:w-14 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
-                                        title="Copiar Texto">
-                                        <i class="bi bi-clipboard"></i>
-                                    </button>
-                                    <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
-                                        class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                        <i class="bi bi-pencil-square"></i> Editar
-                                    </button>
+                            <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
+                            </button>
+
+                            <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                class="w-full sm:w-16 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
+                                title="Copiar Texto">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+
+                            <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
+                                class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
                         </div>
 
                         <?php if ($nextRide['seats_available'] == 0): ?>
@@ -333,10 +341,12 @@ try {
     }
 
     function getRideText(origem, destino, hora, rota, valor, link) {
-        return `🚗 *Carona.online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rota}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+        const rotaFormatada = rota && rota.trim() !== '' ? rota : 'Via padrão';
+        return `🚗 *Carona.online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
     }
 
-    async function copiarOferta(origem, destino, hora, rota, valor, rideId) {
+    // CORRIGIDO: rideId agora é o primeiro parâmetro, igual no HTML
+    async function copiarOferta(rideId, origem, destino, hora, rota, valor) {
         const link = `${window.location.origin}/${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, link);
         try {
@@ -345,7 +355,7 @@ try {
                 toast: true,
                 position: 'top-end',
                 icon: 'success',
-                title: 'Texto copiado com o link!',
+                title: 'Texto copiado!',
                 showConfirmButton: false,
                 timer: 2000
             });

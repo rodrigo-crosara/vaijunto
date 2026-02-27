@@ -324,13 +324,16 @@
                 }
 
                 if (result.success) {
-                    // Captura origem e destino do formulário para deixar a mensagem rica
+                    // Captura origem, destino e rota do formulário para deixar a mensagem rica
                     const origem = $('input[name="origin"]').val() || 'Origem';
                     const destino = $('input[name="destination"]').val() || 'Destino';
+                    const rotaRaw = $('textarea[name="waypoints"]').val() || '';
+                    const rotaFormatada = rotaRaw && rotaRaw.trim() !== '' ? rotaRaw : 'Via padrão';
+
                     // A cereja do bolo: URL super curta!
                     const linkStr = `${window.location.origin}/${result.ride_id}`;
 
-                    const texto = `🚗 *Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n\n👉 *Reserve aqui:* ${linkStr}`;
+                    const texto = `🚗 *Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n🛣️ Rota: ${rotaFormatada}\n\n👉 *Reserve aqui:* ${linkStr}`;
                     const waLink = `https://wa.me/?text=${encodeURIComponent(texto)}`;
 
                     Swal.fire({
