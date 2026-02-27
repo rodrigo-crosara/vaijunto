@@ -307,7 +307,7 @@ if ($currentUserId) {
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor) {
         const rotaFormatada = rota && String(rota).trim() !== '' ? rota : 'Via padrão';
-        const texto = `🚗 *Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}/${rideId}`;
+        const texto = `🚗 *Carona Online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${window.location.origin}/${rideId}`;
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
     }

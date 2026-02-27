@@ -122,29 +122,23 @@ try {
                             $rotaStr = empty($wpArr) ? 'Via padrão' : implode(' -> ', $wpArr);
                         ?>
 
-                        <!-- Botão FECHAR VAGAS -->
-                        <?php if ($nextRide['seats_available'] > 0): ?>
-                            <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
-                                class="w-full mb-4 bg-red-500/80 hover:bg-red-500 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm shadow-lg hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
-                                🚫 Fechar Vagas
-                            </button>
-                        <?php endif; ?>
-
                         <!-- Ações Rápidas -->
                         <div class="flex flex-col sm:flex-row gap-3 w-full mb-6">
-                            <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                                <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
-                            </button>
+                            <div class="flex gap-2 w-full sm:w-auto sm:flex-1">
+                                <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                    class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                    <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
+                                </button>
 
-                            <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
-                                class="w-full sm:w-16 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center gap-2 transition-all"
-                                title="Copiar Texto">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
+                                <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>")'
+                                    class="w-14 shrink-0 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center transition-all"
+                                    title="Copiar Texto">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
 
                             <button onclick="editarVagas(<?= $nextRide['id'] ?>, <?= $nextRide['seats_available'] ?>)"
-                                class="w-full sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                                class="w-full sm:w-auto sm:flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                 <i class="bi bi-pencil-square"></i> Editar
                             </button>
                         </div>
@@ -234,6 +228,15 @@ try {
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
+
+                            <?php if ($nextRide['seats_available'] > 0): ?>
+                                <div class="mt-4">
+                                    <button onclick="fecharVagas(<?= $nextRide['id'] ?>)"
+                                        class="w-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-100 py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2">
+                                        🚫 Lotou fora do app (Fechar Vagas)
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                     </div>
@@ -342,7 +345,7 @@ try {
 
     function getRideText(origem, destino, hora, rota, valor, link) {
         const rotaFormatada = rota && rota.trim() !== '' ? rota : 'Via padrão';
-        return `🚗 *Carona.online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
+        return `🚗 *Carona Online - Vaga Disponível!*\n\n📍 *De:* ${origem}\n🏁 *Para:* ${destino}\n⏰ *Saída:* ${hora}\n🛣️ *Rota:* ${rotaFormatada}\n💰 *Valor:* R$ ${valor}\n\n👉 *Garanta sua vaga:* ${link}`;
     }
 
     // CORRIGIDO: rideId agora é o primeiro parâmetro, igual no HTML

@@ -333,7 +333,7 @@
                     // A cereja do bolo: URL super curta!
                     const linkStr = `${window.location.origin}/${result.ride_id}`;
 
-                    const texto = `🚗 *Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n🛣️ Rota: ${rotaFormatada}\n\n👉 *Reserve aqui:* ${linkStr}`;
+                    const texto = `🚗 *Carona Online - Nova Carona!*\n\n📍 De: ${origem}\n🏁 Para: ${destino}\n🛣️ Rota: ${rotaFormatada}\n\n👉 *Reserve aqui:* ${linkStr}`;
                     const waLink = `https://wa.me/?text=${encodeURIComponent(texto)}`;
 
                     Swal.fire({
