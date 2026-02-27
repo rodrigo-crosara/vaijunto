@@ -139,4 +139,4 @@ $currentUrl = $protocol . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="h-full antialiased text-gray-800">
+<body class="h-full antialiased text-gray-800 overflow-x-hidden">

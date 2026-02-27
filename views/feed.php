@@ -65,7 +65,7 @@ if ($currentUserId) {
     <div id="active-ride-container"></div>
 
     <!-- Smart Search Bar -->
-    <div class="sticky top-0 z-40 bg-gray-50/95 backdrop-blur-md pt-4 pb-3 mb-6 px-4 -mx-4 shadow-sm">
+    <div class="sticky top-0 z-40 bg-[#f8fafc]/95 backdrop-blur-md pt-4 pb-3 mb-6 px-4 -mx-4 shadow-sm">
         <div class="flex gap-2 items-center">
             <div class="relative flex-grow">
                 <i class="bi bi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
