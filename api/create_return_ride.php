@@ -50,10 +50,12 @@ try {
         $newDepartureTime = $input['newDepartureTime'] ?? date('Y-m-d H:i:s', strtotime($original['departure_time'] . ' + 9 hours'));
     }
 
-    // Validação Temporal
-    if (strtotime($newDepartureTime) < time()) {
-        echo json_encode(['success' => false, 'message' => 'O horário da volta deve ser futuro.']);
-        exit;
+    // Validação e Ajuste Temporal Inteligente
+    $isPast = (strtotime($newDepartureTime) < time());
+    if ($isPast) {
+        // Se a volta calculada caiu no passado (ex: repetindo carona de ontem),
+        // agenda automaticamente para daqui a 2 horas.
+        $newDepartureTime = date('Y-m-d H:i:s', strtotime('+2 hours'));
     }
 
     // 4. Inserir nova carona
@@ -70,16 +72,20 @@ try {
         $newDestinationText,
         $newOriginCoords,
         $newDestinationCoords,
-        $original['waypoints'], // Mantém os mesmos waypoints por enquanto (ideal seria inverter mas é complexo)
+        $original['waypoints'],
         $newDepartureTime,
         $original['seats_total'],
-        $original['seats_total'], // Reseta vagas disponíveis
+        $original['seats_total'],
         $original['price']
     ]);
 
+    $msg = $isPast
+        ? 'Carona de volta agendada para hoje (+2h), pois a data original já passou.'
+        : 'Carona de volta criada com sucesso!';
+
     echo json_encode([
         'success' => true,
-        'message' => 'Carona de volta criada com sucesso!',
+        'message' => $msg,
         'new_ride_id' => $pdo->lastInsertId()
     ]);
 

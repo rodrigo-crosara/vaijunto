@@ -95,7 +95,7 @@ if ($currentUserId) {
     <!-- Título -->
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-extrabold text-gray-900 tracking-tight">Próximos Horários</h2>
-        <button onclick="location.reload()" 
+        <button onclick="location.reload()"
             class="group flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1.5 rounded-full hover:bg-primary hover:text-white transition-all active:scale-95 shadow-sm shadow-primary/10">
             <i class="bi bi-arrow-clockwise text-xs transition-transform group-hover:rotate-180 duration-500"></i>
             <span>Atualizado agora</span>
@@ -125,7 +125,8 @@ if ($currentUserId) {
                 $day = date('d/m', strtotime($ride['departure_time']));
                 $avatar = $ride['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($ride['driver_name']) . "&background=random";
                 $waypointsArr = json_decode($ride['waypoints'] ?? '[]', true);
-                if (!is_array($waypointsArr)) $waypointsArr = [];
+                if (!is_array($waypointsArr))
+                    $waypointsArr = [];
                 $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
                 ?>
 
@@ -146,7 +147,8 @@ if ($currentUserId) {
                             </div>
                         </div>
                         <div class="flex items-center gap-4">
-                            <button onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
+                            <button
+                                onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
                                 class="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
                                 title="Compartilhar carona">
                                 <i class="bi bi-share-fill text-xs"></i>
@@ -232,10 +234,11 @@ if ($currentUserId) {
                                     class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>
-                            <?php elseif ($isBooked): 
+                            <?php elseif ($isBooked):
                                 $dPhone = preg_replace('/\D/', '', $ride['driver_phone']);
-                                if (strlen($dPhone) === 11 || strlen($dPhone) === 10) $dPhone = '55' . $dPhone;
-                            ?>
+                                if (strlen($dPhone) === 11 || strlen($dPhone) === 10)
+                                    $dPhone = '55' . $dPhone;
+                                ?>
                                 <a href="https://wa.me/<?= $dPhone ?>" target="_blank"
                                     class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp"></i> WhatsApp
@@ -516,7 +519,7 @@ if ($currentUserId) {
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="bi bi-chat-left-text text-gray-400"></i>
                         </div>
-                        <input type="text" id="swal-note" class="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" placeholder="Ex: Estarei de camisa azul...">
+                        <input type="text" id="swal-note" maxlength="100" class="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-800 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" placeholder="Ex: Estarei de camisa azul...">
                     </div>
                 </div>
             `,

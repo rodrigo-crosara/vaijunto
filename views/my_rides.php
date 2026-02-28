@@ -128,12 +128,12 @@ try {
                         <!-- Ações Rápidas -->
                         <div class="flex flex-col sm:flex-row gap-3 w-full mb-6">
                             <div class="flex gap-2 w-full sm:w-auto sm:flex-1">
-                                <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>", "<?= $nextRide['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
+                                <button onclick='compartilharRide(<?= $nextRide['id'] ?>, "<?= htmlspecialchars(addslashes($nextRide['origin_text']), ENT_QUOTES, "UTF-8") ?>", "<?= htmlspecialchars(addslashes($nextRide['destination_text']), ENT_QUOTES, "UTF-8") ?>", "<?= $time ?>", "<?= htmlspecialchars(addslashes($rotaStr), ENT_QUOTES, "UTF-8") ?>", "<?= number_format($nextRide['price'], 2, ",", ".") ?>", "<?= $nextRide['seats_available'] ?>", "<?= htmlspecialchars(addslashes($detalhesStr), ENT_QUOTES, "UTF-8") ?>")'
                                     class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all">
                                     <i class="bi bi-whatsapp"></i> Divulgar <i class="bi bi-box-arrow-up-right text-[10px]"></i>
                                 </button>
 
-                                <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= addslashes($nextRide['origin_text']) ?>", "<?= addslashes($nextRide['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($nextRide['price'], 2, ',', '.') ?>", "<?= $nextRide['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
+                                <button onclick='copiarOferta(<?= $nextRide['id'] ?>, "<?= htmlspecialchars(addslashes($nextRide['origin_text']), ENT_QUOTES, "UTF-8") ?>", "<?= htmlspecialchars(addslashes($nextRide['destination_text']), ENT_QUOTES, "UTF-8") ?>", "<?= $time ?>", "<?= htmlspecialchars(addslashes($rotaStr), ENT_QUOTES, "UTF-8") ?>", "<?= number_format($nextRide['price'], 2, ",", ".") ?>", "<?= $nextRide['seats_available'] ?>", "<?= htmlspecialchars(addslashes($detalhesStr), ENT_QUOTES, "UTF-8") ?>")'
                                     class="w-14 shrink-0 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-3 rounded-2xl font-bold text-lg flex items-center justify-center transition-all"
                                     title="Copiar Texto">
                                     <i class="bi bi-clipboard"></i>
@@ -328,7 +328,7 @@ try {
                     <div class="collapse <?= $pendingCount > 0 ? 'show' : '' ?>" id="ride-details-<?= $ride['id'] ?>">
                         <div class="bg-gray-50 rounded-xl p-4 mx-2 text-xs space-y-3 mb-4">
                             <div class="flex gap-2">
-                                <button onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", "<?= $time ?>", "<?= addslashes($rotaStr) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes($detalhesStr) ?>")'
+                                <button onclick='compartilharRide(<?= $ride['id'] ?>, "<?= htmlspecialchars(addslashes($ride['origin_text']), ENT_QUOTES, 'UTF-8') ?>", "<?= htmlspecialchars(addslashes($ride['destination_text']), ENT_QUOTES, 'UTF-8') ?>", "<?= $time ?>", "<?= htmlspecialchars(addslashes($rotaStr), ENT_QUOTES, 'UTF-8') ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= htmlspecialchars(addslashes($detalhesStr), ENT_QUOTES, 'UTF-8') ?>")'
                                     class="flex-1 bg-white border border-blue-100 text-blue-600 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
                                     <i class="bi bi-whatsapp"></i> Divulgar
                                 </button>
@@ -430,7 +430,7 @@ try {
                             <div class="bg-white rounded-xl p-4 mx-2 text-xs mb-4 border border-gray-100">
                                 <div class="flex justify-between items-center mb-2">
                                     <span class="font-bold text-gray-500">Passageiros:</span>
-                                    <button onclick='repetirViagem(<?= json_encode($ride) ?>)' class="text-primary font-bold flex items-center gap-1">
+                                    <button onclick='repetirViagem(<?= htmlspecialchars(json_encode($ride), ENT_QUOTES, 'UTF-8') ?>)' class="text-primary font-bold flex items-center gap-1">
                                         <i class="bi bi-arrow-repeat"></i> Repetir Carona
                                     </button>
                                 </div>
@@ -728,7 +728,7 @@ try {
                     Swal.fire({
                         icon: 'success',
                         title: 'Viagem de Volta Criada!',
-                        text: 'Deseja ver na agenda agora?',
+                        text: result.message,
                         showCancelButton: true,
                         confirmButtonText: 'Sim, Ver Agora',
                         cancelButtonText: 'OK'

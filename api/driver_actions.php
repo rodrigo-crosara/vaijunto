@@ -89,30 +89,46 @@ try {
             break;
 
         case 'cancel_ride':
-            // Verificar se a carona é do motorista e é futura
-            $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ? AND departure_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+            // 1. Buscar dados da carona para validação temporal
+            $stmtCheck = $pdo->prepare("SELECT departure_time FROM rides WHERE id = ? AND driver_id = ?");
+            $stmtCheck->execute([$rideId, $driverId]);
+            $rideData = $stmtCheck->fetch();
+
+            if (!$rideData) {
+                echo json_encode(['success' => false, 'message' => 'Carona não encontrada ou sem permissão.']);
+                exit;
+            }
+
+            // Consideramos futura caronas de até 1 hora atrás (margem de tolerância)
+            $isFuture = (strtotime($rideData['departure_time']) >= (time() - 3600));
+
+            // 2. Marcar como cancelada no banco
+            $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ?");
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {
-                // Notificar TODOS os passageiros desta carona (Confirmados e Pendentes)
-                $driverName = $_SESSION['user_name'] ?? 'O motorista';
-                $stmtPass = $pdo->prepare("SELECT id, passenger_id, status FROM bookings WHERE ride_id = ? AND status IN ('confirmed', 'pending')");
-                $stmtPass->execute([$rideId]);
-                $bookingsToCancel = $stmtPass->fetchAll(PDO::FETCH_ASSOC);
+                // 3. Notificar passageiros APENAS se a viagem for futura
+                if ($isFuture) {
+                    $driverName = $_SESSION['user_name'] ?? 'O motorista';
+                    $stmtPass = $pdo->prepare("SELECT id, passenger_id, status FROM bookings WHERE ride_id = ? AND status IN ('confirmed', 'pending')");
+                    $stmtPass->execute([$rideId]);
+                    $bookingsToCancel = $stmtPass->fetchAll(PDO::FETCH_ASSOC);
 
-                foreach ($bookingsToCancel as $b) {
-                    // Marca como rejeitado/cancelado pelo sistema
-                    $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?")->execute([$b['id']]);
-
-                    $msg = ($b['status'] === 'confirmed')
-                        ? "🚨 URGENTE: Viagem cancelada por {$driverName}."
-                        : "❌ Viagem cancelada: O motorista cancelou a carona antes de aceitar seu pedido.";
-
-                    createNotification($pdo, $b['passenger_id'], 'cancel', $msg, 'index.php?page=home');
+                    foreach ($bookingsToCancel as $b) {
+                        $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?")->execute([$b['id']]);
+                        $msg = ($b['status'] === 'confirmed')
+                            ? "🚨 URGENTE: Viagem cancelada por {$driverName}."
+                            : "❌ Viagem cancelada: O motorista cancelou a carona antes de aceitar seu pedido.";
+                        createNotification($pdo, $b['passenger_id'], 'cancel', $msg, 'index.php?page=home');
+                    }
+                    $msgFinal = 'Carona cancelada e passageiros notificados.';
+                } else {
+                    $msgFinal = 'Carona inativada do histórico (sem notificações).';
                 }
-                echo json_encode(['success' => true, 'message' => 'Carona cancelada com sucesso.']);
+
+                echo json_encode(['success' => true, 'message' => $msgFinal]);
             } else {
-                echo json_encode(['success' => false, 'message' => 'Carona não encontrada ou você não tem permissão.']);
+                echo json_encode(['success' => false, 'message' => 'Erro ao processar cancelamento.']);
             }
             break;
 

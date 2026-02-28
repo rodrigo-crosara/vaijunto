@@ -77,7 +77,7 @@ try {
 
     // 4. Vaga reservada provisoriamente (PENDING)
     $meetingPoint = trim($input['meetingPoint'] ?? '');
-    $note = trim($input['note'] ?? '');
+    $note = mb_substr(trim($input['note'] ?? ''), 0, 100);
 
     // Status 'pending' é o gatilho para a confirmação do motorista
     $stmtBook = $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, meeting_point, note, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
