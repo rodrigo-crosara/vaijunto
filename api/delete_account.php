@@ -67,14 +67,31 @@ try {
         @unlink(__DIR__ . '/../' . $carPhoto);
     }
 
-    // 4. Excluir conta (CASCADE cuida do resto no banco)
-    $stmtDelete = $pdo->prepare("DELETE FROM users WHERE id = ?");
-    $stmtDelete->execute([$userId]);
+    // 4. Anonimizar conta (Preserva o histórico para os outros usuários)
+    // Em vez de DELETE, fazemos UPDATE para não quebrar os JOINs do histórico
+    $stmtAnon = $pdo->prepare("
+        UPDATE users SET 
+            name = 'Usuário Excluído',
+            phone = CONCAT('excluido_', id, '_', UNIX_TIMESTAMP()),
+            photo_url = NULL,
+            pix_key = NULL,
+            pin_hash = 'DELETED_ACCOUNT',
+            is_driver = 0,
+            is_admin = 0,
+            reputation = 5.0
+        WHERE id = ?
+    ");
+    $stmtAnon->execute([$userId]);
 
-    // 5. Destruir sessão
+    // Excluir dados do carro (Informação sensível como placa não precisa ficar no histórico)
+    $stmtDeleteCar = $pdo->prepare("DELETE FROM cars WHERE user_id = ?");
+    $stmtDeleteCar->execute([$userId]);
+
+    // 5. Destruir sessão e Invalidar Cookie
     session_destroy();
+    setcookie('vj_remember', '', time() - 3600, '/');
 
-    echo json_encode(['success' => true, 'message' => 'Conta excluída permanentemente.']);
+    echo json_encode(['success' => true, 'message' => 'Sua conta foi desativada e seus dados pessoais foram removidos. Seu histórico de viagens com outros usuários permanecerá anônimo.']);
 
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'message' => 'Erro ao excluir conta.', 'debug' => $e->getMessage()]);

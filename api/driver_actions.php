@@ -24,7 +24,7 @@ $rideId = intval($input['rideId'] ?? $input['ride_id'] ?? 0);
 // Validação: remove_passenger, confirm_payment, confirm_booking, reject_booking não precisam de rideId, usam bookingId
 if (
     !$action ||
-    (!in_array($action, ['remove_passenger', 'confirm_payment', 'confirm_booking', 'reject_booking', 'close_ride']) && $rideId <= 0)
+    (!in_array($action, ['remove_passenger', 'confirm_payment', 'confirm_booking', 'reject_booking', 'close_ride', 'finish_ride']) && $rideId <= 0)
 ) {
     echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos.']);
     exit;
@@ -201,6 +201,39 @@ try {
             echo json_encode(['success' => true, 'message' => 'Passageiro removido e vaga liberada.']);
             break;
 
+        case 'no_show_booking':
+            $bookingId = intval($input['bookingId'] ?? 0);
+            if ($bookingId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID de reserva inválido.']);
+                exit;
+            }
+
+            // Verificar se a carona pertence ao motorista e se o horário já permite no-show
+            $stmt = $pdo->prepare("
+                SELECT b.id, b.passenger_id, r.departure_time 
+                FROM bookings b
+                JOIN rides r ON b.ride_id = r.id
+                WHERE b.id = ? AND r.driver_id = ?
+            ");
+            $stmt->execute([$bookingId, $driverId]);
+            $row = $stmt->fetch();
+
+            if ($row) {
+                // Opcional: Só permitir no-show após o horário da partida? 
+                // Por enquanto deixaremos livre para o motorista decidir.
+
+                $stmtUpdate = $pdo->prepare("UPDATE bookings SET status = 'no_show' WHERE id = ?");
+                $stmtUpdate->execute([$bookingId]);
+
+                // Notificar o passageiro
+                createNotification($pdo, $row['passenger_id'], 'system', "⚠️ O motorista marcou que você não compareceu ao embarque.", 'index.php?page=my_bookings');
+
+                echo json_encode(['success' => true, 'message' => 'Passageiro marcado como No-Show.']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
+            }
+            break;
+
         case 'confirm_payment':
             $bookingId = intval($input['bookingId'] ?? 0);
             if ($bookingId <= 0) {
@@ -261,6 +294,17 @@ try {
                 echo json_encode(['success' => true, 'message' => 'Status de pagamento revertido para pendente.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
+            }
+            break;
+
+        case 'finish_ride':
+            $stmt = $pdo->prepare("UPDATE rides SET status = 'completed' WHERE id = ? AND driver_id = ?");
+            $stmt->execute([$rideId, $driverId]);
+
+            if ($stmt->rowCount() > 0) {
+                echo json_encode(['success' => true, 'message' => 'Viagem finalizada com sucesso!']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Erro ao finalizar viagem ou carona não encontrada.']);
             }
             break;
 

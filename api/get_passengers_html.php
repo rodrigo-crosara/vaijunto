@@ -60,6 +60,11 @@ try {
                             class="w-8 h-8 rounded-full bg-green-500/20 text-green-300 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all">
                             <i class="bi bi-whatsapp text-sm"></i>
                         </a>
+                        <button onclick="marcarNoShow(<?= $p['booking_id'] ?>)"
+                            class="w-8 h-8 rounded-full bg-orange-500/20 text-orange-300 flex items-center justify-center hover:bg-orange-500 hover:text-white transition-all"
+                            title="Não apareceu (No-Show)">
+                            <i class="bi bi-person-x text-sm"></i>
+                        </button>
                         <?php if ($isPaid): ?>
                             <button onclick="desfazerPagamento(<?= $p['booking_id'] ?>)"
                                 class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg border-0 cursor-pointer hover:bg-green-600 transition-colors">

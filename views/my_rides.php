@@ -68,13 +68,13 @@ try {
     <?php else: ?>
 
         <!-- 1. Próxima Viagem (Highlight) -->
-        <?php
         $nextRide = null;
-        $nowGrace = time() - 1800; // 30 minutos atrás
+        $nowGrace = time() - 3600; // 1 hora de tolerância padrão para visualização
         foreach ($myRides as $ride) {
-            if ($ride['status'] !== 'canceled' && strtotime($ride['departure_time']) >= $nowGrace) {
+            // A Próxima Missão é a primeira que não foi cancelada nem completada
+            if ($ride['status'] === 'scheduled') {
                 $nextRide = $ride;
-                break; // A query já ordena por time ASC, então a primeira válida é a próxima missioneira
+                break;
             }
         }
         ?>
@@ -245,10 +245,17 @@ try {
                             <?php endif; ?>
                         </div>
 
-                            <button onclick="confirmarCancelamento(<?= $nextRide['id'] ?>)" 
-                                class="text-[11px] font-bold text-blue-200 hover:text-red-300 transition-colors flex items-center justify-center gap-1.5 mx-auto">
-                                <i class="bi bi-trash3"></i> Cancelar esta viagem
-                            </button>
+                            <div class="flex flex-col gap-2 mt-4">
+                                <button onclick="finalizarViagem(<?= $nextRide['id'] ?>)" 
+                                    class="w-full bg-green-500 text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 hover:scale-[1.02] transition-all">
+                                    <i class="bi bi-flag-fill"></i> FINALIZAR VIAGEM
+                                </button>
+                                
+                                <button onclick="confirmarCancelamento(<?= $nextRide['id'] ?>)" 
+                                    class="text-[11px] font-bold text-blue-200 hover:text-red-300 transition-colors flex items-center justify-center gap-1.5 mx-auto py-2">
+                                    <i class="bi bi-trash3"></i> Cancelar esta viagem
+                                </button>
+                            </div>
 
                             <button onclick="gerarVolta(<?= $nextRide['id'] ?>, '<?= addslashes($nextRide['origin_text']) ?>', '<?= addslashes($nextRide['destination_text']) ?>')" 
                                 class="mt-4 text-[11px] font-bold text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto border border-white/10 uppercase tracking-tighter">
@@ -262,8 +269,8 @@ try {
 
         <!-- 2. Planejamento (Próximas Viagens) -->
         <?php 
-        $futureRides = array_filter($myRides, function($r) use ($nextRide, $nowGrace) {
-            return (!$nextRide || $r['id'] != $nextRide['id']) && strtotime($r['departure_time']) >= $nowGrace;
+        $futureRides = array_filter($myRides, function($r) use ($nextRide) {
+            return (!$nextRide || $r['id'] != $nextRide['id']) && $r['status'] === 'scheduled';
         });
         ?>
 
@@ -370,7 +377,14 @@ try {
                                                 <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'confirm')" class="bg-green-500 text-white px-2 py-1 rounded-lg font-bold">Aceitar</button>
                                                 <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'reject')" class="bg-red-50 text-red-500 px-2 py-1 rounded-lg border border-red-100">Recusar</button>
                                             <?php else: ?>
-                                                <a href="https://wa.me/<?= $pPhone ?>" target="_blank" class="text-green-500"><i class="bi bi-whatsapp"></i></a>
+                                                <div class="flex items-center gap-1.5">
+                                                    <a href="https://wa.me/<?= $pPhone ?>" target="_blank" class="w-8 h-8 rounded-full bg-green-50 text-green-500 flex items-center justify-center border border-green-100 hover:bg-green-500 hover:text-white transition-all" title="WhatsApp">
+                                                        <i class="bi bi-whatsapp"></i>
+                                                    </a>
+                                                    <button onclick="marcarNoShow(<?= $p['booking_id'] ?>)" class="w-8 h-8 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center border border-orange-100 hover:bg-orange-500 hover:text-white transition-all" title="Não compareceu (No-Show)">
+                                                        <i class="bi bi-person-x"></i>
+                                                    </button>
+                                                </div>
                                                 <?php if($p['payment_status'] == 'paid'): ?>
                                                     <button onclick="desfazerPagamento(<?= $p['booking_id'] ?>)" 
                                                         class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg border border-green-100">
@@ -399,8 +413,8 @@ try {
             <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico de Caronas</h2>
             <div class="space-y-4">
                 <?php 
-                $pastRides = array_filter($myRides, function($r) use ($nowGrace) {
-                    return strtotime($r['departure_time']) < $nowGrace || $r['status'] === 'canceled';
+                $pastRides = array_filter($myRides, function($r) {
+                    return $r['status'] === 'completed' || $r['status'] === 'canceled';
                 });
                 // Inverter para mostrar as mais recentes primeiro no histórico
                 $pastRides = array_reverse($pastRides);
@@ -712,6 +726,42 @@ try {
         }).then((result) => {
             if (result.isConfirmed) {
                 driverAction({ action: 'undo_payment', bookingId: bookingId });
+            }
+        });
+    }
+
+    function finalizarViagem(rideId) {
+        Swal.fire({
+            title: 'Finalizar Viagem?',
+            text: "A carona sairá do destaque e irá para o histórico. Certifique-se de que todos embarcaram e pagaram!",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, Finalizar!',
+            cancelButtonText: 'Ainda não',
+            confirmButtonColor: '#10b981'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                driverAction({ action: 'finish_ride', rideId: rideId });
+            }
+        });
+    }
+
+    function marcarNoShow(bookingId) {
+        Swal.fire({
+            title: 'Passageiro não apareceu?',
+            text: "O passageiro será marcado como 'Ausente' e não poderá avaliar você por esta carona.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, não apareceu',
+            cancelButtonText: 'Cancelar',
+            customClass: { 
+                confirmButton: 'bg-orange-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg', 
+                cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2' 
+            },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                driverAction({ action: 'no_show_booking', bookingId: bookingId });
             }
         });
     }
