@@ -35,8 +35,6 @@ try {
     // 2. Inverter Origem e Destino
     $newOriginText = $original['destination_text'];
     $newDestinationText = $original['origin_text'];
-    $newOriginCoords = $original['destination_coords'];
-    $newDestinationCoords = $original['origin_coords'];
 
     // 3. Ajustar Horário
     $originalDate = date('Y-m-d', strtotime($original['departure_time']));
@@ -58,25 +56,24 @@ try {
         $newDepartureTime = date('Y-m-d H:i:s', strtotime('+2 hours'));
     }
 
-    // 4. Inserir nova carona
+    // 4. Inserir nova carona (Sincronizado com create_ride.php)
     $stmtInsert = $pdo->prepare("
         INSERT INTO rides (
-            driver_id, origin_text, destination_text, origin_coords, destination_coords, 
-            waypoints, departure_time, seats_total, seats_available, price, status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())
+            driver_id, origin_text, destination_text, waypoints, departure_time, 
+            seats_total, seats_available, price, tags, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())
     ");
 
     $stmtInsert->execute([
         $userId,
         $newOriginText,
         $newDestinationText,
-        $newOriginCoords,
-        $newDestinationCoords,
         $original['waypoints'],
         $newDepartureTime,
         $original['seats_total'],
-        $original['seats_total'],
-        $original['price']
+        $original['seats_total'], // Restaura as vagas (limpa os fantasmas da ida)
+        $original['price'],
+        $original['tags']         // Copia observações/detalhes
     ]);
 
     $msg = $isPast

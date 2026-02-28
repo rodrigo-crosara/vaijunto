@@ -38,29 +38,38 @@ if (!$input) {
 // 3. Sanitização e Validação
 $origin = trim($input['origin'] ?? '');
 $destination = trim($input['destination'] ?? '');
-$waypointsInput = trim($input['waypoints'] ?? ''); // Plain tex, comma separated
-$detailsInput = trim($input['details'] ?? ''); // Novo campo de observações
+$waypointsInput = trim($input['waypoints'] ?? '');
+$detailsInput = trim($input['details'] ?? '');
 
 $departure_time = $input['departure_time'] ?? '';
 $seats = intval($input['seats'] ?? 0);
+$repeat_days = $input['repeat_days'] ?? [];
+$repeat_time = $input['repeat_time'] ?? '';
+$isRepeat = (!empty($repeat_days) && !empty($repeat_time));
 
-// Sanitização de preço blindada para <input type="number">
-// O navegador geralmente envia "7.00", mas caso venha "7,00", cobrimos ambas as opções.
+// Sanitização de preço blindada
 $priceInput = (string) ($input['price'] ?? '0');
-$priceInput = str_replace(',', '.', $priceInput); // Garante que qualquer vírgula vire ponto decimal
+$priceInput = str_replace(',', '.', $priceInput);
 $price = floatval($priceInput);
 
 $driver_id = $_SESSION['user_id'];
 
-if (empty($origin) || empty($destination) || empty($departure_time) || $seats <= 0) {
-    echo json_encode(['success' => false, 'message' => 'Preencha todos os campos obrigatórios.']);
+// Validação de campos básicos
+if (empty($origin) || empty($destination) || $seats <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Preencha os campos de origem, destino e vagas.']);
     exit;
 }
 
-// Validação: Data no passado (com margem de 1 minuto para evitar erros de latência)
-if (strtotime($departure_time) < (time() - 60)) {
-    echo json_encode(['success' => false, 'message' => 'A data e hora de saída devem ser futuras.']);
-    exit;
+// Se NÃO for repetição, a data única é obrigatória e deve ser futura
+if (!$isRepeat) {
+    if (empty($departure_time)) {
+        echo json_encode(['success' => false, 'message' => 'Selecione a data e hora da carona.']);
+        exit;
+    }
+    if (strtotime($departure_time) < (time() - 60)) {
+        echo json_encode(['success' => false, 'message' => 'A data e hora de saída devem ser futuras.']);
+        exit;
+    }
 }
 
 // Validação: Preço negativo

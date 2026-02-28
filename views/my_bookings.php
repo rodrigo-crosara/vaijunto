@@ -247,7 +247,7 @@ foreach ($bookings as $b) {
                                 </button>
                             </div>
 
-                            <button onclick="cancelarReserva(<?= $nb['booking_id'] ?>)"
+                            <button onclick="cancelarReserva(<?= $nb['booking_id'] ?>, <?= $isPaid ? 'true' : 'false' ?>)"
                                 class="text-xs font-bold text-white/50 hover:text-red-300 transition-colors flex items-center gap-1">
                                 <i class="bi bi-x-circle text-sm"></i> Cancelar Reserva
                             </button>
@@ -305,7 +305,7 @@ foreach ($bookings as $b) {
                                     <div class="flex gap-1.5 items-center">
                                         <span
                                             class="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">Pendente</span>
-                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>)"
+                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>, false)"
                                             class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors"
                                             title="Cancelar"><i class="bi bi-x-lg"></i></button>
                                     </div>
@@ -320,7 +320,7 @@ foreach ($bookings as $b) {
                                             class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm">
                                             <i class="bi bi-whatsapp"></i>
                                         </a>
-                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>)"
+                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>, false)"
                                             class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors">
                                             <i class="bi bi-x-lg"></i>
                                         </button>
@@ -392,10 +392,21 @@ foreach ($bookings as $b) {
         });
     }
 
-    function cancelarReserva(bookingId) {
+    function cancelarReserva(bookingId, isPaid = false) {
+        let warningHtml = '<p class="text-gray-500 text-sm">Isso vai <b>liberar sua vaga</b> para outra pessoa imediatamente.</p>';
+
+        if (isPaid) {
+            warningHtml += `
+                <div class="mt-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-[11px] font-bold leading-tight">
+                    <i class="bi bi-exclamation-triangle-fill mr-1"></i> ATENÇÃO: Você já pagou por esta viagem. O cancelamento NÃO realiza estorno automático do PIX. Resolva com o motorista primeiro.
+                </div>`;
+        }
+
+        warningHtml += '<p class="text-gray-400 text-[10px] mt-4">Você não poderá desfazer essa ação.</p>';
+
         Swal.fire({
             title: 'Cancelar Reserva?',
-            html: '<p class="text-gray-500 text-sm">Isso vai <b>liberar sua vaga</b> para outra pessoa imediatamente.<br>Você não poderá desfazer essa ação.</p>',
+            html: warningHtml,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sim, cancelar',

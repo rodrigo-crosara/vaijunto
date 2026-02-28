@@ -111,19 +111,24 @@ try {
         $color = trim($input['car_color'] ?? '');
         $plate = trim($input['car_plate'] ?? '');
 
-        if (!empty($model) && !empty($plate)) {
-            // Verificar se usuário já tem carro
-            $stmtCheck = $pdo->prepare("SELECT id FROM cars WHERE user_id = ?");
-            $stmtCheck->execute([$userId]);
-            $existingCar = $stmtCheck->fetchColumn();
+        // Validação de Backend: Impede o "Motorista Fantasma"
+        if (empty($model) || empty($plate)) {
+            $pdo->rollBack();
+            echo json_encode(['success' => false, 'message' => 'Para ativar o modo motorista, preencha o modelo e a placa do carro.']);
+            exit;
+        }
 
-            if ($existingCar) {
-                $stmtUpdateCar = $pdo->prepare("UPDATE cars SET model = ?, color = ?, plate = ? WHERE user_id = ?");
-                $stmtUpdateCar->execute([$model, $color, $plate, $userId]);
-            } else {
-                $stmtInsertCar = $pdo->prepare("INSERT INTO cars (user_id, model, color, plate) VALUES (?, ?, ?, ?)");
-                $stmtInsertCar->execute([$userId, $model, $color, $plate]);
-            }
+        // Verificar se usuário já tem carro
+        $stmtCheck = $pdo->prepare("SELECT id FROM cars WHERE user_id = ?");
+        $stmtCheck->execute([$userId]);
+        $existingCar = $stmtCheck->fetchColumn();
+
+        if ($existingCar) {
+            $stmtUpdateCar = $pdo->prepare("UPDATE cars SET model = ?, color = ?, plate = ? WHERE user_id = ?");
+            $stmtUpdateCar->execute([$model, $color, $plate, $userId]);
+        } else {
+            $stmtInsertCar = $pdo->prepare("INSERT INTO cars (user_id, model, color, plate) VALUES (?, ?, ?, ?)");
+            $stmtInsertCar->execute([$userId, $model, $color, $plate]);
         }
     }
 
