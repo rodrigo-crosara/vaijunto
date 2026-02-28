@@ -64,21 +64,27 @@ switch ($action) {
                 exit;
             }
 
+            // SE a reserva estava ativa (confirmed ou pending), devolvemos a vaga
+            // Se estava 'rejected', a vaga já foi devolvida pelo motorista anteriormente.
+            $shouldRestoreSeat = in_array($booking['status'], ['confirmed', 'pending']);
+
             // 2. Cancelar a reserva
             $stmtCancel = $pdo->prepare("UPDATE bookings SET status = 'canceled' WHERE id = ?");
             $stmtCancel->execute([$bookingId]);
 
-            // 3. Devolver a vaga ao ride
-            $stmtSeats = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
-            $stmtSeats->execute([$booking['ride_id']]);
+            // 3. Devolver a vaga ao ride SOMENTE se necessário
+            if ($shouldRestoreSeat) {
+                $stmtSeats = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
+                $stmtSeats->execute([$booking['ride_id']]);
+
+                // Notificar o Motorista apenas se a reserva era relevante
+                $passengerName = $_SESSION['user_name'] ?? 'Um passageiro';
+                createNotification($pdo, $booking['driver_id'], 'cancel', "😕 {$passengerName} cancelou a reserva. Vaga liberada.", 'index.php?page=my_rides');
+            }
 
             $pdo->commit();
 
-            // Notificar o Motorista
-            $passengerName = $_SESSION['user_name'] ?? 'Um passageiro';
-            createNotification($pdo, $booking['driver_id'], 'cancel', "😕 {$passengerName} cancelou a reserva. Vaga liberada.", 'index.php?page=my_rides');
-
-            echo json_encode(['success' => true, 'message' => 'Reserva cancelada. A vaga foi liberada.']);
+            echo json_encode(['success' => true, 'message' => 'Reserva cancelada com sucesso.']);
 
         } catch (PDOException $e) {
             $pdo->rollBack();

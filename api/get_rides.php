@@ -14,19 +14,43 @@ if (!isset($_SESSION['user_id'])) {
 
 $currentUserId = $_SESSION['user_id'];
 $offset = intval($_GET['offset'] ?? 0);
+$query = trim($_GET['query'] ?? '');
+$timeFilter = trim($_GET['time'] ?? '');
 $limit = 10;
 
 try {
+    $params = [];
     $sql = "SELECT r.*, u.name as driver_name, u.photo_url, u.reputation, c.model as car_model, c.color as car_color, c.plate as car_plate, u.phone as driver_phone
             FROM rides r
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
-            WHERE r.departure_time >= NOW() AND r.seats_available > 0 AND r.status != 'canceled'
-            ORDER BY r.departure_time ASC
-            LIMIT ? OFFSET ?";
+            WHERE r.status != 'canceled' AND r.seats_available > 0 AND r.departure_time >= NOW()";
+
+    if ($query !== '') {
+        $sql .= " AND (LOWER(r.origin_text) LIKE LOWER(?) OR LOWER(r.destination_text) LIKE LOWER(?) OR LOWER(r.waypoints) LIKE LOWER(?))";
+        $searchTerm = "%$query%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+
+    if ($timeFilter !== '') {
+        $currentHMin = date('H:i');
+        $dateStr = ($timeFilter < $currentHMin) ? date('Y-m-d', strtotime('+1 day')) : date('Y-m-d');
+        $targetTime = $dateStr . ' ' . $timeFilter . ':00';
+
+        $sql .= " ORDER BY ABS(TIMESTAMPDIFF(SECOND, r.departure_time, ?)) ASC";
+        $params[] = $targetTime;
+    } else {
+        $sql .= " ORDER BY r.departure_time ASC";
+    }
+
+    $sql .= " LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$limit, $offset]);
+    $stmt->execute($params);
     $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Busca IDs das caronas que o usuário já reservou (otimizado: só para as retornadas)

@@ -283,8 +283,11 @@ if ($currentUserId) {
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Carregando...');
 
         try {
-            // Chama a API com o offset atual
-            const response = await fetch(`api/get_rides.php?offset=${offset}`);
+            const query = $('#search-query').val() || '';
+            const time = $('#search-time').val() || '';
+            
+            // Chama a API com o offset atual e filtros
+            const response = await fetch(`api/get_rides.php?offset=${offset}&query=${encodeURIComponent(query)}&time=${encodeURIComponent(time)}`);
             const result = await response.json();
 
             if (result.success) {
@@ -400,6 +403,8 @@ if ($currentUserId) {
             if (result.success) {
                 if (result.count > 0) {
                     container.html(result.html);
+                    // Ocultar botão de paginação padrão ao buscar (evita conflito)
+                    $('#load-more-container').addClass('hidden');
                 } else {
                     container.html(`
                         <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
