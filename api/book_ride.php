@@ -59,11 +59,11 @@ try {
         throw new Exception("Esta carona já partiu.");
     }
 
-    // Verificar duplicidade (exclui canceladas para permitir re-reserva)
-    $stmtCheck = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? AND status != 'canceled'");
+    // Verificar duplicidade (permite re-reserva se a anterior foi cancelada ou REJEITADA)
+    $stmtCheck = $pdo->prepare("SELECT id FROM bookings WHERE ride_id = ? AND passenger_id = ? AND status NOT IN ('canceled', 'rejected')");
     $stmtCheck->execute([$rideId, $passengerId]);
     if ($stmtCheck->fetch()) {
-        throw new Exception("Você já solicitou vaga nesta carona.");
+        throw new Exception("Você já tem uma solicitação ativa nesta carona.");
     }
 
     // 3. RESERVA ATÔMICA: Tenta decrementar SOMENTE se tiver vaga (> 0)
