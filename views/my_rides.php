@@ -70,10 +70,11 @@ try {
         <!-- 1. Próxima Viagem (Highlight) -->
         <?php
         $nextRide = null;
+        $nowGrace = time() - 1800; // 30 minutos atrás
         foreach ($myRides as $ride) {
-            if ($ride['status'] !== 'canceled' && strtotime($ride['departure_time']) >= time()) {
+            if ($ride['status'] !== 'canceled' && strtotime($ride['departure_time']) >= $nowGrace) {
                 $nextRide = $ride;
-                break; // A query já ordena por time ASC, então a primeira válida é a próxima
+                break; // A query já ordena por time ASC, então a primeira válida é a próxima missioneira
             }
         }
         ?>
@@ -181,6 +182,7 @@ try {
                                         <?php foreach ($nextRide['passengers'] as $p):
                                             $isPaid = ($p['payment_status'] === 'paid');
                                             $pPhone = preg_replace('/\D/', '', $p['phone']);
+                                            $pPhone = ltrim($pPhone, '0'); // Remove o zero à esquerda do DDD
                                             if (strlen($pPhone) === 11 || strlen($pPhone) === 10) $pPhone = '55' . $pPhone;
                                             ?>
                                             <div class="flex items-center justify-between">
@@ -260,8 +262,8 @@ try {
 
         <!-- 2. Planejamento (Próximas Viagens) -->
         <?php 
-        $futureRides = array_filter($myRides, function($r) use ($nextRide) {
-            return (!$nextRide || $r['id'] != $nextRide['id']) && strtotime($r['departure_time']) >= time();
+        $futureRides = array_filter($myRides, function($r) use ($nextRide, $nowGrace) {
+            return (!$nextRide || $r['id'] != $nextRide['id']) && strtotime($r['departure_time']) >= $nowGrace;
         });
         ?>
 
@@ -355,6 +357,7 @@ try {
                             <?php else: ?>
                                 <?php foreach ($ride['passengers'] as $p): 
                                     $pPhone = preg_replace('/\D/', '', $p['phone']);
+                                    $pPhone = ltrim($pPhone, '0'); // Remove o zero à esquerda do DDD
                                     if (strlen($pPhone) === 11 || strlen($pPhone) === 10) $pPhone = '55' . $pPhone;
                                 ?>
                                     <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
@@ -368,9 +371,17 @@ try {
                                                 <button onclick="responderSolicitacao(<?= $p['booking_id'] ?>, 'reject')" class="bg-red-50 text-red-500 px-2 py-1 rounded-lg border border-red-100">Recusar</button>
                                             <?php else: ?>
                                                 <a href="https://wa.me/<?= $pPhone ?>" target="_blank" class="text-green-500"><i class="bi bi-whatsapp"></i></a>
-                                                <span class="font-bold <?= $p['payment_status'] == 'paid' ? 'text-green-500' : 'text-gray-300' ?>">
-                                                    <?= $p['payment_status'] == 'paid' ? 'Pago ✓' : 'Pendente' ?>
-                                                </span>
+                                                <?php if($p['payment_status'] == 'paid'): ?>
+                                                    <button onclick="desfazerPagamento(<?= $p['booking_id'] ?>)" 
+                                                        class="text-[10px] font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg border border-green-100">
+                                                        Pago ✓
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
+                                                        class="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 italic">
+                                                        Pendente
+                                                    </button>
+                                                <?php endif; ?>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -388,8 +399,8 @@ try {
             <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico de Caronas</h2>
             <div class="space-y-4">
                 <?php 
-                $pastRides = array_filter($myRides, function($r) {
-                    return strtotime($r['departure_time']) < time() || $r['status'] === 'canceled';
+                $pastRides = array_filter($myRides, function($r) use ($nowGrace) {
+                    return strtotime($r['departure_time']) < $nowGrace || $r['status'] === 'canceled';
                 });
                 // Inverter para mostrar as mais recentes primeiro no histórico
                 $pastRides = array_reverse($pastRides);
@@ -684,6 +695,23 @@ try {
         }).then((result) => {
             if (result.isConfirmed) {
                 driverAction({ action: 'confirm_payment', bookingId: bookingId });
+            }
+        });
+    }
+
+    function desfazerPagamento(bookingId) {
+        Swal.fire({
+            title: 'Estornou o dinheiro?',
+            text: 'O status de pagamento voltará para pendente. Use isto se você devolveu o PIX ao passageiro.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, marcar como pendente',
+            cancelButtonText: 'Voltar',
+            customClass: { confirmButton: 'bg-orange-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg', cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2' },
+            buttonsStyling: false
+        }).then((result) => {
+            if (result.isConfirmed) {
+                driverAction({ action: 'undo_payment', bookingId: bookingId });
             }
         });
     }

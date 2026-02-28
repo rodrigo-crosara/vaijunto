@@ -179,7 +179,8 @@ try {
             FROM bookings b
             JOIN rides r ON b.ride_id = r.id
             WHERE r.driver_id = ? 
-              AND r.status = 'completed'
+              AND r.status != 'canceled'
+              AND r.departure_time < NOW()
               AND r.departure_time > DATE_SUB(NOW(), INTERVAL 90 DAY)
         ");
         $stmtFans->execute([$driver_id]);

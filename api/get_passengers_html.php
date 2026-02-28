@@ -35,6 +35,7 @@ try {
     foreach ($passengers as $p) {
         $isPaid = ($p['payment_status'] === 'paid');
         $pPhone = preg_replace('/\D/', '', $p['phone']);
+        $pPhone = ltrim($pPhone, '0'); // Remove zero à esquerda do DDD
         if (strlen($pPhone) === 11 || strlen($pPhone) === 10)
             $pPhone = '55' . $pPhone;
         ?>
@@ -60,7 +61,10 @@ try {
                             <i class="bi bi-whatsapp text-sm"></i>
                         </a>
                         <?php if ($isPaid): ?>
-                            <span class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg">PAGO ✅</span>
+                            <button onclick="desfazerPagamento(<?= $p['booking_id'] ?>)"
+                                class="badge bg-green-500 text-[9px] font-bold py-1.5 px-2 rounded-lg border-0 cursor-pointer hover:bg-green-600 transition-colors">
+                                PAGO ✅
+                            </button>
                         <?php else: ?>
                             <button onclick="confirmarPagamento(<?= $p['booking_id'] ?>)"
                                 class="btn btn-xs btn-light-success text-[9px] font-bold py-1 px-2 rounded-lg flex items-center gap-1">
@@ -83,17 +87,18 @@ try {
                     <?php endif; ?>
                 </div>
             </div>
-        <!-- Nota do Passageiro (Avisos de bagagem, camisa, etc) -->
-        <?php if (!empty($p['note'])): ?>
-            <div class="px-2">
-                <div class="bg-yellow-400/20 text-yellow-100 text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 w-fit border border-yellow-400/20">
-                    <i class="bi bi-chat-left-text-fill text-[8px]"></i>
-                    <?= htmlspecialchars($p['note']) ?>
+            <!-- Nota do Passageiro (Avisos de bagagem, camisa, etc) -->
+            <?php if (!empty($p['note'])): ?>
+                <div class="px-2">
+                    <div
+                        class="bg-yellow-400/20 text-yellow-100 text-[9px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5 w-fit border border-yellow-400/20">
+                        <i class="bi bi-chat-left-text-fill text-[8px]"></i>
+                        <?= htmlspecialchars($p['note']) ?>
+                    </div>
                 </div>
-            </div>
-        <?php endif; ?>
-    </div> <!-- Fim do flex-col gap-2 -->
-    <?php
+            <?php endif; ?>
+        </div> <!-- Fim do flex-col gap-2 -->
+        <?php
     }
     echo '</div>';
 

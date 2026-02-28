@@ -24,7 +24,7 @@ try {
             FROM rides r
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
-            WHERE r.status != 'canceled' AND r.seats_available > 0 AND r.departure_time >= NOW()";
+            WHERE r.status != 'canceled' AND r.seats_available > 0 AND r.departure_time >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)";
 
     if ($query !== '') {
         $sql .= " AND (LOWER(r.origin_text) LIKE LOWER(?) OR LOWER(r.destination_text) LIKE LOWER(?) OR LOWER(r.waypoints) LIKE LOWER(?))";
@@ -73,6 +73,7 @@ try {
 
         // Normalização do Telefone para WhatsApp
         $dPhone = preg_replace('/\D/', '', $ride['driver_phone']);
+        $dPhone = ltrim($dPhone, '0'); // Remove zero à esquerda do DDD
         if (strlen($dPhone) === 11 || strlen($dPhone) === 10)
             $dPhone = '55' . $dPhone;
 

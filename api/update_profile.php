@@ -29,7 +29,8 @@ if (empty($input)) {
 // 1. Atualizar User
 $name = trim($input['name'] ?? '');
 $bio = trim($input['bio'] ?? '');
-$newPhone = preg_replace('/\D/', '', $input['phone'] ?? ''); // Limpa máscara (61) 9999-9999 -> 61999999999
+$newPhone = preg_replace('/\D/', '', $input['phone'] ?? ''); // Limpa máscara
+$newPhone = ltrim($newPhone, '0'); // Remove o zero à esquerda do DDD (ex: 061... -> 61...)
 
 if (empty($name)) {
     echo json_encode(['success' => false, 'message' => 'O nome é obrigatório.']);
@@ -149,8 +150,22 @@ try {
             $carPath = $uploadDir . DIRECTORY_SEPARATOR . $carFileName;
             if (move_uploaded_file($carFile['tmp_name'], $carPath)) {
                 $carPhotoUrl = "/assets/media/uploads/cars/{$carFileName}";
+
+                // Buscar foto antiga do carro para apagar
+                $stmtOldCar = $pdo->prepare("SELECT photo_url FROM cars WHERE user_id = ?");
+                $stmtOldCar->execute([$userId]);
+                $oldCarPhoto = $stmtOldCar->fetchColumn();
+
                 $stmtCarPhoto = $pdo->prepare("UPDATE cars SET photo_url = ? WHERE user_id = ?");
                 $stmtCarPhoto->execute([$carPhotoUrl, $userId]);
+
+                // Remover arquivo antigo do servidor
+                if ($oldCarPhoto && strpos($oldCarPhoto, '/assets/media/uploads/') === 0) {
+                    $oldCarPath = __DIR__ . '/..' . $oldCarPhoto;
+                    if (file_exists($oldCarPath)) {
+                        unlink($oldCarPath);
+                    }
+                }
             }
         }
     }

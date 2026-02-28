@@ -46,9 +46,10 @@ if (!isset($_SESSION['user_id'])) {
     include 'views/login.php';
 } else {
     // Middleware de Onboarding (Força cadastro completo)
-    // Permite acessar profile, logout e script de update
+    // Impede nomes vazios ou o placeholder padrão "Novo Usuário"
+    $userName = $_SESSION['user_name'] ?? '';
     if (
-        empty($_SESSION['user_name']) &&
+        (empty($userName) || trim($userName) === 'Novo Usuário') &&
         $page !== 'profile' &&
         $page !== 'logout'
     ) {

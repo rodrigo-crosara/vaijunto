@@ -55,8 +55,9 @@ try {
         throw new Exception("Esta carona foi cancelada.");
     }
 
-    if (strtotime($ride['departure_time']) < time()) {
-        throw new Exception("Esta carona já partiu.");
+    // Grace Period de 30 minutos para permitir reservas de última hora
+    if (strtotime($ride['departure_time']) < strtotime('-30 minutes')) {
+        throw new Exception("Esta carona já partiu há mais de 30 minutos.");
     }
 
     // Verificar duplicidade (permite re-reserva se a anterior foi cancelada ou REJEITADA)

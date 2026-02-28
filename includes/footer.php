@@ -222,12 +222,17 @@
                         // Vibrar
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
 
-                        // Som
+                        // Som com Contingência Visual
                         try {
                             const audio = new Audio('assets/media/notification.mp3');
                             audio.volume = 0.5;
-                            audio.play().catch(() => { }); // Falha silenciosa se não houver interação prévia
-                        } catch (e) { }
+                            audio.play().catch(() => {
+                                // Se o áudio falhar (bloqueio de autoplay), fazemos a tela piscar
+                                triggerVisualAlert();
+                            });
+                        } catch (e) {
+                            triggerVisualAlert();
+                        }
                     }
                 }
 
@@ -240,6 +245,23 @@
             } catch (e) {
                 // Silencioso
             }
+        }
+
+        // Contingência Visual: Faz a tela piscar caso o áudio esteja mudo/bloqueado
+        function triggerVisualAlert() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;pointer-events:none;background:rgba(255,0,0,0.3);animation:blinkNotif 0.5s 6;';
+
+            // Injetar estilo se não existir
+            if (!document.getElementById('notif-blink-style')) {
+                const style = document.createElement('style');
+                style.id = 'notif-blink-style';
+                style.innerHTML = '@keyframes blinkNotif { 0%, 100% { background:transparent; } 50% { background:rgba(13, 143, 253, 0.4); } }';
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.remove(), 3000);
         }
     <?php else: ?>
         function pollNotifications() { } // No-op for guests

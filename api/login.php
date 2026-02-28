@@ -45,6 +45,7 @@ try {
 
 // Limpeza básica do número (apenas números para o banco)
 $cleanPhone = preg_replace('/\D/', '', $phone);
+$cleanPhone = ltrim($cleanPhone, '0'); // Remove zero à esquerda do DDD
 $pin = $_POST['pin'] ?? '';
 
 if (strlen($pin) !== 4 || !ctype_digit($pin)) {

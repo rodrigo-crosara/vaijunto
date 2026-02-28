@@ -236,6 +236,7 @@ if ($currentUserId) {
                                 </button>
                             <?php elseif ($isBooked):
                                 $dPhone = preg_replace('/\D/', '', $ride['driver_phone']);
+                                $dPhone = ltrim($dPhone, '0'); // Remove o zero à esquerda do DDD
                                 if (strlen($dPhone) === 11 || strlen($dPhone) === 10)
                                     $dPhone = '55' . $dPhone;
                                 ?>
@@ -285,7 +286,7 @@ if ($currentUserId) {
         try {
             const query = $('#search-query').val() || '';
             const time = $('#search-time').val() || '';
-            
+
             // Chama a API com o offset atual e filtros
             const response = await fetch(`api/get_rides.php?offset=${offset}&query=${encodeURIComponent(query)}&time=${encodeURIComponent(time)}`);
             const result = await response.json();

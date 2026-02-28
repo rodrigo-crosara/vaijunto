@@ -48,18 +48,27 @@ try {
     $bookings = [];
 }
 
-// Separar: próxima viagem ativa vs histórico
+// Separar: Ticket Principal vs Próximas na Agenda vs Histórico
 $nextBooking = null;
-$historyBookings = [];
+$upcomingBookings = [];
+$pastBookings = [];
 
 foreach ($bookings as $b) {
-    $isFuture = strtotime($b['departure_time']) >= time();
-    $isActive = (in_array($b['booking_status'], ['confirmed', 'pending']) && $isFuture && $b['ride_status'] !== 'canceled');
+    // Definir se é futura (considerando a tolerância de 30 min que usamos no feed)
+    $isFuture = strtotime($b['departure_time']) >= (time() - 1800);
+    $isCanceled = ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled');
+    $isCompleted = (!$isFuture || $isCanceled); // Se passou do tempo ou foi cancelada, é histórico
 
-    if (!$nextBooking && $isActive) {
-        $nextBooking = $b;
+    if (!$isCompleted) {
+        // Viagem Ativa/Futura
+        if (!$nextBooking) {
+            $nextBooking = $b;
+        } else {
+            $upcomingBookings[] = $b;
+        }
     } else {
-        $historyBookings[] = $b;
+        // Viagem Passada ou Cancelada
+        $pastBookings[] = $b;
     }
 }
 ?>
@@ -99,6 +108,7 @@ foreach ($bookings as $b) {
             $nbDayName = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][date('w', strtotime($nb['departure_time']))];
             $nbAvatar = $nb['driver_avatar'] ?: "https://ui-avatars.com/api/?name=" . urlencode($nb['driver_name']) . "&background=0D8FFD&color=fff&bold=true";
             $nbPhone = preg_replace('/\D/', '', $nb['driver_phone']);
+            $nbPhone = ltrim($nbPhone, '0'); // Remove zero à esquerda do DDD
             if (strlen($nbPhone) === 11 || strlen($nbPhone) === 10)
                 $nbPhone = '55' . $nbPhone;
             $isPaid = ($nb['payment_status'] === 'paid');
@@ -267,30 +277,28 @@ foreach ($bookings as $b) {
 
 
         <!-- ======================== -->
-        <!-- SEÇÃO 2: HISTÓRICO       -->
+        <!-- SEÇÃO 2: SUA AGENDA      -->
         <!-- ======================== -->
-        <?php if (!empty($historyBookings)): ?>
-            <div>
-                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico</h2>
+        <?php if (!empty($upcomingBookings)): ?>
+            <div class="mb-10">
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Sua Agenda 🗓️</h2>
                 <div class="space-y-3">
-                    <?php foreach ($historyBookings as $b):
+                    <?php foreach ($upcomingBookings as $b):
                         $time = date('H:i', strtotime($b['departure_time']));
                         $date = date('d/m', strtotime($b['departure_time']));
                         $avatar = $b['driver_avatar'] ?: "https://ui-avatars.com/api/?name=" . urlencode($b['driver_name']) . "&background=random";
-                        $isCanceled = ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled');
-                        $isFuture = strtotime($b['departure_time']) >= time();
-                        $isActive = ($b['booking_status'] === 'confirmed' && $isFuture && $b['ride_status'] !== 'canceled');
+                        $uPhone = preg_replace('/\D/', '', $b['driver_phone']);
+                        $uPhone = ltrim($uPhone, '0');
+                        if (strlen($uPhone) === 11 || strlen($uPhone) === 10)
+                            $uPhone = '55' . $uPhone;
                         $isPaid = ($b['payment_status'] === 'paid');
                         ?>
-                        <div
-                            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-4 <?= $isCanceled ? 'opacity-40' : ($isFuture ? '' : 'opacity-70') ?>">
+                        <div class="bg-white rounded-[2rem] p-4 border border-gray-100 shadow-sm flex items-center gap-4">
                             <img src="<?= htmlspecialchars($avatar) ?>" alt="D"
-                                class="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0">
+                                class="w-12 h-12 rounded-full border border-gray-100 object-cover shrink-0">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                    <a href="https://www.google.com/maps/search/?api=1&query=<?= urlencode($b['destination_text']) ?>"
-                                        target="_blank"
-                                        class="truncate hover:text-primary transition-colors"><?= htmlspecialchars($b['destination_text']) ?></a>
+                                    <span class="truncate"><?= htmlspecialchars($b['destination_text']) ?></span>
                                 </div>
                                 <div class="flex items-center gap-2 text-xs text-gray-400">
                                     <span><?= $date ?> às <?= $time ?></span>
@@ -298,39 +306,55 @@ foreach ($bookings as $b) {
                                     <span>R$ <?= number_format($b['price'], 2, ',', '.') ?></span>
                                 </div>
                             </div>
+                            <div class="shrink-0 flex gap-2">
+                                <a href="https://wa.me/<?= $uPhone ?>" target="_blank"
+                                    class="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                <button onclick="cancelarReserva(<?= $b['booking_id'] ?>, <?= $isPaid ? 'true' : 'false' ?>)"
+                                    class="w-9 h-9 rounded-full bg-red-50 text-red-400 flex items-center justify-center border border-red-100">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+
+        <!-- ======================== -->
+        <!-- SEÇÃO 3: HISTÓRICO       -->
+        <!-- ======================== -->
+        <?php if (!empty($pastBookings)): ?>
+            <div>
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">Histórico</h2>
+                <div class="space-y-3">
+                    <?php foreach ($pastBookings as $b):
+                        $time = date('H:i', strtotime($b['departure_time']));
+                        $date = date('d/m', strtotime($b['departure_time']));
+                        $avatar = $b['driver_avatar'] ?: "https://ui-avatars.com/api/?name=" . urlencode($b['driver_name']) . "&background=random";
+                        $isCanceled = ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled');
+                        $isPaid = ($b['payment_status'] === 'paid');
+                        ?>
+                        <div
+                            class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-4 <?= $isCanceled ? 'opacity-40' : 'opacity-70' ?>">
+                            <img src="<?= htmlspecialchars($avatar) ?>" alt="D"
+                                class="w-10 h-10 rounded-full border border-gray-100 object-cover shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
+                                    <span class="truncate"><?= htmlspecialchars($b['destination_text']) ?></span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs text-gray-400">
+                                    <span><?= $date ?> • <?= $isCanceled ? 'Cancelada' : 'Concluída' ?></span>
+                                </div>
+                            </div>
                             <div class="shrink-0">
                                 <?php if ($isCanceled): ?>
                                     <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">Cancelada</span>
-                                <?php elseif ($b['booking_status'] === 'pending' && $isFuture && $b['ride_status'] !== 'canceled'): ?>
-                                    <div class="flex gap-1.5 items-center">
-                                        <span
-                                            class="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">Pendente</span>
-                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>, false)"
-                                            class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors"
-                                            title="Cancelar"><i class="bi bi-x-lg"></i></button>
-                                    </div>
-                                <?php elseif ($isActive): ?>
-                                    <div class="flex gap-1.5">
-                                        <?php
-                                        $hPhone = preg_replace('/\D/', '', $b['driver_phone']);
-                                        if (strlen($hPhone) === 11 || strlen($hPhone) === 10)
-                                            $hPhone = '55' . $hPhone;
-                                        ?>
-                                        <a href="https://wa.me/<?= $hPhone ?>" target="_blank"
-                                            class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm">
-                                            <i class="bi bi-whatsapp"></i>
-                                        </a>
-                                        <button onclick="cancelarReserva(<?= $b['booking_id'] ?>, false)"
-                                            class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-sm hover:bg-red-100 transition-colors">
-                                            <i class="bi bi-x-lg"></i>
-                                        </button>
-                                    </div>
                                 <?php elseif ($isPaid): ?>
                                     <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2.5 py-1 rounded-full">Pago
                                         ✓</span>
-                                <?php elseif ($b['booking_status'] === 'pending' && !$isFuture): ?>
-                                    <span
-                                        class="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Expirada</span>
                                 <?php else: ?>
                                     <span
                                         class="text-[10px] font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">Concluída</span>

@@ -99,8 +99,16 @@ try {
                 exit;
             }
 
-            // Consideramos futura caronas de até 1 hora atrás (margem de tolerância)
-            $isFuture = (strtotime($rideData['departure_time']) >= (time() - 3600));
+            // Validação de Segurança: Proibir cancelamento com pagamentos confirmados
+            $stmtPaid = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE ride_id = ? AND payment_status = 'paid' AND status != 'canceled'");
+            $stmtPaid->execute([$rideId]);
+            if ($stmtPaid->fetchColumn() > 0) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Não é possível cancelar uma carona que já possui pagamentos confirmados. Você deve resolver os estornos com os passageiros primeiro.'
+                ]);
+                exit;
+            }
 
             // 2. Marcar como cancelada no banco
             $stmt = $pdo->prepare("UPDATE rides SET status = 'canceled' WHERE id = ? AND driver_id = ?");
@@ -222,6 +230,35 @@ try {
                 }
 
                 echo json_encode(['success' => true, 'message' => 'Pagamento confirmado!']);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
+            }
+            break;
+
+        case 'undo_payment':
+            $bookingId = intval($input['bookingId'] ?? 0);
+            if ($bookingId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'ID de reserva inválido.']);
+                exit;
+            }
+
+            // Verificar se a carona pertence ao motorista
+            $stmt = $pdo->prepare("
+                SELECT b.id, b.passenger_id FROM bookings b
+                JOIN rides r ON b.ride_id = r.id
+                WHERE b.id = ? AND r.driver_id = ?
+            ");
+            $stmt->execute([$bookingId, $driverId]);
+
+            $bookingRow = $stmt->fetch();
+            if ($bookingRow) {
+                $stmtUpdate = $pdo->prepare("UPDATE bookings SET payment_status = 'pending' WHERE id = ?");
+                $stmtUpdate->execute([$bookingId]);
+
+                // Notificar o passageiro (Estorno ou Correção)
+                createNotification($pdo, $bookingRow['passenger_id'], 'payment', '⚠️ Pagamento marcado como pendente pelo motorista. Resolva se necessário.', 'index.php?page=my_bookings');
+
+                echo json_encode(['success' => true, 'message' => 'Status de pagamento revertido para pendente.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
             }

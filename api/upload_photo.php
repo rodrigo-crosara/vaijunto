@@ -51,9 +51,22 @@ $publicPath = '/assets/media/uploads/users/' . $fileName; // Caminho para salvar
 // Mover arquivo
 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
     try {
+        // Buscar foto antiga para remover do servidor
+        $stmtOld = $pdo->prepare("SELECT photo_url FROM users WHERE id = ?");
+        $stmtOld->execute([$userId]);
+        $oldPhoto = $stmtOld->fetchColumn();
+
         // Atualizar Banco
         $stmt = $pdo->prepare("UPDATE users SET photo_url = ? WHERE id = ?");
         $stmt->execute([$publicPath, $userId]);
+
+        // Remover arquivo antigo se não for um placeholder externo
+        if ($oldPhoto && strpos($oldPhoto, '/assets/media/uploads/') === 0) {
+            $oldFilePath = __DIR__ . '/..' . $oldPhoto;
+            if (file_exists($oldFilePath)) {
+                unlink($oldFilePath);
+            }
+        }
 
         // Atualizar Sessão Imediatamente
         $_SESSION['user_photo'] = $publicPath;

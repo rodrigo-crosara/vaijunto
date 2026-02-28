@@ -200,6 +200,7 @@ try {
                         </button>
                     <?php elseif ($isBooked):
                         $dPhoneSearch = preg_replace('/\D/', '', $ride['driver_phone']);
+                        $dPhoneSearch = ltrim($dPhoneSearch, '0'); // Remove o zero à esquerda do DDD
                         if (strlen($dPhoneSearch) === 11 || strlen($dPhoneSearch) === 10)
                             $dPhoneSearch = '55' . $dPhoneSearch;
                         ?>
