@@ -182,5 +182,5 @@ try {
 
 } catch (PDOException $e) {
     $pdo->rollBack();
-    echo json_encode(['success' => false, 'message' => 'Erro ao salvar perfil.', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao salvar perfil.']);
 }

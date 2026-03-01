@@ -126,5 +126,5 @@ try {
     }
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Erro no banco de dados: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro no servidor. Tente novamente.']);
 }

@@ -214,5 +214,5 @@ try {
 } catch (PDOException $e) {
     // Log do erro real no servidor se necessário
     // error_log($e->getMessage());
-    echo json_encode(['success' => false, 'message' => 'Erro ao salvar carona no banco.', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao salvar carona no banco.']);
 }

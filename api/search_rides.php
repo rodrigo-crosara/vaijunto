@@ -76,6 +76,13 @@ try {
             $waypointsArr = [];
         $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
 
+        // Extrair detalhes das tags ANTES de usar no botão de compartilhar
+        $details = '';
+        if (!empty($ride['tags'])) {
+            $tagsData = json_decode($ride['tags'], true);
+            $details = $tagsData['details'] ?? '';
+        }
+
         // Verificar se passou por waypoints para exibir badge
         $passByMatch = null;
         if ($query !== '') {
@@ -165,11 +172,7 @@ try {
 
             <!-- Observações (Regras) -->
             <?php
-            $details = '';
-            if (!empty($ride['tags'])) {
-                $tags = json_decode($ride['tags'], true);
-                $details = $tags['details'] ?? '';
-            }
+            // $details already extracted above, before the share button
             if (!empty($details)): ?>
                 <div class="bg-yellow-50 text-yellow-800 rounded-xl p-4 mb-5 flex gap-3 items-start text-xs font-medium">
                     <i class="bi bi-info-circle-fill text-yellow-500 text-sm shrink-0 mt-0.5"></i>

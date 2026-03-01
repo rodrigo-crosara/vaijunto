@@ -88,7 +88,7 @@ switch ($action) {
 
         } catch (PDOException $e) {
             $pdo->rollBack();
-            echo json_encode(['success' => false, 'message' => 'Erro ao cancelar reserva.', 'debug' => $e->getMessage()]);
+            echo json_encode(['success' => false, 'message' => 'Erro ao cancelar reserva.']);
         }
         break;
 

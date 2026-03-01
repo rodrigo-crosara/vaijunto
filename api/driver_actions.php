@@ -99,6 +99,9 @@ try {
                 exit;
             }
 
+            // Determinar se a carona é futura (com margem de 30 min)
+            $isFuture = strtotime($rideData['departure_time']) >= (time() - 1800);
+
             // Validação de Segurança: Proibir cancelamento com pagamentos confirmados
             $stmtPaid = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE ride_id = ? AND payment_status = 'paid' AND status != 'canceled'");
             $stmtPaid->execute([$rideId]);
@@ -298,7 +301,7 @@ try {
             break;
 
         case 'finish_ride':
-            $stmt = $pdo->prepare("UPDATE rides SET status = 'completed' WHERE id = ? AND driver_id = ?");
+            $stmt = $pdo->prepare("UPDATE rides SET status = 'finished' WHERE id = ? AND driver_id = ?");
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {

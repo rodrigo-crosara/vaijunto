@@ -414,7 +414,7 @@ try {
             <div class="space-y-4">
                 <?php 
                 $pastRides = array_filter($myRides, function($r) {
-                    return $r['status'] === 'completed' || $r['status'] === 'canceled';
+                    return $r['status'] === 'finished' || $r['status'] === 'canceled';
                 });
                 // Inverter para mostrar as mais recentes primeiro no histórico
                 $pastRides = array_reverse($pastRides);

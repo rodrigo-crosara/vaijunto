@@ -4,7 +4,7 @@ $pageDesc = "Encontre e ofereça caronas de forma rápida e segura.";
 
 if (isset($_GET['ride_id']) && is_numeric($_GET['ride_id'])) {
     try {
-        $stmtMeta = $pdo->prepare("SELECT origin_text, destination_text, departure_time, price, seats_available, waypoints, details FROM rides WHERE id = ?");
+        $stmtMeta = $pdo->prepare("SELECT origin_text, destination_text, departure_time, price, seats_available, waypoints FROM rides WHERE id = ?");
         $stmtMeta->execute([$_GET['ride_id']]);
         $rideMeta = $stmtMeta->fetch(PDO::FETCH_ASSOC);
 

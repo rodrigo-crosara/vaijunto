@@ -105,5 +105,5 @@ try {
 } catch (PDOException $e) {
     if ($pdo->inTransaction())
         $pdo->rollBack();
-    echo json_encode(['success' => false, 'message' => 'Erro ao salvar avaliação.', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao salvar avaliação.']);
 }

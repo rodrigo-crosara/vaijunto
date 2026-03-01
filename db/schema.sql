@@ -11,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
     photo_url VARCHAR(255),
     bio TEXT,
     pix_key VARCHAR(255),
+    pin_hash VARCHAR(255) NULL,
+    is_driver TINYINT(1) DEFAULT 0,
+    is_admin TINYINT(1) DEFAULT 0,
     reputation DECIMAL(3,2) DEFAULT 5.00,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_phone (phone)
@@ -53,11 +56,28 @@ CREATE TABLE IF NOT EXISTS bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     ride_id INT NOT NULL,
     passenger_id INT NOT NULL,
+    meeting_point VARCHAR(255) NULL COMMENT 'Ponto de encontro do passageiro',
     note VARCHAR(100) NULL COMMENT 'Ponto de encontro ou obs do passageiro',
-    status ENUM('pending', 'confirmed', 'rejected', 'completed') DEFAULT 'pending',
+    status ENUM('pending', 'confirmed', 'rejected', 'canceled', 'no_show', 'completed') DEFAULT 'pending',
+    payment_status ENUM('pending', 'paid') DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ride_id) REFERENCES rides(id) ON DELETE CASCADE,
     FOREIGN KEY (passenger_id) REFERENCES users(id) ON DELETE CASCADE,
     INDEX idx_ride_id (ride_id),
     INDEX idx_passenger_id (passenger_id)
 ) ENGINE=InnoDB;
+
+-- Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type VARCHAR(50) NOT NULL COMMENT 'ex: system, booking_request, confirmed, cancel, payment',
+    message TEXT NOT NULL,
+    link_url VARCHAR(255) NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_is_read (is_read),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

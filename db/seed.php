@@ -98,7 +98,7 @@ try {
         $isPast = ($i < 50); // 50 passadas, 50 futuras
         if ($isPast) {
             $time = date('Y-m-d H:i:s', strtotime('-' . rand(1, 60) . ' days'));
-            $status = 'completed';
+            $status = 'finished';
         } else {
             $time = date('Y-m-d H:i:s', strtotime('+' . rand(1, 14) . ' days ' . rand(0, 23) . ' hours'));
             $status = 'active';
@@ -129,7 +129,7 @@ try {
         $ride = $stmtCheck->fetch();
 
         if ($ride && $ride['driver_id'] != $passengerId && $ride['seats_available'] > 0) {
-            $status = ($ride['status'] === 'completed') ? 'confirmed' : (rand(0, 5) > 0 ? 'confirmed' : 'pending');
+            $status = ($ride['status'] === 'finished') ? 'confirmed' : (rand(0, 5) > 0 ? 'confirmed' : 'pending');
 
             $pdo->prepare("INSERT INTO bookings (ride_id, passenger_id, status, created_at) VALUES (?, ?, ?, NOW())")
                 ->execute([$rideId, $passengerId, $status]);
