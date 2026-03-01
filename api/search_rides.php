@@ -198,7 +198,7 @@ try {
                 <div class="flex gap-2">
                     <?php if ($isDriver): ?>
                         <button
-                            onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", "<?= $time ?>", "<?= addslashes(implode(' -> ', $waypoints)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
+                            onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>")'
                             class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                             <i class="bi bi-whatsapp text-lg"></i> Divulgar
                         </button>
@@ -214,7 +214,7 @@ try {
                         </a>
                     <?php else: ?>
                         <button
-                            onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes($ride['origin_text']) ?>", "<?= addslashes($ride['destination_text']) ?>", `<?= addslashes($ride['waypoints'] ?? "[]") ?>`)'
+                            onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", `<?= addslashes(htmlspecialchars($ride['waypoints'] ?? "[]")) ?>`)'
                             class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
                             Reservar
                         </button>

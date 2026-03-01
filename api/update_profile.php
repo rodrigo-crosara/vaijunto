@@ -143,7 +143,9 @@ try {
             $finfo = new finfo(FILEINFO_MIME_TYPE);
             $realMime = $finfo->file($carFile['tmp_name']);
             if (in_array($realMime, $allowed)) {
-                $ext = pathinfo($carFile['name'], PATHINFO_EXTENSION);
+                // Derivar extensão do MIME real (não confiar no nome original)
+                $mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+                $ext = $mimeToExt[$realMime] ?? 'jpg';
                 $carFileName = "car_{$userId}_" . time() . ".{$ext}";
                 $uploadDir = realpath(__DIR__ . '/../assets/media/uploads/cars') ?: __DIR__ . '/../assets/media/uploads/cars';
 

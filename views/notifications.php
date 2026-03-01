@@ -61,7 +61,7 @@ $typeIcons = [
                 $timeAgo = timeAgo($n['created_at']);
                 ?>
                 <a href="javascript:void(0)"
-                    onclick="openNotification(<?= $n['id'] ?>, '<?= addslashes($n['link_url'] ?: '') ?>')"
+                    onclick="openNotification(<?= $n['id'] ?>, '<?= htmlspecialchars(addslashes($n['link_url'] ?: ''), ENT_QUOTES, 'UTF-8') ?>')"
                     class="flex items-start gap-4 p-4 rounded-2xl transition-all hover:shadow-md <?= $isUnread ? 'bg-blue-50/70 border border-blue-100' : 'bg-white border border-gray-50' ?>">
                     <div class="w-10 h-10 rounded-full <?= $icon[2] ?> flex items-center justify-center shrink-0 mt-0.5">
                         <i class="bi <?= $icon[0] ?> <?= $icon[1] ?> text-lg"></i>

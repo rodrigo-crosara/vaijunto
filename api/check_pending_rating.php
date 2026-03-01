@@ -43,7 +43,7 @@ try {
         JOIN users u_driver ON r.driver_id = u_driver.id
         JOIN users u_passenger ON b.passenger_id = u_passenger.id
         WHERE (b.passenger_id = ? OR r.driver_id = ?)
-          AND b.status = 'confirmed'
+          AND b.status IN ('confirmed', 'completed')
           AND r.status != 'canceled'
           AND r.departure_time < DATE_SUB(NOW(), INTERVAL 1 HOUR)
           AND NOT EXISTS (

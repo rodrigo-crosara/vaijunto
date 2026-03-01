@@ -127,8 +127,7 @@ if (empty($_SESSION['is_admin'])) {
                 document.getElementById('stat-bookings').textContent = data.stats.total_bookings;
                 document.getElementById('stat-revenue').textContent = data.stats.revenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-                // Usuários
-                const userList = document.getElementById('list-users');
+                // Funções auxiliares
                 const formatPhone = (p) => {
                     const clean = p.replace(/\D/g, '');
                     if (clean.length === 11) {
@@ -199,7 +198,7 @@ if (empty($_SESSION['is_admin'])) {
     }
 
     async function adminAction(apiUrl, data, confirmText = "Esta ação não pode ser desfeita.") {
-        const confirm = await Swal.fire({
+        const confirmResult = await Swal.fire({
             title: 'Confirmar Ação?',
             text: confirmText,
             icon: 'warning',
@@ -213,7 +212,7 @@ if (empty($_SESSION['is_admin'])) {
             buttonsStyling: false
         });
 
-        if (confirm.isConfirmed) {
+        if (confirmResult.isConfirmed) {
             Swal.fire({
                 title: 'Processando...',
                 html: 'Aguarde um momento',

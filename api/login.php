@@ -48,6 +48,12 @@ $cleanPhone = preg_replace('/\D/', '', $phone);
 $cleanPhone = ltrim($cleanPhone, '0'); // Remove zero à esquerda do DDD
 $pin = $_POST['pin'] ?? '';
 
+// Validação do telefone (mínimo 10 dígitos para fixo BR, 11 para celular)
+if (strlen($cleanPhone) < 10 || strlen($cleanPhone) > 13) {
+    echo json_encode(['success' => false, 'message' => 'Número de telefone inválido. Use o formato (DDD) + número.']);
+    exit;
+}
+
 if (strlen($pin) !== 4 || !ctype_digit($pin)) {
     echo json_encode(['success' => false, 'message' => 'O PIN deve ter 4 dígitos numéricos.']);
     exit;

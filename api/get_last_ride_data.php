@@ -9,7 +9,7 @@ require_once '../config/db.php';
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Nǜo autenticado.']);
+    echo json_encode(['success' => false, 'message' => 'Não autenticado.']);
     exit;
 }
 

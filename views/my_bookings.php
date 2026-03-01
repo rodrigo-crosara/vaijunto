@@ -56,8 +56,8 @@ $pastBookings = [];
 foreach ($bookings as $b) {
     // Definir se é futura (considerando a tolerância de 30 min que usamos no feed)
     $isFuture = strtotime($b['departure_time']) >= (time() - 1800);
-    $isCanceled = ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled');
-    $isCompleted = (!$isFuture || $isCanceled); // Se passou do tempo ou foi cancelada, é histórico
+    $isCanceled = in_array($b['booking_status'], ['canceled', 'rejected', 'no_show']) || $b['ride_status'] === 'canceled';
+    $isCompleted = (!$isFuture || $isCanceled); // Se passou do tempo ou foi cancelada/rejeitada, é histórico
 
     if (!$isCompleted) {
         // Viagem Ativa/Futura
@@ -234,27 +234,30 @@ foreach ($bookings as $b) {
                                     class="w-12 h-12 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30 hover:scale-110 transition-transform">
                                     <i class="bi bi-whatsapp text-xl"></i>
                                 </a>
-                                <?php
-                                $locMsg = urlencode("Olá! Estou compartilhando minha localização atual para facilitar o encontro. 👇");
-                                ?>
-                                <a href="https://wa.me/<?= $nbPhone ?>?text=<?= $locMsg ?>" target="_blank"
-                                    class="w-12 h-12 rounded-full bg-blue-400 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg shadow-blue-400/30"
-                                    title="Pedir/Enviar Localização">
-                                    <i class="bi bi-geo-alt text-xl"></i>
-                                </a>
-                                <?php
-                                $shareTxt = urlencode("Estou indo de {$nb['origin_text']} para {$nb['destination_text']} com {$nb['driver_name']}. Placa: {$nb['car_plate']}. Carro: {$nb['car_model']}. Acompanhe se eu chegar bem!");
-                                ?>
-                                <a href="https://wa.me/?text=<?= $shareTxt ?>" target="_blank"
-                                    class="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors backdrop-blur-md"
-                                    title="🛡️ Enviar dados para Mãe/Amigo">
-                                    <i class="bi bi-shield-check text-xl"></i>
-                                </a>
-                                <button onclick='copiarOferta("<?= addslashes($nb['origin_text']) ?>", "<?= addslashes($nb['destination_text']) ?>", "<?= $nbTime ?>", "<?= addslashes(implode(" > ", $waypoints)) ?>",
-                            "<?= number_format($nb['price'], 2, ',', '.') ?>", <?= $nb['ride_id'] ?>)' class="w-12 h-12 rounded-full bg-cyan-400 text-white flex items-center justify-center
-                            shadow-lg shadow-cyan-400/30 hover:scale-110 transition-transform" title="Copiar Oferta">
-                                    <i class="bi bi-clipboard text-xl"></i>
-                                </button>
+                                <?php if ($nb['booking_status'] !== 'pending'): ?>
+                                    <?php
+                                    $locMsg = urlencode("Olá! Estou compartilhando minha localização atual para facilitar o encontro. 👇");
+                                    ?>
+                                    <a href="https://wa.me/<?= $nbPhone ?>?text=<?= $locMsg ?>" target="_blank"
+                                        class="w-12 h-12 rounded-full bg-blue-400 text-white flex items-center justify-center hover:bg-blue-500 transition-colors shadow-lg shadow-blue-400/30"
+                                        title="Pedir/Enviar Localização">
+                                        <i class="bi bi-geo-alt text-xl"></i>
+                                    </a>
+                                    <?php
+                                    $shareTxt = urlencode("Estou indo de {$nb['origin_text']} para {$nb['destination_text']} com {$nb['driver_name']}. Placa: {$nb['car_plate']}. Carro: {$nb['car_model']}. Acompanhe se eu chegar bem!");
+                                    ?>
+                                    <a href="https://wa.me/?text=<?= $shareTxt ?>" target="_blank"
+                                        class="w-12 h-12 rounded-full bg-white/20 text-white flex items-center justify-center hover:bg-white/30 transition-colors backdrop-blur-md"
+                                        title="🛡️ Enviar dados para Mãe/Amigo">
+                                        <i class="bi bi-shield-check text-xl"></i>
+                                    </a>
+                                    <button onclick='copiarOferta("<?= addslashes(htmlspecialchars($nb['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($nb['destination_text'])) ?>", "<?= $nbTime ?>", "<?= addslashes(htmlspecialchars(implode(" > ", $waypoints))) ?>",
+                                "<?= number_format($nb['price'], 2, ',', '.') ?>", <?= $nb['ride_id'] ?>)' class="w-12 h-12 rounded-full bg-cyan-400 text-white flex items-center justify-center
+                                shadow-lg shadow-cyan-400/30 hover:scale-110 transition-transform"
+                                        title="Copiar Oferta">
+                                        <i class="bi bi-clipboard text-xl"></i>
+                                    </button>
+                                <?php endif; ?>
                             </div>
 
                             <button onclick="cancelarReserva(<?= $nb['booking_id'] ?>, <?= $isPaid ? 'true' : 'false' ?>)"
@@ -334,8 +337,25 @@ foreach ($bookings as $b) {
                         $time = date('H:i', strtotime($b['departure_time']));
                         $date = date('d/m', strtotime($b['departure_time']));
                         $avatar = $b['driver_avatar'] ?: "https://ui-avatars.com/api/?name=" . urlencode($b['driver_name']) . "&background=random";
-                        $isCanceled = ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled');
+                        $isCanceled = in_array($b['booking_status'], ['canceled', 'rejected', 'no_show']) || $b['ride_status'] === 'canceled';
                         $isPaid = ($b['payment_status'] === 'paid');
+
+                        // Label de status
+                        $statusLabel = 'Concluída';
+                        $statusClass = 'text-gray-500 bg-gray-50';
+                        if ($b['booking_status'] === 'canceled' || $b['ride_status'] === 'canceled') {
+                            $statusLabel = 'Cancelada';
+                            $statusClass = 'text-red-500 bg-red-50';
+                        } elseif ($b['booking_status'] === 'rejected') {
+                            $statusLabel = 'Recusada';
+                            $statusClass = 'text-orange-500 bg-orange-50';
+                        } elseif ($b['booking_status'] === 'no_show') {
+                            $statusLabel = 'Não compareceu';
+                            $statusClass = 'text-amber-600 bg-amber-50';
+                        } elseif ($isPaid) {
+                            $statusLabel = 'Pago ✓';
+                            $statusClass = 'text-green-500 bg-green-50';
+                        }
                         ?>
                         <div
                             class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-4 <?= $isCanceled ? 'opacity-40' : 'opacity-70' ?>">
@@ -350,15 +370,8 @@ foreach ($bookings as $b) {
                                 </div>
                             </div>
                             <div class="shrink-0">
-                                <?php if ($isCanceled): ?>
-                                    <span class="text-[10px] font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">Cancelada</span>
-                                <?php elseif ($isPaid): ?>
-                                    <span class="text-[10px] font-bold text-green-500 bg-green-50 px-2.5 py-1 rounded-full">Pago
-                                        ✓</span>
-                                <?php else: ?>
-                                    <span
-                                        class="text-[10px] font-bold text-gray-500 bg-gray-50 px-2.5 py-1 rounded-full">Concluída</span>
-                                <?php endif; ?>
+                                <span
+                                    class="text-[10px] font-bold <?= $statusClass ?> px-2.5 py-1 rounded-full"><?= $statusLabel ?></span>
                             </div>
                         </div>
                     <?php endforeach; ?>

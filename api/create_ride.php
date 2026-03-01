@@ -77,21 +77,9 @@ if ($seats > 8) {
     exit;
 }
 
-// Se NÃO for repetição, a data única é obrigatória e deve ser futura
-if (!$isRepeat) {
-    if (empty($departure_time)) {
-        echo json_encode(['success' => false, 'message' => 'Selecione a data e hora da carona.']);
-        exit;
-    }
-    if (strtotime($departure_time) < (time() - 60)) {
-        echo json_encode(['success' => false, 'message' => 'A data e hora de saída devem ser futuras.']);
-        exit;
-    }
-}
-
-// Validação: Preço negativo
-if ($price < 0) {
-    echo json_encode(['success' => false, 'message' => 'O preço não pode ser negativo.']);
+// Se NÃO for repetição, a data única é obrigatória
+if (!$isRepeat && empty($departure_time)) {
+    echo json_encode(['success' => false, 'message' => 'Selecione a data e hora da carona.']);
     exit;
 }
 

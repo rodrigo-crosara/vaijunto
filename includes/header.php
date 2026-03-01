@@ -53,22 +53,22 @@ $ogImage = $protocol . "://" . $_SERVER['HTTP_HOST'] . "/assets/media/app/icon-5
     <meta charset="UTF-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-    <title><?= $pageTitle ?></title>
-    <meta name="title" content="<?= $pageTitle ?>">
-    <meta name="description" content="<?= $pageDesc ?>">
+    <title><?= htmlspecialchars($pageTitle) ?></title>
+    <meta name="title" content="<?= htmlspecialchars($pageTitle) ?>">
+    <meta name="description" content="<?= htmlspecialchars($pageDesc) ?>">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?= $currentUrl ?>">
-    <meta property="og:title" content="<?= $pageTitle ?>">
-    <meta property="og:description" content="<?= $pageDesc ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($currentUrl) ?>">
+    <meta property="og:title" content="<?= htmlspecialchars($pageTitle) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($pageDesc) ?>">
     <meta property="og:image" content="<?= $ogImage ?>">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="<?= $currentUrl ?>">
-    <meta property="twitter:title" content="<?= $pageTitle ?>">
-    <meta property="twitter:description" content="<?= $pageDesc ?>">
+    <meta property="twitter:url" content="<?= htmlspecialchars($currentUrl) ?>">
+    <meta property="twitter:title" content="<?= htmlspecialchars($pageTitle) ?>">
+    <meta property="twitter:description" content="<?= htmlspecialchars($pageDesc) ?>">
     <meta property="twitter:image" content="<?= $ogImage ?>">
 
 

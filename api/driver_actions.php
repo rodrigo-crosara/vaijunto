@@ -89,12 +89,15 @@ try {
             break;
 
         case 'cancel_ride':
+            $pdo->beginTransaction();
+
             // 1. Buscar dados da carona para validação temporal
             $stmtCheck = $pdo->prepare("SELECT departure_time FROM rides WHERE id = ? AND driver_id = ?");
             $stmtCheck->execute([$rideId, $driverId]);
             $rideData = $stmtCheck->fetch();
 
             if (!$rideData) {
+                $pdo->rollBack();
                 echo json_encode(['success' => false, 'message' => 'Carona não encontrada ou sem permissão.']);
                 exit;
             }
@@ -106,6 +109,7 @@ try {
             $stmtPaid = $pdo->prepare("SELECT COUNT(*) FROM bookings WHERE ride_id = ? AND payment_status = 'paid' AND status != 'canceled'");
             $stmtPaid->execute([$rideId]);
             if ($stmtPaid->fetchColumn() > 0) {
+                $pdo->rollBack();
                 echo json_encode([
                     'success' => false,
                     'message' => 'Não é possível cancelar uma carona que já possui pagamentos confirmados. Você deve resolver os estornos com os passageiros primeiro.'
@@ -137,8 +141,10 @@ try {
                     $msgFinal = 'Carona inativada do histórico (sem notificações).';
                 }
 
+                $pdo->commit();
                 echo json_encode(['success' => true, 'message' => $msgFinal]);
             } else {
+                $pdo->rollBack();
                 echo json_encode(['success' => false, 'message' => 'Erro ao processar cancelamento.']);
             }
             break;
@@ -328,6 +334,19 @@ try {
             if ($stmt->rowCount() > 0) {
                 // Atualizar bookings confirmados para 'completed'
                 $pdo->prepare("UPDATE bookings SET status = 'completed' WHERE ride_id = ? AND status = 'confirmed'")->execute([$rideId]);
+
+                // F4-07 Fix: Bookings 'pending' (nunca aceitos) devem ser rejeitados
+                $stmtPending = $pdo->prepare("SELECT id, passenger_id FROM bookings WHERE ride_id = ? AND status = 'pending'");
+                $stmtPending->execute([$rideId]);
+                $pendingBookings = $stmtPending->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($pendingBookings as $pb) {
+                    $pdo->prepare("UPDATE bookings SET status = 'rejected' WHERE id = ?")->execute([$pb['id']]);
+                    // Devolver a vaga (pois foi reservada no ato do pedido)
+                    $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?")->execute([$rideId]);
+                    createNotification($pdo, $pb['passenger_id'], 'cancel', '❌ Viagem finalizada sem resposta ao seu pedido. Sua vaga foi liberada.', 'index.php?page=home');
+                }
+
                 $pdo->commit();
                 echo json_encode(['success' => true, 'message' => 'Viagem finalizada com sucesso!']);
             } else {

@@ -39,11 +39,13 @@ if ($file['size'] > 5 * 1024 * 1024) {
 // Diretório de Upload
 $uploadDir = '../assets/media/uploads/users/';
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0755, true);
 }
 
 // Gerar nome único
-$extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+// Derivar extensão do MIME real (não confiar no nome original)
+$mimeToExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+$extension = $mimeToExt[$mimeType] ?? 'jpg';
 $fileName = 'user_' . $userId . '_' . time() . '.' . $extension;
 $targetPath = $uploadDir . $fileName;
 $publicPath = '/assets/media/uploads/users/' . $fileName; // Caminho para salvar no banco
