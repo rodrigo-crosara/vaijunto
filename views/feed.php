@@ -37,7 +37,7 @@ try {
     }
 
 } catch (PDOException $e) {
-    echo "<div class='p-4 bg-red-50 text-red-600 rounded-2xl'>Erro: " . $e->getMessage() . "</div>";
+    echo "<div class='p-4 bg-red-50 text-red-600 rounded-2xl'>Erro ao carregar caronas. Tente novamente.</div>";
     $rides = [];
     $myBookings = [];
 }
@@ -128,6 +128,13 @@ if ($currentUserId) {
                 if (!is_array($waypointsArr))
                     $waypointsArr = [];
                 $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
+
+                // Extrair detalhes do campo JSON 'tags'
+                $rideDetails = '';
+                if (!empty($ride['tags'])) {
+                    $tagsData = json_decode($ride['tags'], true);
+                    $rideDetails = $tagsData['details'] ?? '';
+                }
                 ?>
 
                 <div
@@ -148,7 +155,7 @@ if ($currentUserId) {
                         </div>
                         <div class="flex items-center gap-4">
                             <button
-                                onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
+                                onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $rideDetails))) ?>")'
                                 class="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
                                 title="Compartilhar carona">
                                 <i class="bi bi-share-fill text-xs"></i>
@@ -206,10 +213,10 @@ if ($currentUserId) {
                     </div>
 
                     <!-- Observações (Regras) -->
-                    <?php if (!empty($ride['details'])): ?>
+                    <?php if (!empty($rideDetails)): ?>
                         <div class="bg-yellow-50 text-yellow-800 rounded-xl p-4 mb-5 flex gap-3 items-start text-xs font-medium">
                             <i class="bi bi-info-circle-fill text-yellow-500 text-sm shrink-0 mt-0.5"></i>
-                            <span><?= nl2br(htmlspecialchars($ride['details'])) ?></span>
+                            <span><?= nl2br(htmlspecialchars($rideDetails)) ?></span>
                         </div>
                     <?php endif; ?>
 
@@ -230,7 +237,7 @@ if ($currentUserId) {
                         <div class="flex gap-2">
                             <?php if ($isDriver): ?>
                                 <button
-                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $ride['details'] ?? ''))) ?>")'
+                                    onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars(implode(' -> ', $waypoints))) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $rideDetails))) ?>")'
                                     class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
                                     <i class="bi bi-whatsapp text-lg"></i> Divulgar
                                 </button>

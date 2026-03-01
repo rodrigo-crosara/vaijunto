@@ -44,7 +44,7 @@ try {
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
-    echo "<div class='alert alert-danger'>Erro ao carregar reservas: " . $e->getMessage() . "</div>";
+    echo "<div class='alert alert-danger'>Erro ao carregar reservas. Tente novamente.</div>";
     $bookings = [];
 }
 
@@ -249,10 +249,9 @@ foreach ($bookings as $b) {
                                     title="🛡️ Enviar dados para Mãe/Amigo">
                                     <i class="bi bi-shield-check text-xl"></i>
                                 </a>
-                                <button
-                                    onclick='copiarOferta(<?= $nb['ride_id'] ?>, "<?= addslashes($nb['origin_text']) ?>", "<?= addslashes($nb['destination_text']) ?>", "<?= $nbTime ?>", "<?= addslashes(implode(" > ", $waypoints)) ?>", "<?= number_format($nb['price'], 2, ',', '.') ?>")'
-                                    class="w-12 h-12 rounded-full bg-cyan-400 text-white flex items-center justify-center shadow-lg shadow-cyan-400/30 hover:scale-110 transition-transform"
-                                    title="Copiar Oferta">
+                                <button onclick='copiarOferta("<?= addslashes($nb['origin_text']) ?>", "<?= addslashes($nb['destination_text']) ?>", "<?= $nbTime ?>", "<?= addslashes(implode(" > ", $waypoints)) ?>",
+                            "<?= number_format($nb['price'], 2, ',', '.') ?>", <?= $nb['ride_id'] ?>)' class="w-12 h-12 rounded-full bg-cyan-400 text-white flex items-center justify-center
+                            shadow-lg shadow-cyan-400/30 hover:scale-110 transition-transform" title="Copiar Oferta">
                                     <i class="bi bi-clipboard text-xl"></i>
                                 </button>
                             </div>

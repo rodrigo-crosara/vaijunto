@@ -41,7 +41,7 @@ try {
         $ride['passengers'] = $stmtPassengers->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (PDOException $e) {
-    echo "<div class='alert alert-danger'>Erro ao carregar dados: " . $e->getMessage() . "</div>";
+    echo "<div class='alert alert-danger'>Erro ao carregar dados. Tente novamente.</div>";
     $myRides = [];
 }
 ?>

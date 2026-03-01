@@ -7,23 +7,30 @@ require_once 'config/db.php';
 
 // Sistema de Auto-Login (Lembrar-me)
 if (!isset($_SESSION['user_id']) && isset($_COOKIE['vj_remember'])) {
-    list($cookie_user_id, $cookie_hash) = explode('|', $_COOKIE['vj_remember']);
+    $cookieParts = explode('|', $_COOKIE['vj_remember']);
 
-    // Verifica se o cookie não foi falsificado
-    if (hash_equals(hash_hmac('sha256', $cookie_user_id, SECRET_KEY), $cookie_hash)) {
-        // Cookie válido! Busca os dados do usuário e recria a sessão
-        $stmtAuth = $pdo->prepare("SELECT id, name, is_driver, is_admin FROM users WHERE id = ?");
-        $stmtAuth->execute([$cookie_user_id]);
-        $userAuth = $stmtAuth->fetch();
+    if (count($cookieParts) === 2) {
+        list($cookie_user_id, $cookie_hash) = $cookieParts;
 
-        if ($userAuth) {
-            $_SESSION['user_id'] = $userAuth['id'];
-            $_SESSION['user_name'] = $userAuth['name'];
-            $_SESSION['is_driver'] = $userAuth['is_driver'];
-            $_SESSION['is_admin'] = $userAuth['is_admin'];
+        // Verifica se o cookie não foi falsificado
+        if (hash_equals(hash_hmac('sha256', $cookie_user_id, SECRET_KEY), $cookie_hash)) {
+            // Cookie válido! Busca os dados do usuário e recria a sessão
+            $stmtAuth = $pdo->prepare("SELECT id, name, is_driver, is_admin FROM users WHERE id = ?");
+            $stmtAuth->execute([$cookie_user_id]);
+            $userAuth = $stmtAuth->fetch();
+
+            if ($userAuth) {
+                $_SESSION['user_id'] = $userAuth['id'];
+                $_SESSION['user_name'] = $userAuth['name'];
+                $_SESSION['is_driver'] = $userAuth['is_driver'];
+                $_SESSION['is_admin'] = $userAuth['is_admin'];
+            }
+        } else {
+            // Cookie inválido/fraudado: destrói o cookie
+            setcookie('vj_remember', '', time() - 3600, '/');
         }
     } else {
-        // Cookie inválido/fraudado: destrói o cookie
+        // Cookie malformado: destrói
         setcookie('vj_remember', '', time() - 3600, '/');
     }
 }

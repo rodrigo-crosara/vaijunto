@@ -310,124 +310,125 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Loading state handled globally, but we might need specific handling here if we preventDefault
-            // Since we preventDefault, the global handler might fire but we control the flow.
-            // Let's ensure the button is locked.
-            btnParam.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
-            btnParam.disabled = true;
-
-            const formData = new FormData(form);
-            const data = {};
-            formData.forEach((value, key) => {
-                if (key.endsWith('[]')) {
-                    const cleanKey = key.replace('[]', '');
-                    if (!data[cleanKey]) data[cleanKey] = [];
-                    data[cleanKey].push(value);
-                } else {
-                    data[key] = value;
-                }
-            });
-
-            const response = await fetch('api/create_ride.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            // Tenta processar JSON, se falhar, lança erro
-            let result;
             try {
-                result = await response.json();
-            } catch (jsonError) {
-                throw new Error('Erro de comunicação com o servidor (JSON Inválido).');
-            }
+                // Loading state handled globally, but we might need specific handling here if we preventDefault
+                // Since we preventDefault, the global handler might fire but we control the flow.
+                // Let's ensure the button is locked.
+                btnParam.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publicando...';
+                btnParam.disabled = true;
 
-            if (result.success) {
-                const isRepeat = document.getElementById('chk-repeat').checked;
-                const origem = data.origin;
-                const destino = data.destination;
-                const valor = parseFloat(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                const rota = data.waypoints || '';
-                const vagas = data.seats;
-                const detalhes = data.details || '';
-                const link = `${window.location.origin}/${result.ride_id}`;
-
-                let hora = '';
-                let diasStr = '';
-
-                if (isRepeat && data.repeat_time) {
-                    hora = data.repeat_time;
-                    const diasMap = { '1': 'Seg', '2': 'Ter', '3': 'Qua', '4': 'Qui', '5': 'Sex' };
-                    const selecionados = (data.repeat_days || []).map(d => diasMap[d] || d);
-                    diasStr = selecionados.join(', ');
-                } else if (data.departure_time) {
-                    hora = new Date(data.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                }
-
-                let textoZap = `*${vagas} Vaga(s) para ${destino}* 🚘\n`;
-                if (isRepeat && diasStr) {
-                    textoZap += `📅 Dias: ${diasStr}\n`;
-                }
-                textoZap += `⏰ Saída: ${hora}\n\n`;
-
-                let pontos = [origem];
-                if (rota && rota.trim() !== '') {
-                    let rotaArray = rota.includes(',') ? rota.split(',') : [rota];
-                    rotaArray.forEach(p => pontos.push(p.trim()));
-                }
-                pontos.push(destino);
-                pontos = [...new Set(pontos)];
-
-                pontos.forEach(p => { if (p) textoZap += `🚘 ${p}\n`; });
-
-                textoZap += `\n💰 R$ ${valor}\n`;
-                if (detalhes && detalhes.trim() !== '') textoZap += `⚠️ ${detalhes}\n`;
-                textoZap += `\n👉 *Reservar vaga:* ${link}`;
-
-                const waLink = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
-
-                Swal.fire({
-                    title: 'Carona Criada! 🚀',
-                    text: 'Deseja divulgar sua vaga no grupo do WhatsApp agora?',
-                    icon: 'success',
-                    showCancelButton: true,
-                    confirmButtonText: '<i class="bi bi-whatsapp"></i> Divulgar no Grupo',
-                    cancelButtonText: 'Agora Não',
-                    customClass: {
-                        confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all',
-                        cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
-                    },
-                    buttonsStyling: false
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Abre o WhatsApp em nova aba
-                        window.open(waLink, '_blank');
-                    }
-                    // Redireciona a aba original para o painel do motorista
-                    window.location.href = 'index.php?page=my_rides';
-                });
-            } else {
-                throw new Error(result.message || 'Erro ao publicar carona.');
-            }
-        } catch (error) {
-            console.error(error);
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    text: error.message,
-                    icon: "error",
-                    buttonsStyling: false,
-                    confirmButtonText: "Ok, entendi",
-                    customClass: {
-                        confirmButton: "btn btn-primary font-bold px-6 py-2 rounded-lg"
+                const formData = new FormData(form);
+                const data = {};
+                formData.forEach((value, key) => {
+                    if (key.endsWith('[]')) {
+                        const cleanKey = key.replace('[]', '');
+                        if (!data[cleanKey]) data[cleanKey] = [];
+                        data[cleanKey].push(value);
+                    } else {
+                        data[key] = value;
                     }
                 });
-            } else {
-                alert(error.message);
+
+                const response = await fetch('api/create_ride.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                // Tenta processar JSON, se falhar, lança erro
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    throw new Error('Erro de comunicação com o servidor (JSON Inválido).');
+                }
+
+                if (result.success) {
+                    const isRepeat = document.getElementById('chk-repeat').checked;
+                    const origem = data.origin;
+                    const destino = data.destination;
+                    const valor = parseFloat(data.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    const rota = data.waypoints || '';
+                    const vagas = data.seats;
+                    const detalhes = data.details || '';
+                    const link = `${window.location.origin}/${result.ride_id}`;
+
+                    let hora = '';
+                    let diasStr = '';
+
+                    if (isRepeat && data.repeat_time) {
+                        hora = data.repeat_time;
+                        const diasMap = { '1': 'Seg', '2': 'Ter', '3': 'Qua', '4': 'Qui', '5': 'Sex' };
+                        const selecionados = (data.repeat_days || []).map(d => diasMap[d] || d);
+                        diasStr = selecionados.join(', ');
+                    } else if (data.departure_time) {
+                        hora = new Date(data.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    }
+
+                    let textoZap = `*${vagas} Vaga(s) para ${destino}* 🚘\n`;
+                    if (isRepeat && diasStr) {
+                        textoZap += `📅 Dias: ${diasStr}\n`;
+                    }
+                    textoZap += `⏰ Saída: ${hora}\n\n`;
+
+                    let pontos = [origem];
+                    if (rota && rota.trim() !== '') {
+                        let rotaArray = rota.includes(',') ? rota.split(',') : [rota];
+                        rotaArray.forEach(p => pontos.push(p.trim()));
+                    }
+                    pontos.push(destino);
+                    pontos = [...new Set(pontos)];
+
+                    pontos.forEach(p => { if (p) textoZap += `🚘 ${p}\n`; });
+
+                    textoZap += `\n💰 R$ ${valor}\n`;
+                    if (detalhes && detalhes.trim() !== '') textoZap += `⚠️ ${detalhes}\n`;
+                    textoZap += `\n👉 *Reservar vaga:* ${link}`;
+
+                    const waLink = `https://wa.me/?text=${encodeURIComponent(textoZap)}`;
+
+                    Swal.fire({
+                        title: 'Carona Criada! 🚀',
+                        text: 'Deseja divulgar sua vaga no grupo do WhatsApp agora?',
+                        icon: 'success',
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="bi bi-whatsapp"></i> Divulgar no Grupo',
+                        cancelButtonText: 'Agora Não',
+                        customClass: {
+                            confirmButton: 'bg-green-500 text-white font-bold px-6 py-3 rounded-2xl shadow-lg hover:scale-105 transition-all',
+                            cancelButton: 'bg-gray-100 text-gray-500 font-bold px-6 py-3 rounded-2xl ml-2'
+                        },
+                        buttonsStyling: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Abre o WhatsApp em nova aba
+                            window.open(waLink, '_blank');
+                        }
+                        // Redireciona a aba original para o painel do motorista
+                        window.location.href = 'index.php?page=my_rides';
+                    });
+                } else {
+                    throw new Error(result.message || 'Erro ao publicar carona.');
+                }
+            } catch (error) {
+                console.error(error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        text: error.message,
+                        icon: "error",
+                        buttonsStyling: false,
+                        confirmButtonText: "Ok, entendi",
+                        customClass: {
+                            confirmButton: "btn btn-primary font-bold px-6 py-2 rounded-lg"
+                        }
+                    });
+                } else {
+                    alert(error.message);
+                }
+                // Destravar botão
+                btnParam.innerHTML = btnParam.getAttribute('data-original-text') || 'Publicar Carona';
+                btnParam.disabled = false;
             }
-            // Destravar botão
-            btnParam.innerHTML = btnParam.getAttribute('data-original-text') || 'Publicar Carona';
-            btnParam.disabled = false;
-        }
-    });
+        });
     });
 </script>
