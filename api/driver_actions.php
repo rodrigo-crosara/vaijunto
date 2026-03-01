@@ -150,6 +150,16 @@ try {
                 exit;
             }
 
+            // Validar se não ultrapassa o limite total original (Seats Total)
+            $stmtCheckTotal = $pdo->prepare("SELECT seats_total FROM rides WHERE id = ? AND driver_id = ?");
+            $stmtCheckTotal->execute([$rideId, $driverId]);
+            $sTotal = $stmtCheckTotal->fetchColumn();
+
+            if ($newSeats > $sTotal) {
+                echo json_encode(['success' => false, 'message' => "Você não pode definir mais de {$sTotal} vagas (limite do seu carro)."]);
+                exit;
+            }
+
             $stmt = $pdo->prepare("UPDATE rides SET seats_available = ? WHERE id = ? AND driver_id = ? AND departure_time >= NOW()");
             $stmt->execute([$newSeats, $rideId, $driverId]);
 
@@ -211,9 +221,9 @@ try {
                 exit;
             }
 
-            // Verificar se a carona pertence ao motorista e se o horário já permite no-show
+            // Verificar se a carona pertence ao motorista
             $stmt = $pdo->prepare("
-                SELECT b.id, b.passenger_id, r.departure_time 
+                SELECT b.id, b.ride_id, b.passenger_id, r.departure_time 
                 FROM bookings b
                 JOIN rides r ON b.ride_id = r.id
                 WHERE b.id = ? AND r.driver_id = ?
@@ -222,16 +232,26 @@ try {
             $row = $stmt->fetch();
 
             if ($row) {
-                // Opcional: Só permitir no-show após o horário da partida? 
-                // Por enquanto deixaremos livre para o motorista decidir.
+                try {
+                    $pdo->beginTransaction();
 
-                $stmtUpdate = $pdo->prepare("UPDATE bookings SET status = 'no_show' WHERE id = ?");
-                $stmtUpdate->execute([$bookingId]);
+                    // 1. Atualizar Status
+                    $stmtUpdate = $pdo->prepare("UPDATE bookings SET status = 'no_show' WHERE id = ?");
+                    $stmtUpdate->execute([$bookingId]);
 
-                // Notificar o passageiro
-                createNotification($pdo, $row['passenger_id'], 'system', "⚠️ O motorista marcou que você não compareceu ao embarque.", 'index.php?page=my_bookings');
+                    // 2. Devolver Vaga (Item 14 Fix)
+                    $stmtRestore = $pdo->prepare("UPDATE rides SET seats_available = seats_available + 1 WHERE id = ?");
+                    $stmtRestore->execute([$row['ride_id']]);
 
-                echo json_encode(['success' => true, 'message' => 'Passageiro marcado como No-Show.']);
+                    // 3. Notificar o passageiro
+                    createNotification($pdo, $row['passenger_id'], 'system', "⚠️ O motorista marcou que você não compareceu ao embarque. Vaga liberada.", 'index.php?page=my_bookings');
+
+                    $pdo->commit();
+                    echo json_encode(['success' => true, 'message' => 'Passageiro marcado como No-Show. Vaga liberada.']);
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    echo json_encode(['success' => false, 'message' => 'Erro ao processar No-Show.']);
+                }
             } else {
                 echo json_encode(['success' => false, 'message' => 'Reserva não encontrada ou sem permissão.']);
             }

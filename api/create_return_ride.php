@@ -68,7 +68,8 @@ try {
         $userId,
         $newOriginText,
         $newDestinationText,
-        $original['waypoints'],
+        // F-07: Inverter waypoints para a volta (A→B→C vira C→B→A)
+        json_encode(array_reverse(json_decode($original['waypoints'] ?? '[]', true) ?: [])),
         $newDepartureTime,
         $original['seats_total'],
         $original['seats_total'], // Restaura as vagas (limpa os fantasmas da ida)

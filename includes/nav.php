@@ -53,6 +53,13 @@ if (isset($_SESSION['user_id'])) {
                     <i class="bi bi-plus-lg text-3xl font-bold"></i>
                 </a>
             </div>
+
+            <!-- Reservas do motorista como passageiro -->
+            <a href="index.php?page=my_bookings"
+                class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'my_bookings') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
+                <i class="bi bi-ticket-perforated<?= ($currentPage == 'my_bookings') ? '-fill' : '' ?> text-2xl"></i>
+                <span class="text-[9px] font-bold uppercase tracking-wider">Reservas</span>
+            </a>
         <?php else: ?>
             <!-- Minhas Reservas (Passageiro) -->
             <a href="index.php?page=my_bookings"
@@ -76,13 +83,6 @@ if (isset($_SESSION['user_id'])) {
             class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'profile') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
             <i class="bi bi-person-circle<?= ($currentPage == 'profile') ? '-fill' : '' ?> text-2xl"></i>
             <span class="text-[9px] font-bold uppercase tracking-wider">Perfil</span>
-        </a>
-
-        <!-- Ajuda (Novo) -->
-        <a href="index.php?page=help"
-            class="flex flex-col items-center justify-center w-16 gap-1 transition-all <?= ($currentPage == 'help') ? 'text-primary' : 'text-gray-400 hover:text-gray-600' ?>">
-            <i class="bi bi-question-circle<?= ($currentPage == 'help') ? '-fill' : '' ?> text-2xl"></i>
-            <span class="text-[9px] font-bold uppercase tracking-wider">Ajuda</span>
         </a>
 
     </div>

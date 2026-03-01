@@ -18,11 +18,11 @@ try {
     $stmtDriver->execute([$currentUserId]);
     $driverPix = $stmtDriver->fetchColumn();
 
-    // 1. Buscar caronas criadas pelo motorista
+    // 1. Buscar caronas criadas pelo motorista (últimos 7 dias + futuras)
     $stmtRides = $pdo->prepare("
         SELECT id, origin_text, destination_text, departure_time, seats_total, seats_available, price, status, waypoints, tags
         FROM rides
-        WHERE driver_id = ?
+        WHERE driver_id = ? AND departure_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
         ORDER BY departure_time ASC
     ");
     $stmtRides->execute([$currentUserId]);
@@ -158,7 +158,7 @@ try {
                             }
                             ?>
                             
-                            <button onclick="copiarLotado(<?= $nextRide['id'] ?>, '<?= $time ?>', '<?= addslashes($nextRide['destination_text']) ?>')"
+                            <button onclick="copiarLotado(<?= $nextRide['id'] ?>, '<?= $time ?>', '<?= htmlspecialchars(addslashes($nextRide['destination_text']), ENT_QUOTES, 'UTF-8') ?>')"
                                 class="w-full mb-6 bg-red-500 text-white py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:scale-[1.02] transition-all">
                                 🚫 Copiar Aviso de "LOTADO"
                             </button>
@@ -170,7 +170,7 @@ try {
                                 <span class="text-xs font-bold text-blue-200 uppercase">Passageiros</span>
                                 <span
                                     class="text-xs font-bold bg-white/20 px-2 py-0.5 rounded text-white"><?= count($nextRide['passengers']) ?>
-                                    Confirmados</span>
+                                    Inscritos</span>
                             </div>
 
                             <div id="passenger-list-container">
@@ -194,7 +194,7 @@ try {
                                                         <span
                                                             class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
                                                         <span class="text-[10px] text-blue-200 truncate max-w-[100px]">
-                                                            <i class="bi bi-geo-alt-fill"></i> <?= $p['meeting_point'] ?>
+                                                            <i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($p['meeting_point']) ?>
                                                         </span>
                                                         <?php if (!empty($p['note'])): ?>
                                                             <span class="text-[10px] text-white/70 truncate max-w-[120px] mt-0.5 italic">
@@ -238,7 +238,7 @@ try {
 
                             <?php if ($nextRide['seats_available'] > 0): ?>
                                 <div class="mt-4">
-                                    <button onclick="fecharVagas(<?= $nextRide['id'] ?>, '<?= addslashes($nextRide['destination_text']) ?>', '<?= $time ?>')"
+                                    <button onclick="fecharVagas(<?= $nextRide['id'] ?>, '<?= htmlspecialchars(addslashes($nextRide['destination_text']), ENT_QUOTES, 'UTF-8') ?>', '<?= $time ?>')"
                                         class="w-full bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 text-red-100 py-3 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 mt-4">
                                         🚫 Lotou fora do app (Fechar Vagas)
                                     </button>
@@ -258,7 +258,7 @@ try {
                                 </button>
                             </div>
 
-                            <button onclick="gerarVolta(<?= $nextRide['id'] ?>, '<?= addslashes($nextRide['origin_text']) ?>', '<?= addslashes($nextRide['destination_text']) ?>')" 
+                            <button onclick="gerarVolta(<?= $nextRide['id'] ?>, '<?= htmlspecialchars(addslashes($nextRide['origin_text']), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars(addslashes($nextRide['destination_text']), ENT_QUOTES, 'UTF-8') ?>')" 
                                 class="mt-4 text-[11px] font-bold text-white bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-2 mx-auto border border-white/10 uppercase tracking-tighter">
                                 <i class="bi bi-arrow-repeat"></i> Criar Viagem de Volta
                             </button>
@@ -350,7 +350,7 @@ try {
                                     class="bg-white border border-red-50 text-red-400 px-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm">
                                     <i class="bi bi-trash"></i>
                                 </button>
-                                <button onclick="gerarVolta(<?= $ride['id'] ?>, '<?= addslashes($ride['origin_text']) ?>', '<?= addslashes($ride['destination_text']) ?>')"
+                                <button onclick="gerarVolta(<?= $ride['id'] ?>, '<?= htmlspecialchars(addslashes($ride['origin_text']), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars(addslashes($ride['destination_text']), ENT_QUOTES, 'UTF-8') ?>')"
                                     class="bg-blue-50 border border-blue-100 text-blue-600 px-3 rounded-xl font-bold flex items-center justify-center gap-1 shadow-sm"
                                     title="Gerar Volta">
                                     <i class="bi bi-arrow-repeat"></i> Volta

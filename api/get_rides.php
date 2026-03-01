@@ -24,7 +24,10 @@ try {
             FROM rides r
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
-            WHERE r.status != 'canceled' AND r.seats_available > 0 AND r.departure_time >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)";
+            WHERE r.status != 'canceled' 
+              AND r.seats_available > 0 
+              AND r.price BETWEEN 1 AND 200
+              AND r.departure_time >= DATE_SUB(NOW(), INTERVAL 30 MINUTE)";
 
     if ($query !== '') {
         $sql .= " AND (LOWER(r.origin_text) LIKE LOWER(?) OR LOWER(r.destination_text) LIKE LOWER(?) OR LOWER(r.waypoints) LIKE LOWER(?))";
@@ -77,88 +80,121 @@ try {
         if (strlen($dPhone) === 11 || strlen($dPhone) === 10)
             $dPhone = '55' . $dPhone;
 
+        $waypointsArr = json_decode($ride['waypoints'] ?? '[]', true);
+        if (!is_array($waypointsArr))
+            $waypointsArr = [];
+        $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
+
+        $details = '';
+        if (!empty($ride['tags'])) {
+            $tagsData = json_decode($ride['tags'], true);
+            $details = $tagsData['details'] ?? '';
+        }
+
         ob_start();
         ?>
-        <div class="card shadow-sm border-0 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-shadow">
-            <div class="card-body p-5">
-                <!-- Topo: Motorista -->
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <img src="<?= htmlspecialchars($avatar) ?>" alt="Motorista"
-                            class="w-10 h-10 rounded-full border border-gray-100 shadow-sm">
-                        <div class="flex flex-col">
-                            <span class="text-gray-900 font-bold text-sm leading-tight">
-                                <?= htmlspecialchars($ride['driver_name']) ?>
-                            </span>
-                            <div class="flex items-center text-warning gap-1">
-                                <i class="bi bi-star-fill text-[8px]"></i>
-                                <span class="text-[10px] font-semibold text-gray-500">
-                                    <?= $ride['reputation'] ?>
-                                </span>
-                            </div>
+        <div
+            class="bg-white rounded-[2.5rem] p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col hover:shadow-xl hover:shadow-gray-200/40 transition-all active:scale-[0.98] mb-4">
+            <!-- Topo -->
+            <div class="flex items-center justify-between mb-5 relative">
+                <div class="flex items-center gap-3">
+                    <img src="<?= htmlspecialchars($avatar) ?>" alt="D"
+                        class="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover">
+                    <div class="flex flex-col">
+                        <span
+                            class="text-gray-900 font-bold text-sm leading-tight"><?= htmlspecialchars($ride['driver_name']) ?></span>
+                        <div class="flex items-center text-warning gap-1">
+                            <i class="bi bi-star-fill text-[9px]"></i>
+                            <span class="text-[10px] font-bold text-gray-400"><?= $ride['reputation'] ?></span>
                         </div>
                     </div>
-                    <div class="flex flex-col items-end">
-                        <span class="text-[10px] font-bold text-gray-400 uppercase">
-                            <?= date('d/m \à\s H:i', strtotime($ride['departure_time'])) ?>
-                        </span>
-                        <span class="text-lg font-extrabold text-primary">
-                            <!-- Hora já mostrada acima, aqui só destaque se quiser -->
-                        </span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button
+                        onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $details))) ?>")'
+                        class="w-9 h-9 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary/10 hover:text-primary transition-all active:scale-90"
+                        title="Compartilhar carona">
+                        <i class="bi bi-share-fill text-xs"></i>
+                    </button>
+                    <div class="text-right">
+                        <span
+                            class="block text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-1"><?= $day ?></span>
+                        <span class="text-2xl font-black text-primary tracking-tighter"><?= $time ?></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rota Detalhada -->
+            <div class="flex gap-4 mb-5 relative no-select">
+                <div class="flex flex-col items-center w-4 flex-shrink-0 pt-1">
+                    <div class="w-3 h-3 rounded-full border-2 border-primary bg-white z-10"></div>
+                    <div class="flex-grow w-0 border-l-2 border-dashed border-gray-300 my-1"></div>
+                    <div class="w-3 h-3 rounded-full bg-primary z-10"></div>
+                </div>
+
+                <div class="flex flex-col justify-between flex-grow gap-6 pb-1">
+                    <div>
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Partida</span>
+                        <div class="text-gray-900 font-bold text-base leading-tight">
+                            <?= htmlspecialchars($ride['origin_text']) ?></div>
+                    </div>
+                    <?php if (!empty($waypointsArr)): ?>
+                        <div class="space-y-3">
+                            <?php foreach ($waypointsArr as $point): ?>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                                    <div class="text-gray-500 font-medium text-xs"><?= htmlspecialchars($point) ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                    <div>
+                        <span class="text-xs text-gray-400 font-bold uppercase tracking-wider block mb-0.5">Chegada</span>
+                        <div class="text-gray-900 font-bold text-base leading-tight">
+                            <?= htmlspecialchars($ride['destination_text']) ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observações -->
+            <?php if (!empty($details)): ?>
+                <div class="bg-yellow-50 text-yellow-800 rounded-xl p-4 mb-5 flex gap-3 items-start text-xs font-medium">
+                    <i class="bi bi-info-circle-fill text-yellow-500 text-sm shrink-0 mt-0.5"></i>
+                    <span><?= nl2br(htmlspecialchars($details)) ?></span>
+                </div>
+            <?php endif; ?>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-between pt-5 border-t border-gray-50">
+                <div class="flex gap-4">
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-bold text-gray-300 uppercase">Vagas</span>
+                        <span class="text-sm font-black text-gray-600"><?= $ride['seats_available'] ?></span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[9px] font-bold text-gray-300 uppercase">Valor</span>
+                        <span class="text-sm font-black text-primary">R$
+                            <?= number_format($ride['price'], 2, ',', '.') ?></span>
                     </div>
                 </div>
 
-                <!-- Rota Compacta -->
-                <div class="flex flex-col gap-3 mb-5 relative pl-2">
-                    <div class="absolute left-[9px] top-2 bottom-3 w-[2px] border-l-2 border-dashed border-gray-200"></div>
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div class="w-2.5 h-2.5 rounded-full border-2 border-primary bg-white mt-1"></div>
-                        <span class="text-gray-700 font-medium text-sm line-clamp-1">
-                            <?= htmlspecialchars($ride['origin_text']) ?>
-                        </span>
-                    </div>
-                    <div class="flex items-start gap-4 relative z-10">
-                        <div class="w-2.5 h-2.5 rounded-full bg-primary mt-1"></div>
-                        <span class="text-gray-900 font-bold text-sm line-clamp-1">
-                            <?= htmlspecialchars($ride['destination_text']) ?>
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Rodapé: Vagas e Preço -->
-                <div class="flex items-center justify-between pt-4 border-t border-gray-50">
-                    <div class="flex items-center gap-4">
-                        <div class="flex items-center gap-1.5 text-gray-500">
-                            <i class="bi bi-people-fill text-sm"></i>
-                            <span class="text-xs font-bold">
-                                <?= $ride['seats_available'] ?> vagas
-                            </span>
-                        </div>
-                        <div class="flex items-center gap-1.5 text-primary">
-                            <i class="bi bi-cash-stack text-sm"></i>
-                            <span class="text-xs font-extrabold">R$
-                                <?= number_format($ride['price'], 2, ',', '.') ?>
-                            </span>
-                        </div>
-                    </div>
-
+                <div class="flex gap-2">
                     <?php if ($isDriver): ?>
-                        <span class="badge badge-light-primary rounded-lg font-bold uppercase text-[9px] px-3 py-1.5">Sua
-                            Carona</span>
+                        <button
+                            onclick='compartilharRide(<?= $ride['id'] ?>, "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", "<?= $time ?>", "<?= addslashes(htmlspecialchars($rotaStr)) ?>", "<?= number_format($ride['price'], 2, ',', '.') ?>", "<?= $ride['seats_available'] ?>", "<?= addslashes(htmlspecialchars(preg_replace('/\r|\n/', ' ', $details))) ?>")'
+                            class="bg-primary/10 text-primary px-5 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-2 hover:bg-primary/20 active:scale-95 transition-all">
+                            <i class="bi bi-whatsapp text-lg"></i> Divulgar
+                        </button>
                     <?php elseif ($isBooked): ?>
-                        <div class="flex gap-2">
-                            <a href="https://wa.me/<?= $dPhone ?>" target="_blank"
-                                class="btn btn-sm btn-light-success rounded-xl font-bold px-4">
-                                WhatsApp
-                            </a>
-                            <span
-                                class="badge badge-light-info rounded-lg font-bold uppercase text-[9px] flex items-center">Reservado</span>
-                        </div>
+                        <a href="https://wa.me/<?= $dPhone ?>" target="_blank"
+                            class="bg-green-500 text-white px-5 py-2.5 rounded-2xl font-bold text-xs shadow-lg shadow-green-200 flex items-center gap-2 active:scale-95 transition-all">
+                            <i class="bi bi-whatsapp"></i> WhatsApp
+                        </a>
                     <?php else: ?>
                         <button
-                            onclick="reservarCarona(<?= $ride['id'] ?>, '<?= $ride['price'] ?>', '<?= addslashes($ride['origin_text']) ?>', '<?= addslashes($ride['destination_text']) ?>')"
-                            class="btn btn-primary btn-sm rounded-xl px-6 font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform">
-                            Reservar
+                            onclick='reservarCarona(<?= $ride['id'] ?>, "<?= $ride['price'] ?>", "<?= addslashes(htmlspecialchars($ride['origin_text'])) ?>", "<?= addslashes(htmlspecialchars($ride['destination_text'])) ?>", `<?= addslashes(htmlspecialchars($ride['waypoints'] ?? "[]")) ?>`)'
+                            class="bg-gray-900 text-white px-8 py-3 rounded-2xl font-bold text-sm shadow-xl shadow-gray-400 hover:bg-black active:scale-95 transition-all">
+                            Solicitar Vaga
                         </button>
                     <?php endif; ?>
                 </div>

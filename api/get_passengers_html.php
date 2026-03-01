@@ -15,6 +15,13 @@ if ($rideId <= 0) {
     exit;
 }
 
+// F-08 Fix: Verificar se a carona pertence ao motorista logado (prevenir IDOR)
+$stmtOwner = $pdo->prepare("SELECT id FROM rides WHERE id = ? AND driver_id = ?");
+$stmtOwner->execute([$rideId, $_SESSION['user_id']]);
+if (!$stmtOwner->fetch()) {
+    exit; // Silencioso — não revelar que a carona existe
+}
+
 try {
     $stmt = $pdo->prepare("
         SELECT b.id as booking_id, u.name, u.photo_url, u.phone, b.meeting_point, b.note, b.status as booking_status, b.payment_status

@@ -24,6 +24,7 @@ try {
             LEFT JOIN cars c ON c.user_id = u.id
             WHERE r.status != 'canceled' 
               AND r.seats_available > 0 
+              AND r.price BETWEEN 1 AND 200
               AND r.departure_time >= NOW()";
 
     if ($query !== '') {

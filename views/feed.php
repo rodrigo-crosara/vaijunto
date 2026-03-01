@@ -9,21 +9,22 @@ $currentUserId = $_SESSION['user_id'] ?? 0;
 
 try {
     $limit = 10;
+    $rideIdParam = intval($_GET['ride_id'] ?? $_GET['ride_id_param'] ?? 0);
+
+    // Query Robusta: Busca as caronas normais (disponíveis)
+    // MAS, se houver um ride_id_param, tenta incluí-lo mesmo que esteja lotado ou cancelado para dar feedback ao usuário
     $sql = "SELECT r.*, u.name as driver_name, u.photo_url, u.reputation, c.model as car_model, u.phone as driver_phone
             FROM rides r
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
-            WHERE r.departure_time >= NOW() AND r.seats_available > 0 AND r.status != 'canceled'
+            WHERE (r.departure_time >= NOW() AND r.seats_available > 0 AND r.status != 'canceled')
+               OR (r.id = :ride_id_param)
             ORDER BY 
                 CASE WHEN r.id = :ride_id_param THEN 0 ELSE 1 END,
                 r.departure_time ASC
             LIMIT $limit";
     $stmt = $pdo->prepare($sql);
-
-    // Bind Params
-    $rideIdParam = $_GET['ride_id'] ?? 0;
     $stmt->bindValue(':ride_id_param', $rideIdParam, PDO::PARAM_INT);
-
     $stmt->execute();
     $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -119,8 +120,17 @@ if ($currentUserId) {
             foreach ($rides as $ride):
                 if ($ride['id'] > $maxRideId)
                     $maxRideId = $ride['id'];
+
+                $isTarget = ($ride['id'] == $rideIdParam);
                 $isDriver = ($ride['driver_id'] == $currentUserId);
                 $isBooked = in_array($ride['id'], $myBookings);
+
+                // Estados Especiais
+                $isFull = ($ride['seats_available'] <= 0);
+                $isCanceled = ($ride['status'] === 'canceled');
+                $isPast = (strtotime($ride['departure_time']) < time());
+                $isInvalid = ($isFull || $isCanceled || $isPast);
+
                 $time = date('H:i', strtotime($ride['departure_time']));
                 $day = date('d/m', strtotime($ride['departure_time']));
                 $avatar = $ride['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($ride['driver_name']) . "&background=random";
@@ -129,7 +139,6 @@ if ($currentUserId) {
                     $waypointsArr = [];
                 $rotaStr = empty($waypointsArr) ? 'Via padrão' : implode(' -> ', $waypointsArr);
 
-                // Extrair detalhes do campo JSON 'tags'
                 $rideDetails = '';
                 if (!empty($ride['tags'])) {
                     $tagsData = json_decode($ride['tags'], true);
@@ -138,7 +147,30 @@ if ($currentUserId) {
                 ?>
 
                 <div
-                    class="bg-white rounded-[2.5rem] p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] border border-gray-50 flex flex-col hover:shadow-xl hover:shadow-gray-200/40 transition-all active:scale-[0.98]">
+                    class="bg-white rounded-[2.5rem] p-6 shadow-[0_4px_25px_rgba(0,0,0,0.02)] border-2 <?= $isTarget ? 'border-primary/30 shadow-primary/10' : 'border-gray-50' ?> flex flex-col hover:shadow-xl hover:shadow-gray-200/40 transition-all active:scale-[0.98] mb-4 relative <?= $isInvalid ? 'opacity-80 grayscale-[0.5]' : '' ?>">
+
+                    <?php if ($isTarget): ?>
+                        <div
+                            class="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[9px] font-black uppercase px-4 py-1 rounded-full shadow-lg z-10 tracking-widest">
+                            Link Sugerido</div>
+                    <?php endif; ?>
+
+                    <?php if ($isInvalid): ?>
+                        <div
+                            class="absolute inset-0 bg-white/40 backdrop-blur-[1px] rounded-[2.5rem] z-20 flex items-center justify-center">
+                            <div
+                                class="bg-gray-900/90 text-white px-6 py-2 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl">
+                                <?php
+                                if ($isCanceled)
+                                    echo "Carona Cancelada";
+                                elseif ($isFull)
+                                    echo "Carona Lotada";
+                                elseif ($isPast)
+                                    echo "Já partiu";
+                                ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <!-- Topo -->
                     <div class="flex items-center justify-between mb-5 relative">
                         <div class="flex items-center gap-3">
@@ -464,7 +496,7 @@ if ($currentUserId) {
                                     <i class="bi bi-check-circle"></i> Contribuição Confirmada
                                 </div>
                             ` : `
-                                <button onclick="copyToClipboard('${ride.driver_pix}')" class="w-full bg-white text-primary py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all text-center">
+                                <button onclick="copyToClipboard('${escapeHtml(ride.driver_pix || '')}')" class="w-full bg-white text-primary py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all text-center">
                                     Pagar R$ ${price}
                                 </button>
                             `}

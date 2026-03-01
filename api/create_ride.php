@@ -60,6 +60,18 @@ if (empty($origin) || empty($destination) || $seats <= 0) {
     exit;
 }
 
+// Validação de Preço (Máximo de R$ 200, carona solidária)
+if ($price < 1 || $price > 200) {
+    echo json_encode(['success' => false, 'message' => 'O valor por pessoa deve ser entre R$ 1 e R$ 200.']);
+    exit;
+}
+
+// Validação de Data (Apenas futuras) - Aplicado apenas para caronas não recorrentes
+if (!$isRepeat && strtotime($departure_time) < (time() - 300)) { // Pequena margem de 5 min
+    echo json_encode(['success' => false, 'message' => 'O horário de partida deve ser no futuro.']);
+    exit;
+}
+
 if ($seats > 8) {
     echo json_encode(['success' => false, 'message' => 'Máximo de 8 vagas por carona.']);
     exit;

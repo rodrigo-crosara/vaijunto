@@ -535,7 +535,7 @@ $msg = $_GET['msg'] ?? '';
             // Trava de segurança: confirmar troca de telefone ANTES de enviar
             const currentPhone = $('#input-phone').val();
             if (currentPhone !== originalPhone) {
-                const confirm = await Swal.fire({
+                const confirmResult = await Swal.fire({
                     title: 'Confirme seu novo número',
                     html: `<p class="text-gray-600 text-sm">Seu login mudará para:<br><b class="text-xl text-primary mt-2 block">${currentPhone}</b></p><p class="text-red-500 text-xs font-bold mt-3"><i class="bi bi-exclamation-triangle-fill"></i> Se estiver errado, você perderá o acesso à conta!</p>`,
                     icon: 'warning',
@@ -551,7 +551,7 @@ $msg = $_GET['msg'] ?? '';
                     allowOutsideClick: false
                 });
 
-                if (!confirm.isConfirmed) {
+                if (!confirmResult.isConfirmed) {
                     // Foca no campo de telefone para revisão
                     $('#input-phone').focus().select();
                     return;
