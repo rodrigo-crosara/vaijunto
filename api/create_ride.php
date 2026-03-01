@@ -60,6 +60,11 @@ if (empty($origin) || empty($destination) || $seats <= 0) {
     exit;
 }
 
+if ($seats > 8) {
+    echo json_encode(['success' => false, 'message' => 'Máximo de 8 vagas por carona.']);
+    exit;
+}
+
 // Se NÃO for repetição, a data única é obrigatória e deve ser futura
 if (!$isRepeat) {
     if (empty($departure_time)) {

@@ -301,12 +301,17 @@ try {
             break;
 
         case 'finish_ride':
+            $pdo->beginTransaction();
             $stmt = $pdo->prepare("UPDATE rides SET status = 'finished' WHERE id = ? AND driver_id = ?");
             $stmt->execute([$rideId, $driverId]);
 
             if ($stmt->rowCount() > 0) {
+                // Atualizar bookings confirmados para 'completed'
+                $pdo->prepare("UPDATE bookings SET status = 'completed' WHERE ride_id = ? AND status = 'confirmed'")->execute([$rideId]);
+                $pdo->commit();
                 echo json_encode(['success' => true, 'message' => 'Viagem finalizada com sucesso!']);
             } else {
+                $pdo->rollBack();
                 echo json_encode(['success' => false, 'message' => 'Erro ao finalizar viagem ou carona não encontrada.']);
             }
             break;

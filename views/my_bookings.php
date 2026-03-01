@@ -220,7 +220,8 @@ foreach ($bookings as $b) {
                                     Confirmado</span>
                             </div>
                         <?php else: ?>
-                            <button onclick="verPixMotorista('<?= addslashes($nb['driver_pix'] ?: '') ?>')"
+                            <button
+                                onclick="verPixMotorista('<?= htmlspecialchars(addslashes($nb['driver_pix'] ?: ''), ENT_QUOTES, 'UTF-8') ?>')"
                                 class="w-full bg-white text-blue-600 font-black py-4 rounded-2xl text-sm shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center gap-2 mb-5">
                                 <i class="bi bi-qr-code text-lg"></i> Ver Chave Pix do Motorista
                             </button>

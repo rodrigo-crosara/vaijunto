@@ -87,7 +87,13 @@ try {
         $token = $user['id'] . '|' . $signature;
 
         // Salva o cookie por 30 dias (86400 segundos = 1 dia)
-        setcookie('vj_remember', $token, time() + (86400 * 30), "/");
+        setcookie('vj_remember', $token, [
+            'expires' => time() + (86400 * 30),
+            'path' => '/',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
 
         echo json_encode(['success' => true, 'type' => 'login']);
 
@@ -111,7 +117,13 @@ try {
         $token = $newUserId . '|' . $signature;
 
         // Salva o cookie por 30 dias (86400 segundos = 1 dia)
-        setcookie('vj_remember', $token, time() + (86400 * 30), "/");
+        setcookie('vj_remember', $token, [
+            'expires' => time() + (86400 * 30),
+            'path' => '/',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
 
         require_once '../helpers/notification.php';
         createNotification(

@@ -53,7 +53,7 @@ try {
     }
 
     // 3. Verificar se o status da reserva era válido para avaliação (Só avalia viagens reais)
-    if (!in_array($booking['status'], ['confirmed', 'paid'])) {
+    if (!in_array($booking['status'], ['confirmed', 'completed'])) {
         echo json_encode(['success' => false, 'message' => 'Você não pode avaliar uma viagem que foi cancelada ou não foi confirmada.']);
         exit;
     }

@@ -67,7 +67,8 @@ try {
         </div>
     <?php else: ?>
 
-        <!-- 1. Próxima Viagem (Highlight) -->
+        <?php
+        // 1. Próxima Viagem (Highlight)
         $nextRide = null;
         $nowGrace = time() - 3600; // 1 hora de tolerância padrão para visualização
         foreach ($myRides as $ride) {

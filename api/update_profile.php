@@ -139,31 +139,36 @@ try {
         $allowed = ['image/jpeg', 'image/png', 'image/webp'];
 
         if (in_array($carFile['type'], $allowed) && $carFile['size'] <= 5 * 1024 * 1024) {
-            $ext = pathinfo($carFile['name'], PATHINFO_EXTENSION);
-            $carFileName = "car_{$userId}_" . time() . ".{$ext}";
-            $uploadDir = realpath(__DIR__ . '/../assets/media/uploads/cars') ?: __DIR__ . '/../assets/media/uploads/cars';
+            // Validação real do MIME (não confiar apenas no navegador)
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $realMime = $finfo->file($carFile['tmp_name']);
+            if (in_array($realMime, $allowed)) {
+                $ext = pathinfo($carFile['name'], PATHINFO_EXTENSION);
+                $carFileName = "car_{$userId}_" . time() . ".{$ext}";
+                $uploadDir = realpath(__DIR__ . '/../assets/media/uploads/cars') ?: __DIR__ . '/../assets/media/uploads/cars';
 
-            if (!is_dir($uploadDir)) {
-                mkdir($uploadDir, 0755, true);
-            }
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
 
-            $carPath = $uploadDir . DIRECTORY_SEPARATOR . $carFileName;
-            if (move_uploaded_file($carFile['tmp_name'], $carPath)) {
-                $carPhotoUrl = "/assets/media/uploads/cars/{$carFileName}";
+                $carPath = $uploadDir . DIRECTORY_SEPARATOR . $carFileName;
+                if (move_uploaded_file($carFile['tmp_name'], $carPath)) {
+                    $carPhotoUrl = "/assets/media/uploads/cars/{$carFileName}";
 
-                // Buscar foto antiga do carro para apagar
-                $stmtOldCar = $pdo->prepare("SELECT photo_url FROM cars WHERE user_id = ?");
-                $stmtOldCar->execute([$userId]);
-                $oldCarPhoto = $stmtOldCar->fetchColumn();
+                    // Buscar foto antiga do carro para apagar
+                    $stmtOldCar = $pdo->prepare("SELECT photo_url FROM cars WHERE user_id = ?");
+                    $stmtOldCar->execute([$userId]);
+                    $oldCarPhoto = $stmtOldCar->fetchColumn();
 
-                $stmtCarPhoto = $pdo->prepare("UPDATE cars SET photo_url = ? WHERE user_id = ?");
-                $stmtCarPhoto->execute([$carPhotoUrl, $userId]);
+                    $stmtCarPhoto = $pdo->prepare("UPDATE cars SET photo_url = ? WHERE user_id = ?");
+                    $stmtCarPhoto->execute([$carPhotoUrl, $userId]);
 
-                // Remover arquivo antigo do servidor
-                if ($oldCarPhoto && strpos($oldCarPhoto, '/assets/media/uploads/') === 0) {
-                    $oldCarPath = __DIR__ . '/..' . $oldCarPhoto;
-                    if (file_exists($oldCarPath)) {
-                        unlink($oldCarPath);
+                    // Remover arquivo antigo do servidor
+                    if ($oldCarPhoto && strpos($oldCarPhoto, '/assets/media/uploads/') === 0) {
+                        $oldCarPath = __DIR__ . '/..' . $oldCarPhoto;
+                        if (file_exists($oldCarPath)) {
+                            unlink($oldCarPath);
+                        }
                     }
                 }
             }
