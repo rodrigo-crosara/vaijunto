@@ -28,6 +28,7 @@ try {
 // Ícones por tipo
 $typeIcons = [
     'booking' => ['bi-ticket-perforated-fill', 'text-primary', 'bg-blue-50'],
+    'booking_request' => ['bi-person-raised-hand', 'text-amber-500', 'bg-amber-50'],
     'cancel' => ['bi-x-circle-fill', 'text-red-500', 'bg-red-50'],
     'confirmed' => ['bi-check-circle-fill', 'text-green-500', 'bg-green-50'],
     'payment' => ['bi-cash-stack', 'text-emerald-500', 'bg-emerald-50'],

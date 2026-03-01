@@ -1,8 +1,10 @@
-const CACHE_NAME = 'vaijunto-v4'; // Bump version
+const CACHE_NAME = 'vaijunto-v4.1'; 
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
-  './manifest.json'
+  './manifest.json',
+  './assets/media/app/icon-192.png',
+  './assets/media/app/icon-512.png'
 ];
 
 // Instalação: Cache inicial (Apenas ativos locais críticos)

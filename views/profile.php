@@ -339,8 +339,58 @@ $msg = $_GET['msg'] ?? '';
     <?php endif; ?>
 
 
+    <!-- Atalhos Rápidos (UX Improvement) -->
+    <div class="mt-8 mb-4 space-y-3 px-2">
+        <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 mb-2">Acesso Rápido</h4>
 
-    <div class="h-40"></div>
+        <?php if ($isDriver): ?>
+            <a href="index.php?page=my_bookings"
+                class="flex items-center justify-between p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:bg-gray-50 active:scale-98 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center">
+                        <i class="bi bi-ticket-perforated-fill text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-black text-gray-900 leading-tight">Minhas Reservas</p>
+                        <p class="text-[10px] text-gray-400">Viagens que sou passageiro</p>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-gray-300"></i>
+            </a>
+        <?php endif; ?>
+
+        <?php if (!empty($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
+            <a href="index.php?page=admin"
+                class="flex items-center justify-between p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:bg-gray-50 active:scale-98 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center">
+                        <i class="bi bi-shield-lock-fill text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-black text-gray-900 leading-tight">Painel Administrativo Pró</p>
+                        <p class="text-[10px] text-gray-400">Moderação e Estatísticas</p>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-gray-300"></i>
+            </a>
+        <?php endif; ?>
+
+        <a href="index.php?page=help"
+            class="flex items-center justify-between p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:bg-gray-50 active:scale-98 transition-all">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <i class="bi bi-question-circle-fill text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-black text-gray-900 leading-tight">Central de Ajuda</p>
+                    <p class="text-[10px] text-gray-400">Dúvidas comuns e suporte</p>
+                </div>
+            </div>
+            <i class="bi bi-chevron-right text-gray-300"></i>
+        </a>
+    </div>
+
+    <div class="h-20"></div>
 </div>
 
 <script>

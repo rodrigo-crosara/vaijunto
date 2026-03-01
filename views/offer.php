@@ -351,7 +351,7 @@
                     const rota = data.waypoints || '';
                     const vagas = data.seats;
                     const detalhes = data.details || '';
-                    const link = `${window.location.origin}/${result.ride_id}`;
+                    const link = `${window.location.origin}${window.location.pathname}?ride_id=${result.ride_id}`;
 
                     let hora = '';
                     let diasStr = '';
@@ -426,7 +426,7 @@
                     alert(error.message);
                 }
                 // Destravar botão
-                btnParam.innerHTML = btnParam.getAttribute('data-original-text') || 'Publicar Carona';
+                btnParam.innerHTML = 'Publicar Carona';
                 btnParam.disabled = false;
             }
         });

@@ -32,6 +32,8 @@
             <div class="mt-4">
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">PIN de
                     Segurança (4 dígitos)</label>
+                <p class="text-[10px] text-gray-400 mb-2 ml-1">Novo aqui? Crie um PIN de 4 números. Já tem conta? Digite
+                    seu PIN.</p>
                 <input type="tel" name="pin" id="pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" required
                     class="w-full p-4 rounded-3xl border border-gray-100 bg-white shadow-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all text-gray-700 font-bold text-2xl text-center tracking-[1em]"
                     placeholder="••••" style="-webkit-text-security: disc;">
@@ -57,7 +59,7 @@
         </form>
 
         <div class="mt-8 text-center text-sm text-gray-400">
-            <i class="bi bi-shield-lock-fill mr-1"></i> Acesso seguro sem senha
+            <i class="bi bi-shield-lock-fill mr-1"></i> Login rápido com WhatsApp + PIN
         </div>
     </div>
 </div>

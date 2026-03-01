@@ -18,13 +18,14 @@ try {
             JOIN users u ON r.driver_id = u.id
             LEFT JOIN cars c ON c.user_id = u.id
             WHERE (r.departure_time >= NOW() AND r.seats_available > 0 AND r.status != 'canceled')
-               OR (r.id = :ride_id_param)
+               OR (r.id = :ride_id_1)
             ORDER BY 
-                CASE WHEN r.id = :ride_id_param THEN 0 ELSE 1 END,
+                CASE WHEN r.id = :ride_id_2 THEN 0 ELSE 1 END,
                 r.departure_time ASC
             LIMIT $limit";
     $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':ride_id_param', $rideIdParam, PDO::PARAM_INT);
+    $stmt->bindValue(':ride_id_1', $rideIdParam, PDO::PARAM_INT);
+    $stmt->bindValue(':ride_id_2', $rideIdParam, PDO::PARAM_INT);
     $stmt->execute();
     $rides = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -392,7 +393,7 @@ if ($currentUserId) {
     }
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
-        const link = `${window.location.origin}/${rideId}`;
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');
@@ -531,12 +532,12 @@ if ($currentUserId) {
         }
 
         // 1. Preparar Opções de Ponto de Encontro
-        let optionsHtml = `<option value="${origin}">${origin} (Saída)</option>`;
+        let optionsHtml = `<option value="${escapeHtml(origin)}">${escapeHtml(origin)} (Saída)</option>`;
         try {
             const points = JSON.parse(waypointsJson);
             if (Array.isArray(points)) {
                 points.forEach(p => {
-                    optionsHtml += `<option value="${p}">${p}</option>`;
+                    optionsHtml += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
                 });
             }
         } catch (e) { }
@@ -636,8 +637,23 @@ if ($currentUserId) {
     }
 
     async function copyToClipboard(text) {
-        navigator.clipboard.writeText(text);
-        Swal.fire({ text: 'Pix copiado!', icon: 'success', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
+        if (!text) {
+            Swal.fire({ text: 'O motorista ainda não cadastrou chave Pix.', icon: 'info', toast: true, position: 'top', timer: 3000, showConfirmButton: false });
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+            Swal.fire({ text: 'Pix copiado!', icon: 'success', toast: true, position: 'top', timer: 1500, showConfirmButton: false });
+        } catch (e) {
+            // Fallback para HTTP ou permissão negada
+            Swal.fire({
+                title: 'Chave Pix',
+                html: `<p class="text-gray-600 text-sm mb-2">Copie manualmente:</p><input type="text" value="${text}" class="w-full p-3 bg-gray-50 rounded-xl text-center font-bold text-lg" readonly onclick="this.select()">`,
+                confirmButtonText: 'OK',
+                customClass: { confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold', popup: 'rounded-[2.5rem]' },
+                buttonsStyling: false
+            });
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {

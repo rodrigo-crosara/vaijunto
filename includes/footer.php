@@ -329,20 +329,22 @@
                 if (typeof Swal !== 'undefined' && Swal.isVisible()) return; // Não atropela alertas rodando
                 Swal.fire({
                     toast: true,
-                    position: 'top',
+                    position: 'top-end',
                     icon: 'info',
                     title: 'Ativar Alertas Sonoros? 🔔',
                     showConfirmButton: true,
                     showCancelButton: true,
                     confirmButtonText: 'Sim',
                     cancelButtonText: 'Não',
+                    timer: 10000,
+                    timerProgressBar: true,
                     customClass: { popup: 'rounded-2xl !text-sm' }
                 }).then((res) => {
                     if (res.isConfirmed) {
                         Notification.requestPermission();
                     }
                 });
-            }, 6000); // 6s delay
+            }, 8000); // 8s delay (menos intrusivo)
         }
 
         // Iniciar Tour
@@ -427,6 +429,9 @@
                     buttonsStyling: false,
                     allowOutsideClick: false
                 }).then((result) => {
+                    // Marca como visto logo no primeiro passo para não ser intrusivo se o usuário navegar
+                    localStorage.setItem('tutorial_seen', 'true');
+
                     if (stepIndex === 2 && result.isConfirmed) {
                         localStorage.setItem('tutorial_seen', 'true');
 

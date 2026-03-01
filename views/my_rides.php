@@ -192,7 +192,7 @@ try {
                                                         class="w-8 h-8 rounded-full border border-white/30">
                                                     <div class="flex flex-col">
                                                         <span
-                                                            class="text-sm font-bold leading-tight"><?= explode(' ', $p['name'])[0] ?></span>
+                                                            class="text-sm font-bold leading-tight"><?= htmlspecialchars(explode(' ', $p['name'])[0]) ?></span>
                                                         <span class="text-[10px] text-blue-200 truncate max-w-[100px]">
                                                             <i class="bi bi-geo-alt-fill"></i> <?= htmlspecialchars($p['meeting_point']) ?>
                                                         </span>
@@ -371,7 +371,7 @@ try {
                                     <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
                                         <div class="flex items-center gap-2">
                                             <img src="<?= $p['photo_url'] ?: "https://ui-avatars.com/api/?name=" . urlencode($p['name']) ?>" class="w-6 h-6 rounded-full">
-                                            <span class="font-bold text-gray-700"><?= $p['name'] ?></span>
+                                            <span class="font-bold text-gray-700"><?= htmlspecialchars($p['name']) ?></span>
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <?php if ($p['booking_status'] === 'pending'): ?>
