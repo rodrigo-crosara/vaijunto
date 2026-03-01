@@ -137,12 +137,24 @@ if (empty($_SESSION['is_admin'])) {
                     return p;
                 };
 
+                const escapeHTML = (str) => {
+                    if (!str) return '';
+                    return String(str)
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+                };
+
+                // Usuários
+                const userList = document.getElementById('list-users');
                 userList.innerHTML = data.recent_users.map(u => `
                     <div class="flex items-center justify-between group">
                         <div class="flex items-center gap-3">
-                            <img src="${u.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || u.phone)}" class="w-10 h-10 rounded-full object-cover">
+                            <img src="${escapeHTML(u.photo_url) || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.name || u.phone)}" class="w-10 h-10 rounded-full object-cover">
                             <div class="flex flex-col">
-                                <span class="text-xs font-bold text-gray-800">${u.name || 'Sem Nome'}</span>
+                                <span class="text-xs font-bold text-gray-800">${escapeHTML(u.name) || 'Sem Nome'}</span>
                                 <span class="text-[10px] text-gray-400">${formatPhone(u.phone)}</span>
                             </div>
                         </div>
@@ -151,7 +163,7 @@ if (empty($_SESSION['is_admin'])) {
                                class="w-8 h-8 rounded-lg bg-green-50 text-green-500 flex items-center justify-center hover:bg-green-500 hover:text-white transition-all" title="Checar Zap">
                                 <i class="bi bi-whatsapp"></i>
                             </a>
-                            <button onclick="notificarUsuario(${u.id}, '${u.name || u.phone}')" 
+                            <button onclick="notificarUsuario(${u.id}, '${escapeHTML(u.name || u.phone)}')" 
                                 class="w-8 h-8 rounded-lg bg-yellow-50 text-yellow-500 flex items-center justify-center hover:bg-yellow-500 hover:text-white transition-all" title="Enviar Aviso">
                                 <i class="bi bi-bell-fill"></i>
                             </button>
@@ -169,11 +181,11 @@ if (empty($_SESSION['is_admin'])) {
                     <div class="bg-gray-50 rounded-2xl p-4 flex items-center justify-between border border-transparent hover:border-gray-200 transition-all">
                         <div class="min-w-0 pr-4">
                             <div class="flex items-center gap-2 text-[10px] font-bold text-gray-900 truncate mb-1">
-                                <span>${r.origin_text}</span>
+                                <span>${escapeHTML(r.origin_text)}</span>
                                 <i class="bi bi-arrow-right text-gray-300"></i>
-                                <span>${r.destination_text}</span>
+                                <span>${escapeHTML(r.destination_text)}</span>
                             </div>
-                            <span class="text-[10px] text-gray-400 font-medium">${r.driver_name} • ${new Date(r.departure_time).toLocaleDateString('pt-BR')}</span>
+                            <span class="text-[10px] text-gray-400 font-medium">${escapeHTML(r.driver_name)} • ${new Date(r.departure_time).toLocaleDateString('pt-BR')}</span>
                         </div>
                         <button onclick="deleteRide(${r.id})" class="text-gray-300 hover:text-red-500 transition-colors">
                             <i class="bi bi-trash3 text-sm"></i>

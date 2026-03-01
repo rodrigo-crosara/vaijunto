@@ -71,8 +71,8 @@ try {
         $nextRide = null;
         $nowGrace = time() - 3600; // 1 hora de tolerância padrão para visualização
         foreach ($myRides as $ride) {
-            // A Próxima Missão é a primeira que não foi cancelada nem completada
-            if ($ride['status'] === 'scheduled') {
+            // A Próxima Missão é a primeira que não foi cancelada nem finalizada
+            if ($ride['status'] === 'scheduled' || $ride['status'] === 'active') {
                 $nextRide = $ride;
                 break;
             }
@@ -270,7 +270,7 @@ try {
         <!-- 2. Planejamento (Próximas Viagens) -->
         <?php 
         $futureRides = array_filter($myRides, function($r) use ($nextRide) {
-            return (!$nextRide || $r['id'] != $nextRide['id']) && $r['status'] === 'scheduled';
+            return (!$nextRide || $r['id'] != $nextRide['id']) && in_array($r['status'], ['scheduled', 'active']);
         });
         ?>
 
@@ -305,9 +305,9 @@ try {
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 text-sm font-bold text-gray-800">
-                                    <div><?= $ride['origin_text'] ?></div>
+                                    <div><?= htmlspecialchars($ride['origin_text']) ?></div>
                                     <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
-                                    <div><?= $ride['destination_text'] ?></div>
+                                    <div><?= htmlspecialchars($ride['destination_text']) ?></div>
                                     <?php if ($pendingCount > 0): ?>
                                         <span class="flex h-2 w-2 rounded-full bg-red-500 animate-ping"></span>
                                     <?php endif; ?>
@@ -435,9 +435,9 @@ try {
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 text-sm font-bold text-gray-600">
-                                        <div><?= $ride['origin_text'] ?></div>
+                                        <div><?= htmlspecialchars($ride['origin_text']) ?></div>
                                         <i class="bi bi-arrow-right text-gray-300 text-xs"></i>
-                                        <div><?= $ride['destination_text'] ?></div>
+                                        <div><?= htmlspecialchars($ride['destination_text']) ?></div>
                                     </div>
                                     <span class="text-[10px] text-gray-400">
                                         <?= count($ride['passengers']) ?> passageiros • R$ <?= number_format($ride['price'], 2, ',', '.') ?>

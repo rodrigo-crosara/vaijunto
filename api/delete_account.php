@@ -94,5 +94,5 @@ try {
     echo json_encode(['success' => true, 'message' => 'Sua conta foi desativada e seus dados pessoais foram removidos. Seu histórico de viagens com outros usuários permanecerá anônimo.']);
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Erro ao excluir conta.', 'debug' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao excluir conta.']);
 }

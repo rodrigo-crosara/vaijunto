@@ -33,5 +33,5 @@ try {
     }
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Erro DB: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao fechar vagas.']);
 }

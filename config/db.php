@@ -26,6 +26,5 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     // In a production environment, don't leak connection details
-    // throw new \PDOException($e->getMessage(), (int)$e->getCode());
-    die("Database connection failed: " . $e->getMessage());
+    die("Database connection failed. Please try again later.");
 }

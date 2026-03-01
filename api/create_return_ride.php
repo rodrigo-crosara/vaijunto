@@ -87,6 +87,6 @@ try {
     ]);
 
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Erro no banco: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Erro ao criar viagem de volta.']);
 }
 ?>
