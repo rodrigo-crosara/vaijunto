@@ -463,7 +463,7 @@ try {
                                 <div class="space-y-1">
                                     <?php foreach ($ride['passengers'] as $p): ?>
                                         <div class="flex justify-between items-center text-gray-500">
-                                            <span><?= $p['name'] ?></span>
+                                            <span><?= htmlspecialchars($p['name']) ?></span>
                                             <span class="font-bold"><?= $p['payment_status'] == 'paid' ? 'Pago' : 'Não Pago' ?></span>
                                         </div>
                                     <?php endforeach; ?>
@@ -524,7 +524,7 @@ try {
 
     // CORRIGIDO: rideId agora é o primeiro parâmetro, igual no HTML
     async function copiarOferta(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
-        const link = `${window.location.origin}/${rideId}`;
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         try {
             await navigator.clipboard.writeText(texto);
@@ -537,12 +537,19 @@ try {
                 timer: 2000
             });
         } catch (err) {
-            Swal.fire('Erro', 'Não foi possível copiar.', 'error');
+            // Fallback: mostra texto para copiar manualmente
+            Swal.fire({
+                title: 'Copiar Texto',
+                html: `<textarea class="w-full p-3 bg-gray-50 rounded-xl text-sm" rows="6" readonly onclick="this.select()">${texto}</textarea>`,
+                confirmButtonText: 'Fechar',
+                customClass: { confirmButton: 'bg-primary text-white px-8 py-3 rounded-2xl font-bold', popup: 'rounded-[2.5rem]' },
+                buttonsStyling: false
+            });
         }
     }
 
     function compartilharRide(rideId, origem, destino, hora, rota, valor, vagas, detalhes) {
-        const link = `${window.location.origin}/${rideId}`;
+        const link = `${window.location.origin}${window.location.pathname}?ride_id=${rideId}`;
         const texto = getRideText(origem, destino, hora, rota, valor, vagas, detalhes, link);
         const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
         window.open(url, '_blank');

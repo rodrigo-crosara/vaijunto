@@ -74,17 +74,30 @@ try {
         echo json_encode(['success' => true, 'message' => 'Mensagem enviada com sucesso para toda a base!']);
 
     } elseif ($action === 'purge_old') {
-        // 1. Apagar caronas com mais de 3 meses
+        $pdo->beginTransaction();
+
+        // 1. Apagar access_logs antigos (mais de 1 mês)
+        $pdo->query("DELETE FROM access_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)");
+
+        // 2. Apagar ratings de caronas com mais de 3 meses
+        $pdo->query("DELETE rt FROM ratings rt JOIN rides r ON rt.ride_id = r.id WHERE r.departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
+
+        // 3. Apagar bookings de caronas com mais de 3 meses
+        $pdo->query("DELETE b FROM bookings b JOIN rides r ON b.ride_id = r.id WHERE r.departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
+
+        // 4. Agora sim apagar as caronas (sem dependências)
         $stmtRides = $pdo->query("DELETE FROM rides WHERE departure_time < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
         $countRides = $stmtRides->rowCount();
 
-        // 2. Apagar notificações velhas (mais de 3 meses)
+        // 5. Apagar notificações velhas (mais de 3 meses)
         $stmtNotifOld = $pdo->query("DELETE FROM notifications WHERE created_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)");
 
-        // 3. Apagar notificações LIDAS com mais de 1 mês (limpeza agressiva)
+        // 6. Apagar notificações LIDAS com mais de 1 mês (limpeza agressiva)
         $stmtNotifRead = $pdo->query("DELETE FROM notifications WHERE is_read = 1 AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH)");
 
         $totalNotifDeleted = $stmtNotifOld->rowCount() + $stmtNotifRead->rowCount();
+
+        $pdo->commit();
 
         echo json_encode([
             'success' => true,

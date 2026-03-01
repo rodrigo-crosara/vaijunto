@@ -53,7 +53,7 @@ try {
                         class="w-8 h-8 rounded-full border border-white/30">
                     <div class="flex flex-col">
                         <span class="text-sm font-bold leading-tight">
-                            <?= explode(' ', $p['name'])[0] ?>
+                            <?= htmlspecialchars(explode(' ', $p['name'])[0]) ?>
                         </span>
                         <span class="text-[10px] text-blue-200 truncate max-w-[120px]">
                             <i class="bi bi-geo-alt-fill"></i>
